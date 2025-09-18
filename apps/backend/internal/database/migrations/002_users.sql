@@ -1,0 +1,94 @@
+
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(255) NOT NULL UNIQUE,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    phone_number VARCHAR(20) UNIQUE,
+    password TEXT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    role VARCHAR(20) NOT NULL DEFAULT 'user',-- roles: user, restaurant_manager, delivery_partner, admin
+    is_verified BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE,
+    loyalty_points INT DEFAULT 0,
+    profile_picture TEXT,
+    two_factor_enabled BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    deleted_at TIMESTAMP -- soft delete
+);
+
+
+
+-- 2FA tokens table
+CREATE TABLE user_2fa_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token VARCHAR(255) NOT NULL,
+    token_type VARCHAR(20) NOT NULL, -- e.g., "authenticator", "recovery"
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    used BOOLEAN DEFAULT FALSE
+);
+
+CREATE INDEX idx_user_2fa_tokens_user_id ON user_2fa_tokens(user_id);
+CREATE INDEX idx_user_2fa_tokens_token ON user_2fa_tokens(token);
+
+
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_phone_number ON users(phone_number);
+CREATE INDEX idx_users_username ON users(username);
+
+CREATE TRIGGER set_updated_at_users
+    BEFORE UPDATE ON users
+    FOR EACH ROW
+    EXECUTE FUNCTION trigger_set_updated_at();
+
+
+CREATE TABLE user_addresses (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    label VARCHAR(20) NOT NULL, -- e.g., Home, Work
+    latitude DECIMAL(9,6) NOT NULL,
+    longitude DECIMAL(9,6) NOT NULL,
+    is_default BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, label)
+);
+
+CREATE INDEX idx_user_addresses_user_id ON user_addresses(user_id);
+CREATE INDEX idx_user_addresses_user_id_default ON user_addresses(user_id) WHERE is_default;
+
+CREATE TRIGGER set_updated_at_user_addresses
+    BEFORE UPDATE ON user_addresses
+    FOR EACH ROW
+    EXECUTE FUNCTION trigger_set_updated_at();
+
+-- Ensure only one default address per user
+ALTER TABLE user_addresses
+ADD CONSTRAINT one_default_address_per_user
+UNIQUE (user_id) WHERE is_default;
+
+CREATE TABLE loyalty_points_audit (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id),   -- the user whose points changed
+    operation VARCHAR(10) NOT NULL,              -- ADD, SUBTRACT
+    points_change INT NOT NULL,                  -- amount added or subtracted
+    old_points INT NOT NULL,                      -- previous total points
+    new_points INT NOT NULL,                      -- new total points
+    reason VARCHAR(255),                          -- e.g., "Order #1234", "Promotion"
+    performed_by UUID NOT NULL REFERENCES users(id), -- who triggered the change (user/system/admin)
+    performed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes
+CREATE INDEX idx_loyalty_points_audit_user ON loyalty_points_audit(user_id);
+CREATE INDEX idx_loyalty_points_audit_performed_by ON loyalty_points_audit(performed_by);
+CREATE INDEX idx_loyalty_points_audit_performed_at ON loyalty_points_audit(performed_at);
+
+
+CREATE TRIGGER audit_loyalty_points_trigger
+BEFORE UPDATE OF loyalty_points ON users
+FOR EACH ROW
+EXECUTE FUNCTION audit_loyalty_points('Loyalty points update');
+
