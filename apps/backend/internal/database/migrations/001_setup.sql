@@ -32,39 +32,3 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-
-
-CREATE OR REPLACE FUNCTION audit_loyalty_points()
-RETURNS TRIGGER AS $$
-DECLARE
-    performer_uuid UUID;
-BEGIN
-    -- Get current app user; if not set, default to system user
-    performer_uuid := COALESCE(current_setting('my.app_user', true)::uuid,
-                               '00000000-0000-0000-0000-000000000001'::uuid);
-
-    -- Only log if loyalty_points actually changed
-    IF NEW.loyalty_points <> OLD.loyalty_points THEN
-        INSERT INTO loyalty_points_audit(
-            user_id,
-            operation,
-            points_change,
-            old_points,
-            new_points,
-            reason,
-            performed_by
-        )
-        VALUES (
-            NEW.id,
-            CASE WHEN NEW.loyalty_points > OLD.loyalty_points THEN 'ADD' ELSE 'SUBTRACT' END,
-            abs(NEW.loyalty_points - OLD.loyalty_points),
-            OLD.loyalty_points,
-            NEW.loyalty_points,
-            TG_ARGV[0],       -- optional reason passed from update
-            performer_uuid
-        );
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;

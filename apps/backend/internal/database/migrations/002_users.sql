@@ -69,26 +69,24 @@ ALTER TABLE user_addresses
 ADD CONSTRAINT one_default_address_per_user
 UNIQUE (user_id) WHERE is_default;
 
-CREATE TABLE loyalty_points_audit (
+
+
+CREATE TABLE loyalty_points_ledger (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id),   -- the user whose points changed
-    operation VARCHAR(10) NOT NULL,              -- ADD, SUBTRACT
-    points_change INT NOT NULL,                  -- amount added or subtracted
-    old_points INT NOT NULL,                      -- previous total points
-    new_points INT NOT NULL,                      -- new total points
-    reason VARCHAR(255),                          -- e.g., "Order #1234", "Promotion"
+    transaction_type VARCHAR(20) NOT NULL CHECK (transaction_type IN ('EARN', 'REDEEM', 'ADJUST')),
+    points_change NUMERIC(10, 2) NOT NULL,                  -- amount added or subtracted
+    balance_after NUMERIC(10, 2) NOT NULL,   
+    reason VARCHAR(255),                          -- "Order #1234", "Promo: Double Pizza Points"
+    reference_id UUID,                           -- optional link to order, promo, etc.
+    reference_type VARCHAR(50),                  -- e.g., "ORDER", "PROMO", "MANUAL"
     performed_by UUID NOT NULL REFERENCES users(id), -- who triggered the change (user/system/admin)
     performed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Indexes
-CREATE INDEX idx_loyalty_points_audit_user ON loyalty_points_audit(user_id);
-CREATE INDEX idx_loyalty_points_audit_performed_by ON loyalty_points_audit(performed_by);
-CREATE INDEX idx_loyalty_points_audit_performed_at ON loyalty_points_audit(performed_at);
+CREATE INDEX idx_loyalty_points_ledger_user ON loyalty_points_ledger(user_id);
+CREATE INDEX idx_loyalty_points_ledger_performed_by ON loyalty_points_ledger(performed_by);
+CREATE INDEX idx_loyalty_points_ledger_user_time ON loyalty_points_ledger(user_id, performed_at DESC);
 
-
-CREATE TRIGGER audit_loyalty_points_trigger
-BEFORE UPDATE OF loyalty_points ON users
-FOR EACH ROW
-EXECUTE FUNCTION audit_loyalty_points('Loyalty points update');
 
