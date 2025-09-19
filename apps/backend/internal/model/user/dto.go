@@ -28,15 +28,16 @@ func (p *CreateUserPayload) Validate() error {
 // ------------------------------------------------------------
 
 
-type UpdateUserPayload  struct {
-	ID           uuid.UUID  `param:"id" validate:"required,uuid"`
-	Email        string `json:"email" validate:"required,email"`
-	Username     string `json:"username" validate:"required,min=3,max=50"`
-	PhoneNumber  string `json:"phoneNumber,omitempty" validate:"omitempty"` 
-	Password     string `json:"password" validate:"required,min=6"`
-	Role         string `json:"role,omitempty" validate:"oneof=user restaurant_manager delivery_partner admin"`
-	ProfilePicture string `json:"profilePicture,omitempty" validate:"omitempty,url"`
+type UpdateUserPayload struct {
+    ID             uuid.UUID  `param:"id" validate:"required,uuid"`
+    Email          *string    `json:"email,omitempty" validate:"omitempty,email"`
+    Username       *string    `json:"username,omitempty" validate:"omitempty,min=3,max=50"`
+    PhoneNumber    *string    `json:"phoneNumber,omitempty" validate:"omitempty"`
+    Password       *string    `json:"password,omitempty" validate:"omitempty,min=6"`
+    Role           *string    `json:"role,omitempty" validate:"omitempty,oneof=user restaurant_manager delivery_partner admin"`
+    ProfilePicture *string    `json:"profilePicture,omitempty" validate:"omitempty,url"`
 }
+
 
 func (p *UpdateUserPayload) Validate() error {
 	validate := validator.New()
