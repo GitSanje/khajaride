@@ -5,7 +5,6 @@ CREATE TABLE users (
     username VARCHAR(255) NOT NULL UNIQUE,
     phone_number VARCHAR(20) UNIQUE,
     password TEXT NOT NULL,
-    name VARCHAR(255) NOT NULL,
     role VARCHAR(20) NOT NULL DEFAULT 'user',-- roles: user, restaurant_manager, delivery_partner, admin
     is_verified BOOLEAN DEFAULT FALSE,
     is_active BOOLEAN DEFAULT TRUE,
@@ -13,8 +12,8 @@ CREATE TABLE users (
     profile_picture TEXT,
     two_factor_enabled BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-    deleted_at TIMESTAMP -- soft delete
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- soft delete
 );
 
 
@@ -57,17 +56,17 @@ CREATE TABLE user_addresses (
 );
 
 CREATE INDEX idx_user_addresses_user_id ON user_addresses(user_id);
-CREATE INDEX idx_user_addresses_user_id_default ON user_addresses(user_id) WHERE is_default;
+CREATE UNIQUE INDEX one_default_address_per_user ON user_addresses(user_id) WHERE is_default = TRUE;
+
 
 CREATE TRIGGER set_updated_at_user_addresses
     BEFORE UPDATE ON user_addresses
     FOR EACH ROW
     EXECUTE FUNCTION trigger_set_updated_at();
 
--- Ensure only one default address per user
-ALTER TABLE user_addresses
-ADD CONSTRAINT one_default_address_per_user
-UNIQUE (user_id) WHERE is_default;
+
+
+
 
 
 

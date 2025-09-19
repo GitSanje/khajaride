@@ -1,7 +1,7 @@
 version: '3'
 
 vars:
-  KHAJARIDE_DB_DSN: '{{.KHAJARIDE_DB_DSN | default ""}}'
+  KHAJARIDE_DB_DSN: 'postgresql://postgres:postgres@localhost:5432/khajaride?sslmode=disable'
 
 tasks:
   help:
