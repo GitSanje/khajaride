@@ -233,11 +233,21 @@ type AdjustPointsPayload struct {
 	PointsChange float64   `json:"pointsChange" validate:"required"` // positive or negative
 	TransactionType string `json:"transactionType" validate:"required,oneof=EARN REDEEM ADJUST"`
 	Reason      string    `json:"reason" validate:"required,min=3,max=255"`
+	PerformedBy string    `json:"performedBy" validate:"required"`
 	ReferenceID *uuid.UUID `json:"referenceId,omitempty"`       // optional link to order/promo
 	ReferenceType *string  `json:"referenceType,omitempty"`      // e.g., "ORDER", "PROMO", "MANUAL"
-}
+}   
 
 func (p *AdjustPointsPayload) Validate() error {
 	validate := validator.New()
 	return validate.Struct(p)
 }
+
+
+type getCurrentBalancePayload struct{}
+
+func (p *getCurrentBalancePayload) Validate() error {
+	return nil
+}
+	
+

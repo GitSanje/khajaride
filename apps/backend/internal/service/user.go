@@ -6,7 +6,6 @@ import (
 	"github.com/gitSanje/khajaride/internal/model/user"
 	"github.com/gitSanje/khajaride/internal/repository"
 	"github.com/gitSanje/khajaride/internal/server"
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -26,7 +25,7 @@ func NewUserService(s *server.Server, userRepo *repository.UserRepository) *User
 
 
 
-func ( s *UserService) CreateUser ( ctx echo.Context, userId string, payload *user.CreateUserPayload) ( *user.User, error) {
+func ( s *UserService) CreateUser ( ctx echo.Context,  payload *user.CreateUserPayload) ( *user.User, error) {
 	logger := middleware.GetLogger(ctx)
 
 	 logger.Info().
@@ -56,30 +55,30 @@ func ( s *UserService) CreateUser ( ctx echo.Context, userId string, payload *us
 }
 
 
-func (s *UserService) GetUserByID(ctx echo.Context, userID uuid.UUID) (*user.User, error) {
+func (s *UserService) GetUserByID(ctx echo.Context, userID string) (*user.User, error) {
     logger := middleware.GetLogger(ctx)
 
-    logger.Info().Str("user_id", userID.String()).Msg("Fetching user by ID")
+    logger.Info().Str("user_id", userID).Msg("Fetching user by ID")
 
     u, err := s.userRepo.GetUserByID(ctx.Request().Context(), userID)
     if err != nil {
-        logger.Error().Err(err).Str("user_id", userID.String()).Msg("Failed to fetch user by ID")
+        logger.Error().Err(err).Str("user_id", userID).Msg("Failed to fetch user by ID")
         return nil, err
     }
 
-    logger.Info().Str("user_id", userID.String()).Msg("User fetched successfully")
+    logger.Info().Str("user_id", userID).Msg("User fetched successfully")
     return u, nil
 }
 
 
-func (s *UserService) UpdateUser(ctx echo.Context, userID uuid.UUID, payload *user.UpdateUserPayload) (*user.User, error) {
+func (s *UserService) UpdateUser(ctx echo.Context, userID string, payload *user.UpdateUserPayload) (*user.User, error) {
     logger := middleware.GetLogger(ctx)
 
-    logger.Info().Str("user_id", userID.String()).Msg("Updating user")
+    logger.Info().Str("user_id", userID).Msg("Updating user")
 
     updatedUser, err := s.userRepo.UpdateUser(ctx.Request().Context(), userID, payload)
     if err != nil {
-        logger.Error().Err(err).Str("user_id", userID.String()).Msg("Failed to update user")
+        logger.Error().Err(err).Str("user_id", userID).Msg("Failed to update user")
         return nil, err
     }
 
@@ -123,23 +122,23 @@ func (s *UserService) GetUsers(ctx echo.Context, query *user.GetUsersQuery) (*mo
 }
 
 
-func (s *UserService) DeleteUser(ctx echo.Context, userID uuid.UUID) error {
+func (s *UserService) DeleteUser(ctx echo.Context, userID string) error {
     logger := middleware.GetLogger(ctx)
 
-    logger.Info().Str("user_id", userID.String()).Msg("Deleting user")
+    logger.Info().Str("user_id", userID).Msg("Deleting user")
 
     if err := s.userRepo.DeleteUser(ctx.Request().Context(), userID); err != nil {
-        logger.Error().Err(err).Str("user_id", userID.String()).Msg("Failed to delete user")
+        logger.Error().Err(err).Str("user_id", userID).Msg("Failed to delete user")
         return err
     }
 
-    logger.Info().Str("user_id", userID.String()).Msg("User deleted successfully")
+    logger.Info().Str("user_id", userID).Msg("User deleted successfully")
     return nil
 }
 
 
 
-func (s *UserService) CreateAddress(ctx echo.Context, userID uuid.UUID, payload *user.CreateAddressPayload) (*user.UserAddress, error) {
+func (s *UserService) CreateAddress(ctx echo.Context, userID string, payload *user.CreateAddressPayload) (*user.UserAddress, error) {
     logger := middleware.GetLogger(ctx)
 
     // Validate payload
@@ -148,7 +147,7 @@ func (s *UserService) CreateAddress(ctx echo.Context, userID uuid.UUID, payload 
         return nil, err
     }
 
-    logger.Info().Str("user_id", userID.String()).Msg("Creating new address")
+    logger.Info().Str("user_id", userID).Msg("Creating new address")
 
     // Call repository
     address, err := s.userRepo.CreateAddress(ctx.Request().Context(), userID, payload)
@@ -165,12 +164,7 @@ func (s *UserService) CreateAddress(ctx echo.Context, userID uuid.UUID, payload 
 func (s *UserService) UpdateAddress(ctx echo.Context, payload *user.UpdateAddressPayload) (*user.UserAddress, error) {
     logger := middleware.GetLogger(ctx)
 
-    // Validate payload
-    if err := payload.Validate(); err != nil {
-        logger.Warn().Err(err).Msg("Invalid UpdateAddress payload")
-        return nil, err
-    }
-
+    
     logger.Info().Str("address_id", payload.ID.String()).Msg("Updating address")
 
     // Call repository
@@ -208,12 +202,12 @@ func (s *UserService) DeleteAddress(ctx echo.Context, payload *user.DeleteUserAd
 
 
 
-func (s *UserService) SetDefaultAddress(ctx echo.Context, userID uuid.UUID, payload *user.SetDefaultAddressPayload) error {
+func (s *UserService) SetDefaultAddress(ctx echo.Context, userID string, payload *user.SetDefaultAddressPayload) error {
     logger := middleware.GetLogger(ctx)
 
 
     logger.Info().
-        Str("user_id", userID.String()).
+        Str("user_id", userID).
         Str("address_id", payload.ID.String()).
         Msg("Setting default address")
 
@@ -224,7 +218,7 @@ func (s *UserService) SetDefaultAddress(ctx echo.Context, userID uuid.UUID, payl
     }
 
     logger.Info().
-        Str("user_id", userID.String()).
+        Str("user_id", userID).
         Str("address_id", payload.ID.String()).
         Msg("Default address set successfully")
     return nil
@@ -233,23 +227,102 @@ func (s *UserService) SetDefaultAddress(ctx echo.Context, userID uuid.UUID, payl
 
 // ------------------- GET CURRENT BALANCE -------------------
 
-func (s *UserService) GetCurrentBalance(ctx echo.Context, userID uuid.UUID) (float64, error) {
-	
+func (s *UserService) GetCurrentBalance(ctx echo.Context, userID string) (float64, error) {
+
 	logger := middleware.GetLogger(ctx)
 	
 	balance, err := s.userRepo.GetCurrentBalance(ctx.Request().Context(), userID)
 	if err != nil {
 		logger.Error().
 			Err(err).
-			Str("user_id", userID.String()).
+			Str("user_id", userID).
 			Msg("failed to get current loyalty balance")
 		return 0, err
 	}
 
 	logger.Info().
 		Float64("balance", balance).
-		Str("user_id", userID.String()).
+		Str("user_id", userID).
 		Msg("retrieved current loyalty balance")
 
 	return balance, nil
 }
+
+
+// ------------------- GET USER LOYALTY POINTS -------------------
+
+func (s *UserService) GetUserLoyaltyPoints(ctx echo.Context, userID string, query *user.GetLoyaltyQuery) (*model.PaginatedResponse[user.LoyaltyPointsLedger], error) {
+    logger := middleware.GetLogger(ctx)
+
+    history, err := s.userRepo.GetUserLoyaltyPoints(ctx.Request().Context(), userID, query)
+    if err != nil {
+        logger.Error().Err(err).Msg("Failed to fetch user loyalty points")
+        return nil, err
+    }
+
+    logger.Info().
+        Str("user_id", userID).
+        Int("count", len(history.Data)).
+        Msg("Fetched loyalty points successfully")
+
+    return history, nil
+}
+
+
+
+// ------------------- REDEEM POINTS (USER) -------------------
+
+func (s *UserService) RedeemPoints(ctx echo.Context, userID string, payload *user.RedeemPointsPayload) error {
+    logger := middleware.GetLogger(ctx)
+
+    logger.Info().
+        Str("user_id", userID).
+        Float64("points", payload.Points).
+        Msg("Attempting to redeem loyalty points")
+
+    if err := s.userRepo.RedeemPoints(ctx.Request().Context(), userID, payload); err != nil {
+        logger.Error().
+            Err(err).
+            Str("user_id", userID).
+            Msg("Failed to redeem loyalty points")
+        return err
+    }
+
+    logger.Info().
+        Str("user_id", userID).
+        Float64("points", payload.Points).
+        Msg("Loyalty points redeemed successfully")
+
+    return nil
+}
+
+
+
+// ------------------- ADJUST POINTS (ADMIN/SYSTEM) -------------------
+
+func (s *UserService) AdjustPoints(ctx echo.Context, performedBy string, payload *user.AdjustPointsPayload) error {
+    logger := middleware.GetLogger(ctx)
+
+    logger.Info().
+        Str("user_id", payload.UserID.String()).
+        Float64("change", payload.PointsChange).
+        Str("performed_by", performedBy).
+        Msg("Adjusting loyalty points")
+
+    if err := s.userRepo.AdjustPoints(ctx.Request().Context(), payload, performedBy); err != nil {
+        logger.Error().
+            Err(err).
+            Str("user_id", payload.UserID.String()).
+            Msg("Failed to adjust loyalty points")
+        return err
+    }
+
+    logger.Info().
+        Str("user_id", payload.UserID.String()).
+        Float64("change", payload.PointsChange).
+        Msg("Loyalty points adjusted successfully")
+
+    return nil
+}
+
+

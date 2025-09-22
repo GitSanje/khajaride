@@ -10,7 +10,7 @@ import (
 	"github.com/gitSanje/khajaride/internal/model"
 	"github.com/gitSanje/khajaride/internal/model/user"
 	"github.com/gitSanje/khajaride/internal/server"
-	"github.com/google/uuid"
+
 	"github.com/jackc/pgx/v5"
 )
 
@@ -78,7 +78,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, payload *user.CreateUse
 
 // ------------------- GET USER BY ID -------------------
 
-func (r *UserRepository) GetUserByID(ctx context.Context, id uuid.UUID) (*user.User, error) {
+func (r *UserRepository) GetUserByID(ctx context.Context, id string) (*user.User, error) {
     stmt := `SELECT * FROM users WHERE id = @id AND deleted_at IS NULL`
 
     rows, err := r.server.DB.Pool.Query(ctx, stmt, pgx.NamedArgs{
@@ -99,7 +99,7 @@ func (r *UserRepository) GetUserByID(ctx context.Context, id uuid.UUID) (*user.U
 
 // ------------------- UPDATE USER -------------------
 
-func (r *UserRepository) UpdateUser(ctx context.Context, userID uuid.UUID, payload *user.UpdateUserPayload) (*user.User, error) {
+func (r *UserRepository) UpdateUser(ctx context.Context, userID string, payload *user.UpdateUserPayload) (*user.User, error) {
     setClauses := []string{}
     args := pgx.NamedArgs{"id": userID}
 
@@ -154,7 +154,7 @@ func (r *UserRepository) UpdateUser(ctx context.Context, userID uuid.UUID, paylo
 
 // ------------------- DELETE USER (SOFT DELETE) -------------------
 
-func (r *UserRepository) DeleteUser(ctx context.Context, id uuid.UUID) error {
+func (r *UserRepository) DeleteUser(ctx context.Context, id string) error {
     stmt := `
         UPDATE users
         SET deleted_at = CURRENT_TIMESTAMP
@@ -265,7 +265,7 @@ func (r *UserRepository) GetUsers(ctx context.Context, query *user.GetUsersQuery
 
 // ------------------- CREATE ADDRESS -------------------
 
-func (r *UserRepository) CreateAddress(ctx context.Context, userID uuid.UUID, payload *user.CreateAddressPayload) (*user.UserAddress, error) {
+func (r *UserRepository) CreateAddress(ctx context.Context, userID string, payload *user.CreateAddressPayload) (*user.UserAddress, error) {
     stmt := `
         INSERT INTO user_addresses (
             user_id,
@@ -364,7 +364,7 @@ func (r *UserRepository) DeleteAddress(ctx context.Context, payload *user.Delete
 
 // ------------------- SET DEFAULT ADDRESS -------------------
 
-func (r *UserRepository) SetDefaultAddress(ctx context.Context, userID uuid.UUID, payload *user.SetDefaultAddressPayload) error {
+func (r *UserRepository) SetDefaultAddress(ctx context.Context, userID string, payload *user.SetDefaultAddressPayload) error {
     tx, err := r.server.DB.Pool.Begin(ctx)
     if err != nil {
         return fmt.Errorf("failed to start transaction: %w", err)
@@ -405,7 +405,7 @@ func (r *UserRepository) SetDefaultAddress(ctx context.Context, userID uuid.UUID
 
 // ------------------- GET  USERS LOYALTY -------------------
 
-func (r *UserRepository) GetUserLoyaltyPoints(ctx context.Context, userID uuid.UUID, query *user.GetLoyaltyQuery) (*model.PaginatedResponse[user.LoyaltyPointsLedger], error) {
+func (r *UserRepository) GetUserLoyaltyPoints(ctx context.Context, userID string, query *user.GetLoyaltyQuery) (*model.PaginatedResponse[user.LoyaltyPointsLedger], error) {
 
 	stmt := 
 	`
@@ -479,7 +479,7 @@ func (r *UserRepository) GetUserLoyaltyPoints(ctx context.Context, userID uuid.U
 // ------------------- REDEEM POINTS (USER) -------------------
 
 
-func (r *UserRepository) RedeemPoints(ctx context.Context, userID uuid.UUID, payload *user.RedeemPointsPayload) error {
+func (r *UserRepository) RedeemPoints(ctx context.Context, userID string, payload *user.RedeemPointsPayload) error {
 
 	tx, err := r.server.DB.Pool.Begin(ctx)
 
@@ -527,7 +527,7 @@ func (r *UserRepository) RedeemPoints(ctx context.Context, userID uuid.UUID, pay
 
 // ------------------- ADJUST POINTS (ADMIN/SYSTEM) -------------------
 
-func (r *UserRepository) AdjustPoints(ctx context.Context, payload *user.AdjustPointsPayload, performedBy uuid.UUID) error {
+func (r *UserRepository) AdjustPoints(ctx context.Context, payload *user.AdjustPointsPayload, performedBy string) error {
 	tx, err := r.server.DB.Pool.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to start transaction: %w", err)
@@ -570,7 +570,7 @@ func (r *UserRepository) AdjustPoints(ctx context.Context, payload *user.AdjustP
 
 // -------------------GET CURRENT BALANCE  -------------------
 
-func (r *UserRepository) GetCurrentBalance(ctx context.Context, userID uuid.UUID) (float64, error) {
+func (r *UserRepository) GetCurrentBalance(ctx context.Context, userID string) (float64, error) {
     var balance float64
     err := r.server.DB.Pool.QueryRow(ctx, `
         SELECT COALESCE(SUM(points_change), 0)
