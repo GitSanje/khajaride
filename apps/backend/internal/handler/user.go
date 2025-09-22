@@ -115,6 +115,40 @@ func (h *UserHandler) UpdateAddress(c echo.Context) error {
 	)(c)
 }
 
+// ------------------- GET ADDRESS BY ID -------------------
+func (h *UserHandler) GetUserAddressByID(c echo.Context) error {
+	return Handle(
+		h.Handler,
+		func(c echo.Context, payload *user.GetUserAddressByIDPayload) (*user.UserAddress, error) {
+			return h.UserService.GetUserAddressByID(c, payload)
+		},
+		http.StatusOK,
+		&user.GetUserAddressByIDPayload{},
+	)(c)
+}
+	
+
+// ------------------- GET ADDRESSES BY USER ID -------------------
+
+type GetUserAddressByUserIDPayload struct{}
+
+func (p *GetUserAddressByUserIDPayload) Validate() error {
+	return nil
+}
+
+func (h *UserHandler) GetUserAddressByUserID(c echo.Context) error {
+	return Handle(
+		h.Handler,
+		func(c echo.Context, payload *GetUserAddressByUserIDPayload) ([]user.UserAddress, error) {
+			userID := middleware.GetUserID(c)
+			return h.UserService.GetUserAddressByUserID(c, userID)
+		},
+		http.StatusOK,
+		&GetUserAddressByUserIDPayload{},
+	)(c)
+}
+
+
 // ------------------- DELETE ADDRESS -------------------
 func (h *UserHandler) DeleteAddress(c echo.Context) error {
 	return Handle(

@@ -161,6 +161,36 @@ func (s *UserService) CreateAddress(ctx echo.Context, userID string, payload *us
 }
 
 
+func (s *UserService) GetUserAddressByID(ctx echo.Context, payload *user.GetUserAddressByIDPayload) (*user.UserAddress, error) {
+    logger := middleware.GetLogger(ctx)
+
+  
+    u, err := s.userRepo.GetUserAddressByID(ctx.Request().Context(), payload.ID.String())
+    if err != nil {
+        logger.Error().Err(err).Str("address_id", payload.ID.String()).Msg("Failed to fetch user address by ID")
+        return nil, err
+    }
+
+    logger.Info().Str("address_id", payload.ID.String()).Msg("User address fetched successfully")
+    return u, nil
+}
+
+
+func (s *UserService) GetUserAddressByUserID(ctx echo.Context, userID string) ([]user.UserAddress, error) {
+    logger := middleware.GetLogger(ctx)
+
+
+    u, err := s.userRepo.GetUserAddressesByUserID(ctx.Request().Context(), userID)
+    if err != nil {
+        logger.Error().Err(err).Str("user_id", userID).Msg("Failed to fetch user addresses by user ID")
+        return nil, err
+    }
+
+    logger.Info().Str("user_id", userID).Msg("User addresses fetched successfully")
+    return u, nil
+}
+
+
 func (s *UserService) UpdateAddress(ctx echo.Context, payload *user.UpdateAddressPayload) (*user.UserAddress, error) {
     logger := middleware.GetLogger(ctx)
 

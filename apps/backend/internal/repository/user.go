@@ -340,6 +340,50 @@ func (r *UserRepository) UpdateAddress(ctx context.Context, payload *user.Update
 }
 
 
+// ------------------- GET ADDRESS BY ID -------------------
+
+func (r *UserRepository) GetUserAddressByID(ctx context.Context, id string) (*user.UserAddress, error) {
+    stmt := `SELECT * FROM user_addresses WHERE id = @id AND deleted_at IS NULL`
+
+    rows, err := r.server.DB.Pool.Query(ctx, stmt, pgx.NamedArgs{
+		"id":id,
+	})
+    if err != nil {
+        return nil, fmt.Errorf("failed to query user by id=%s: %w", id, err)
+    }
+
+    useraddress, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[user.UserAddress])
+    if err != nil {
+        return nil, fmt.Errorf("failed to collect user row by id=%s: %w", id, err)
+    }
+
+    return &useraddress, nil
+}
+
+// ------------------- GET ADDRESSES BY USER ID -------------------
+
+func (r *UserRepository) GetUserAddressesByUserID(ctx context.Context, userID string) ([]user.UserAddress, error) {
+    stmt := `SELECT * FROM user_addresses WHERE user_id = @user_id AND deleted_at IS NULL`
+
+    rows, err := r.server.DB.Pool.Query(ctx, stmt, pgx.NamedArgs{
+		"user_id": userID,
+	})
+    if err != nil {
+        return nil, fmt.Errorf("failed to query user addresses by user_id=%s: %w", userID, err)
+    }
+
+   addresses, err := pgx.CollectRows(rows, pgx.RowToStructByName[user.UserAddress])
+   if err != nil {
+       return nil, fmt.Errorf("failed to collect user addresses by user_id=%s: %w", userID, err)
+   }
+
+    return addresses, nil
+}
+
+
+
+
+
 // ------------------- DELETE ADDRESS -------------------
 
 func (r *UserRepository) DeleteAddress(ctx context.Context, payload *user.DeleteUserAddressPayload) error {
