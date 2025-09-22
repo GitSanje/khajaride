@@ -1,7 +1,7 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
 import { ZHealthResponse } from "@khajaride/zod";
-import { getSecurityMetadata } from "@/utils.js";
+
 
 const c = initContract();
 
