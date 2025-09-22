@@ -81,7 +81,7 @@ export const userContract = c.router(
      // List users (admin only)
     listUsers: {
       summary: "List users",
-      path: "/users",
+      path: "/users/list",
       method: "GET",
       description: "List users with pagination, filtering, sorting",
       query: ZGetUsersQuery,

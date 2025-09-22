@@ -15,7 +15,8 @@ type CreateUserPayload struct {
 	PhoneNumber  string `json:"phoneNumber,omitempty" validate:"omitempty"` 
 	Password     string `json:"password" validate:"required,min=6"`
 	Role         *string `json:"role,omitempty" validate:"oneof=user restaurant_manager delivery_partner admin"`
-	ProfilePicture *string `json:"profilePicture,omitempty" validate:"omitempty,url"`
+    ProfilePicture *string `json:"profilePicture,omitempty" validate:"omitempty,url"`
+
 }
 
 
