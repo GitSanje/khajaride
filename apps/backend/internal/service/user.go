@@ -44,7 +44,7 @@ func ( s *UserService) CreateUser ( ctx echo.Context,  payload *user.CreateUserP
 
 	 logger.Info().
         Str("event", "user_created").
-        Str("user_id", createdUser.ID.String()).
+        Str("user_id", createdUser.ID).
         Str("email", createdUser.Email).
         Str("username", createdUser.Username).
         Str("role", createdUser.Role).
@@ -83,7 +83,7 @@ func (s *UserService) UpdateUser(ctx echo.Context, userID string, payload *user.
     }
 
     logger.Info().
-        Str("user_id", updatedUser.ID.String()).
+        Str("user_id", updatedUser.ID).
         Str("email", updatedUser.Email).
         Str("username", updatedUser.Username).
         Msg("User updated successfully")

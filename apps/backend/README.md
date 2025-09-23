@@ -22,3 +22,9 @@
 *  `GET /users/me/loyalty/balance` → returns only current balance
 * `POST /loyalty/redeem` → redeem points
 * (Admin/system only) `POST /loyalty/adjust` → adjust points manually
+
+
+### Run Ngrok docker
+
+`docker run --net=host -it -e NGROK_AUTHTOKEN=2ylrqB7ELT6GIG4D7qOstmLzYGL_6nA6Heuqm8pVZ141fYXYv  ngrok/ngrok:latest http 8080`
+

@@ -53,7 +53,9 @@ func NewRouter(s *server.Server, h *handler.Handlers, services *service.Services
 
 	// register system routes
 	registerSystemRoutes(router, h)
-
+    // register webhook routes
+	webhookRoutes := router.Group("/api/webhooks")
+	webhookRoutes.POST("", h.Webhooks.HandleClerkWebhook) // POST /api/webhooks
 	// register versioned routes
 	v1Router := router.Group("/api/v1")
 	v1.RegisterV1Routes(v1Router, h, middlewares)

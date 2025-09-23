@@ -19,6 +19,8 @@ type Config struct {
 	Redis         RedisConfig          `koanf:"redis" validate:"required"`
 	Integration   IntegrationConfig    `koanf:"integration" validate:"required"`
 	Observability *ObservabilityConfig `koanf:"observability"`
+	Webhooks      *WebhookConfig       `koanf:"webhooks"`
+
 }
 
 type Primary struct {
@@ -55,6 +57,9 @@ type IntegrationConfig struct {
 
 type AuthConfig struct {
 	SecretKey string `koanf:"secret_key" validate:"required"`
+}
+type WebhookConfig struct {
+	ClerkWebhookSigningSecret string `koanf:"clerk_webhook_signing_secret" validate:"required"`
 }
 
 func LoadConfig() (*Config, error) {

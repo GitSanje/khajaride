@@ -3,11 +3,12 @@ package user
 import "github.com/gitSanje/khajaride/internal/model"
 
 type User struct {
-	model.Base
-
+	model.BaseWithCreatedAt
+	model.BaseWithUpdatedAt
+    ID               string  `json:"id" db:"id"`
 	Email            string  `json:"email" db:"email"`
 	Username         string  `json:"username" db:"username"`
-	Password         string  `json:"-" db:"password"` // omit from JSON
+	Password         *string  `json:"-" db:"password"` // omit from JSON
 	PhoneNumber      *string `json:"phoneNumber,omitempty" db:"phone_number"`
 	Role             string  `json:"role" db:"role"`
 	IsVerified       bool    `json:"isVerified" db:"is_verified"`

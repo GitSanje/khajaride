@@ -10,11 +10,12 @@ import (
 // ------------------------------------------------------------
 
 type CreateUserPayload struct {
+	ID            string `json:"id" validate:"required"`
 	Email        string `json:"email" validate:"required,email"`
 	Username     string `json:"username" validate:"required,min=3,max=50"`
-	PhoneNumber  string `json:"phoneNumber,omitempty" validate:"omitempty"` 
-	Password     string `json:"password" validate:"required,min=6"`
-	Role         *string `json:"role,omitempty" validate:"oneof=user restaurant_manager delivery_partner admin"`
+	PhoneNumber  *string `json:"phoneNumber,omitempty" validate:"omitempty"` 
+	Password     *string `json:"password,omitempty" validate:"omitempty,min=6"`
+	Role         string `json:"role" validate:"oneof=user restaurant_manager delivery_partner admin"`
     ProfilePicture *string `json:"profilePicture,omitempty" validate:"omitempty,url"`
 
 }
@@ -245,10 +246,5 @@ func (p *AdjustPointsPayload) Validate() error {
 }
 
 
-type getCurrentBalancePayload struct{}
 
-func (p *getCurrentBalancePayload) Validate() error {
-	return nil
-}
-	
 

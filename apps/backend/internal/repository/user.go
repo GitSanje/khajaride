@@ -29,6 +29,7 @@ func NewUserRepository(s *server.Server) *UserRepository {
 func (r *UserRepository) CreateUser(ctx context.Context, payload *user.CreateUserPayload) (*user.User, error) {
     stmt := `
         INSERT INTO users (
+            id,
             email,
             username,
             phone_number,
@@ -37,6 +38,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, payload *user.CreateUse
             profile_picture
         )
         VALUES (
+            @ID,
             @Email,
             @Username,
             @PhoneNumber,
@@ -48,12 +50,13 @@ func (r *UserRepository) CreateUser(ctx context.Context, payload *user.CreateUse
     `
 
     role := "user"
-	if payload.Role != nil {
-		role = *payload.Role
+	if payload.Role != "" {
+		role = payload.Role
 	}
 
 
     rows, err := r.server.DB.Pool.Query(ctx, stmt, pgx.NamedArgs{
+        "ID":             payload.ID,
         "Email":          payload.Email,
         "Username":       payload.Username,
         "PhoneNumber":    payload.PhoneNumber,
@@ -79,7 +82,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, payload *user.CreateUse
 // ------------------- GET USER BY ID -------------------
 
 func (r *UserRepository) GetUserByID(ctx context.Context, id string) (*user.User, error) {
-    stmt := `SELECT * FROM users WHERE id = @id AND deleted_at IS NULL`
+    stmt := `SELECT * FROM users WHERE id = @id `
 
     rows, err := r.server.DB.Pool.Query(ctx, stmt, pgx.NamedArgs{
 		"id":id,
@@ -135,7 +138,7 @@ func (r *UserRepository) UpdateUser(ctx context.Context, userID string, payload 
     stmt := `
         UPDATE users
         SET ` + strings.Join(setClauses, ", ") + `
-        WHERE id = @id AND deleted_at IS NULL
+        WHERE id = @id 
         RETURNING *
     `
 
@@ -156,9 +159,8 @@ func (r *UserRepository) UpdateUser(ctx context.Context, userID string, payload 
 
 func (r *UserRepository) DeleteUser(ctx context.Context, id string) error {
     stmt := `
-        UPDATE users
-        SET deleted_at = CURRENT_TIMESTAMP
-        WHERE id = @id AND deleted_at IS NULL
+        DELETE FROM users
+        WHERE id = @id 
     `
 
     tag, err := r.server.DB.Pool.Exec(ctx, stmt, pgx.NamedArgs{
@@ -180,7 +182,7 @@ func (r *UserRepository) DeleteUser(ctx context.Context, id string) error {
 func (r *UserRepository) GetUsers(ctx context.Context, query *user.GetUsersQuery) (*model.PaginatedResponse[user.User], error) {
 
 
-	stmt := `SELECT * FROM users WHERE deleted_at IS NULL`
+	stmt := `SELECT * FROM users`
 	args := pgx.NamedArgs{}
 
 	conditions := []string{}
@@ -314,7 +316,7 @@ func (r *UserRepository) UpdateAddress(ctx context.Context, payload *user.Update
             longitude = COALESCE(@Longitude, longitude),
             is_default = COALESCE(@IsDefault, is_default),
             updated_at = CURRENT_TIMESTAMP
-        WHERE id = @ID AND deleted_at IS NULL
+        WHERE id = @ID
         RETURNING *
     `
 
@@ -343,7 +345,7 @@ func (r *UserRepository) UpdateAddress(ctx context.Context, payload *user.Update
 // ------------------- GET ADDRESS BY ID -------------------
 
 func (r *UserRepository) GetUserAddressByID(ctx context.Context, id string) (*user.UserAddress, error) {
-    stmt := `SELECT * FROM user_addresses WHERE id = @id AND deleted_at IS NULL`
+    stmt := `SELECT * FROM user_addresses WHERE id = @id `
 
     rows, err := r.server.DB.Pool.Query(ctx, stmt, pgx.NamedArgs{
 		"id":id,
@@ -363,7 +365,7 @@ func (r *UserRepository) GetUserAddressByID(ctx context.Context, id string) (*us
 // ------------------- GET ADDRESSES BY USER ID -------------------
 
 func (r *UserRepository) GetUserAddressesByUserID(ctx context.Context, userID string) ([]user.UserAddress, error) {
-    stmt := `SELECT * FROM user_addresses WHERE user_id = @user_id AND deleted_at IS NULL`
+    stmt := `SELECT * FROM user_addresses WHERE user_id = @user_id `
 
     rows, err := r.server.DB.Pool.Query(ctx, stmt, pgx.NamedArgs{
 		"user_id": userID,
@@ -390,7 +392,7 @@ func (r *UserRepository) DeleteAddress(ctx context.Context, payload *user.Delete
     stmt := `
         UPDATE user_addresses
         SET deleted_at = CURRENT_TIMESTAMP
-        WHERE id = @ID AND deleted_at IS NULL
+        WHERE id = @ID
     `
 
     ct, err := r.server.DB.Pool.Exec(ctx, stmt, pgx.NamedArgs{"ID": payload.ID})
@@ -419,7 +421,7 @@ func (r *UserRepository) SetDefaultAddress(ctx context.Context, userID string, p
     _, err = tx.Exec(ctx, `
         UPDATE user_addresses
         SET is_default = false
-        WHERE user_id = @UserID AND deleted_at IS NULL
+        WHERE user_id = @UserID 
     `, pgx.NamedArgs{"UserID": userID})
     if err != nil {
         return fmt.Errorf("failed to unset defaults: %w", err)
@@ -429,7 +431,7 @@ func (r *UserRepository) SetDefaultAddress(ctx context.Context, userID string, p
     ct, err := tx.Exec(ctx, `
         UPDATE user_addresses
         SET is_default = true
-        WHERE id = @ID AND user_id = @UserID AND deleted_at IS NULL
+        WHERE id = @ID AND user_id = @UserID 
     `, pgx.NamedArgs{"ID": payload.ID, "UserID": userID})
     if err != nil {
         return fmt.Errorf("failed to set default address: %w", err)
