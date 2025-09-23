@@ -1,20 +1,16 @@
 package handler
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/base64"
-	"encoding/hex"
+	
 	"encoding/json"
 	"io"
 	"net/http"
-	"strings"
 
 	"github.com/gitSanje/khajaride/internal/lib/utils"
 	"github.com/gitSanje/khajaride/internal/middleware"
 	"github.com/gitSanje/khajaride/internal/server"
 	"github.com/gitSanje/khajaride/internal/service"
-
+    "github.com/svix/svix-webhooks/go"
 	"github.com/labstack/echo/v4"
 )
 
@@ -40,12 +36,12 @@ func (h *WebhookHandler) HandleClerkWebhook(c echo.Context) error {
         return echo.NewHTTPError(http.StatusBadRequest, "invalid body")
     }
 
-    sig := c.Request().Header.Get("svix-signature")
-    if sig == "" {
-        return echo.NewHTTPError(http.StatusUnauthorized, "missing signature")
-    }
+     // Get signing secret from config
+    secret := h.server.Config.Webhooks.ClerkWebhookSigningSecret
 
-    if !h.VerifyClerkWebhookSignature(c, body, sig) {
+    // Use Svix library to verify webhook
+    if err := verifyWebhook(body, c.Request().Header, secret); err != nil {
+        logger.Error().Err(err).Msg("webhook signature verification failed")
         return echo.NewHTTPError(http.StatusUnauthorized, "invalid signature")
     }
 
@@ -74,31 +70,12 @@ func (h *WebhookHandler) HandleClerkWebhook(c echo.Context) error {
     return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 }
 
-
-func (h *WebhookHandler) VerifyClerkWebhookSignature(c echo.Context, payload []byte, signatureHeader string) bool {
-	logger := middleware.GetLogger(c)
-	secret := h.server.Config.Webhooks.ClerkWebhookSigningSecret
-
-	// Header format: "v1,<base64_signature>"
-	parts := strings.Split(signatureHeader, ",")
-	if len(parts) != 2 || parts[0] != "v1" {
-		logger.Error().Msg("invalid svix signature header format")
-		return false
-	}
-
-	sigBase64 := parts[1]
-	sigBytes, err := base64.StdEncoding.DecodeString(sigBase64)
-	if err != nil {
-		logger.Error().Err(err).Msg("failed to decode base64 signature")
-		return false
-	}
-
-	mac := hmac.New(sha256.New, []byte(secret))
-	mac.Write(payload)
-	expectedMAC := mac.Sum(nil)
-   logger.Debug().
-        Str("expected_mac", hex.EncodeToString(expectedMAC)).
-        Str("signature_received", hex.EncodeToString(sigBytes)).
-        Msg("Verifying webhook signature")
-	return hmac.Equal(expectedMAC, sigBytes)
+func verifyWebhook(payload []byte, headers http.Header, secret string) error {
+    wh, err := svix.NewWebhook(secret)
+    if err != nil {
+        return err
+    }
+    return wh.Verify(payload, headers)
 }
+
+
