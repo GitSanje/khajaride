@@ -77,5 +77,3 @@ func verifyWebhook(payload []byte, headers http.Header, secret string) error {
     }
     return wh.Verify(payload, headers)
 }
-
-

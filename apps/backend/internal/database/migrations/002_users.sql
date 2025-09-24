@@ -29,7 +29,7 @@ CREATE TABLE user_2fa_tokens (
 CREATE INDEX idx_user_2fa_tokens_user_id ON user_2fa_tokens(user_id);
 CREATE INDEX idx_user_2fa_tokens_token ON user_2fa_tokens(token);
 
-
+CREATE INDEX idx_users_id ON users(id);
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_phone_number ON users(phone_number);
 CREATE INDEX idx_users_username ON users(username);

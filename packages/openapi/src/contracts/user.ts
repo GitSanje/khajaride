@@ -32,7 +32,6 @@ export const userContract = c.router(
       responses: {
         201: ZUser,
       },
-      metadata,
     },
 
     // Get my profile

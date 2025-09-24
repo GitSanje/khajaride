@@ -12,10 +12,10 @@ import (
 func registerUserRoutes(r *echo.Group, h *handler.UserHandler, auth *middleware.AuthMiddleware) {
 	// Protect all /users routes with auth middleware
 	user := r.Group("/users")
-	user.Use(auth.RequireAuth)
-
-	// ------------------- Users -------------------
 	user.POST("", h.CreateUser)      // POST /users
+	user.Use(auth.RequireAuth)
+	// ------------------- Users -------------------
+	
 	user.GET("/me", h.GetUserByID)   // GET /users/me
 	user.PATCH("/me", h.UpdateUser)  // PATCH /users/me
 	user.DELETE("/me", h.DeleteUser) // DELETE /users/me

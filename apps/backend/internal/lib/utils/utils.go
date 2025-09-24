@@ -19,7 +19,7 @@ func PrintJSON(v interface{}) {
 // MapClerkUserToCreateUser maps the "data" field from a Clerk webhook payload to CreateUserPayload
 func MapClerkUserToCreateUser(data json.RawMessage) (*user.CreateUserPayload, error) {
 	var clerkUser struct {
-		ID           string  `json:"id"`
+		ID           *string  `json:"id"`
 		Email        string  `json:"email"`
 		Username     string  `json:"username"`
 		PhoneNumber  *string `json:"phone_number"`

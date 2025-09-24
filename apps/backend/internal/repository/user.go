@@ -38,7 +38,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, payload *user.CreateUse
             profile_picture
         )
         VALUES (
-            @ID,
+            COALESCE(@ID, gen_random_uuid()::TEXT),
             @Email,
             @Username,
             @PhoneNumber,
@@ -48,7 +48,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, payload *user.CreateUse
         )
         RETURNING *
     `
-
+    
     role := "user"
 	if payload.Role != "" {
 		role = payload.Role

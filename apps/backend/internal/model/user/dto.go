@@ -10,9 +10,9 @@ import (
 // ------------------------------------------------------------
 
 type CreateUserPayload struct {
-	ID            string `json:"id" validate:"required"`
-	Email        string `json:"email" validate:"required,email"`
-	Username     string `json:"username" validate:"required,min=3,max=50"`
+	ID           *string `json:"id"`
+	Email        string  `json:"email" validate:"required,email"`
+	Username     string  `json:"username" validate:"required,min=3,max=50"`
 	PhoneNumber  *string `json:"phoneNumber,omitempty" validate:"omitempty"` 
 	Password     *string `json:"password,omitempty" validate:"omitempty,min=6"`
 	Role         string `json:"role" validate:"oneof=user restaurant_manager delivery_partner admin"`
