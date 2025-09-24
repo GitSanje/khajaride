@@ -16,15 +16,57 @@ func PrintJSON(v interface{}) {
 	fmt.Println("JSON:", string(json))
 }
 
+// ---------- Interfaces & Structs ----------
+type HasValue interface {
+	GetValue() string
+	GetID() string
+}
+
+type ClerkEmail struct {
+	ID           string `json:"id"`
+	EmailAddress string `json:"email_address"`
+}
+
+func (c ClerkEmail) GetValue() string { return c.EmailAddress }
+func (c ClerkEmail) GetID() string    { return c.ID }
+
+type ClerkPhoneNumber struct {
+	ID          string `json:"id"`
+	PhoneNumber string `json:"phone_number"`
+}
+
+func (c ClerkPhoneNumber) GetValue() string { return c.PhoneNumber }
+func (c ClerkPhoneNumber) GetID() string    { return c.ID }
+
+
+func strPtr(s string) *string {
+	if s == "" {
+		return nil 
+	}
+	return &s
+}
+
+
+// ---------- Generic Helper ----------
+func findPrimaryValue[T HasValue](data []T, primaryID string) string {
+	for _, item := range data {
+		if item.GetID() == primaryID {
+			return item.GetValue()
+		}
+	}
+	return ""
+}
 // MapClerkUserToCreateUser maps the "data" field from a Clerk webhook payload to CreateUserPayload
 func MapClerkUserToCreateUser(data json.RawMessage) (*user.CreateUserPayload, error) {
+	
 	var clerkUser struct {
 		ID           *string  `json:"id"`
-		Email        string  `json:"email"`
+		EmailAddresses        []ClerkEmail `json:"email_addresses"`
+		PhoneNumbers  []ClerkPhoneNumber `json:"phone_numbers"`
+		ProfileImage *string `json:"image_url"`
 		Username     string  `json:"username"`
-		PhoneNumber  *string `json:"phone_number"`
-		ProfileImage *string `json:"profile_image_url"`
-		
+		PrimaryEmailAddressID string       `json:"primary_email_address_id"`
+		PrimaryPhoneNumberID   string       `json:"primary_phone_number_id"`
 	}
 
 	// Unmarshal only the data portion
@@ -32,13 +74,16 @@ func MapClerkUserToCreateUser(data json.RawMessage) (*user.CreateUserPayload, er
 		return nil, fmt.Errorf("failed to unmarshal Clerk user data: %w", err)
 	}
 
+	email := findPrimaryValue(clerkUser.EmailAddresses, clerkUser.PrimaryEmailAddressID)
+	phoneNumber := findPrimaryValue(clerkUser.PhoneNumbers, clerkUser.PrimaryPhoneNumberID)
+    
 	return &user.CreateUserPayload{
 		ID:             clerkUser.ID,
-		Email:          clerkUser.Email,
+		Email:          email,
 		Username:       clerkUser.Username,
-		PhoneNumber:    clerkUser.PhoneNumber,
-		Password:       nil,           
-		Role:           "user",        
+		PhoneNumber:    strPtr(phoneNumber),
+		Password:       nil,
+		Role:           "user",
 		ProfilePicture: clerkUser.ProfileImage,
 	}, nil
 }

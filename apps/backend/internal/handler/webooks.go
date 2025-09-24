@@ -52,7 +52,7 @@ func (h *WebhookHandler) HandleClerkWebhook(c echo.Context) error {
     if err := json.Unmarshal(body, &event); err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, "invalid json")
     }
-
+   
     switch event.Type {
     case "user.created":
         userPayload, err := utils.MapClerkUserToCreateUser(event.Data)

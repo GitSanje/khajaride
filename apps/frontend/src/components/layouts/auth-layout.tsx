@@ -15,7 +15,7 @@ export function AuthLayout() {
             path="/sign-in/*"
             element={
               <SignIn
-                // redirectUrl="/dashboard"
+                redirectUrl="/dashboard"
                 appearance={{
                   baseTheme: isDark ? dark : undefined,
                   elements: {
@@ -30,7 +30,7 @@ export function AuthLayout() {
             path="/sign-up/*"
             element={
               <SignUp
-                // redirectUrl="/dashboard"
+                redirectUrl="/dashboard"
                 appearance={{
                   baseTheme: isDark ? dark : undefined,
                   elements: {
