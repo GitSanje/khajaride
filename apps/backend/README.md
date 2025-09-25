@@ -26,5 +26,5 @@
 
 ### Run Ngrok docker
 
-`docker run --net=host -it -e NGROK_AUTHTOKEN=2ylrqB7ELT6GIG4D7qOstmLzYGL_6nA6Heuqm8pVZ141fYXYv  ngrok/ngrok:latest http 8080`
+`docker run --net=host -it -e NGROK_AUTHTOKEN=xyz ngrok/ngrok:latest http 8080`
 

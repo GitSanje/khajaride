@@ -16,7 +16,7 @@ import { useClerk, useUser } from "@clerk/clerk-react"
 export function DashboardHeader() {
   const { user, isLoaded, isSignedIn } = useUser()
   const { signOut } = useClerk()
-   console.log(user)
+   
 
   return (
     <header className="border-b border-border bg-card">
