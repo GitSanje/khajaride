@@ -48,10 +48,11 @@ def fetch_menu_items_for_all_vendors(vendor_ids, delay=1):
 
 
 if __name__ == "__main__":
-    all_menu_items = fetch_menu_items_for_all_vendors(extract_vendor_ids("foodmandu_all_restaurants.json"))
+    # all_menu_items = fetch_menu_items_for_all_vendors(extract_vendor_ids("foodmandu_all_restaurants.json")[1000:])
+    
+    # # Save to JSON
+    # with open("foodmandu_all_menu_items2.json", "w", encoding="utf-8") as f:
+    #     json.dump(all_menu_items, f, ensure_ascii=False, indent=2)
 
-    # Save to JSON
-    with open("foodmandu_all_menu_items.json", "w", encoding="utf-8") as f:
-        json.dump(all_menu_items, f, ensure_ascii=False, indent=2)
-
-    print("\n✅ Done! Data saved to 'foodmandu_all_menu_items.json'")
+    # print("\n✅ Done! Data saved to 'foodmandu_all_menu_items2.json'")
+    print(len(extract_vendor_ids("foodmandu_all_restaurants.json")))

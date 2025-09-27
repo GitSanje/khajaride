@@ -1,6 +1,6 @@
 
--- Restaurants table
-CREATE TABLE restaurants (
+-- Vendor table
+CREATE TABLE vendors (
     id UUID  PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(150) NOT NULL,
     about TEXT,                             -- Description/About section
@@ -16,27 +16,35 @@ CREATE TABLE restaurants (
     delivery_time_estimate VARCHAR(50),     -- "16-20 min" (approx, cached)
     is_open BOOLEAN DEFAULT TRUE,
     opening_hours JSONB,                    -- {"mon":"09-22", "tue":"09-22"}
-    image TEXT,                             -- logo/banner
+    vendor_listing_image_name TEXT,                             -- logo/banner
+    vendor_logo_image_name TEXT,                             -- array of images
+    vendor_type VARCHAR(50),               -- 'restaurant', 'bakery','alcohol' etc.
+    favorite_count INT DEFAULT 0,   
+    is_featured BOOLEAN DEFAULT FALSE,      -- for homepage
+    cuisine_tags TEXT[],                    -- array of tags, e.g. ["Italian", "Pizza", "Pasta"]
+    promo_text TEXT,                  -- e.g. "Free delivery on orders over $20"
+    vendor_notice TEXT,                     -- e.g. "We are short-staffed today..."
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_restaurants_name ON restaurants(name);
-CREATE INDEX idx_restaurants_cuisine ON restaurants(cuisine);
-CREATE INDEX idx_restaurants_rating ON restaurants(rating);
+CREATE INDEX idx_vendors_name ON vendors(name);           -- good for search
+CREATE INDEX idx_vendors_cuisine ON vendors(cuisine);     -- filter by cuisine
+CREATE INDEX idx_vendors_rating ON vendors(rating);       -- for sorting/filter
+CREATE INDEX idx_vendors_open ON vendors(is_open);        -- filter by availability quickly
 
 
-CREATE TRIGGER set_updated_at_restaurants
-    BEFORE UPDATE ON restaurants
+CREATE TRIGGER set_updated_at_vendors
+    BEFORE UPDATE ON vendors
     FOR EACH ROW
     EXECUTE FUNCTION trigger_set_updated_at();
 
 
 
--- Restaurant addresses
-CREATE TABLE restaurant_addresses (
-    id UUID  PRIMARY KEY DEFAULT gen_random_uuid()
-    restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
+-- Vendor addresses
+CREATE TABLE vendor_addresses (
+    id UUID  PRIMARY KEY DEFAULT gen_random_uuid(),
+    vendor_id UUID NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
     street_address TEXT,
     city VARCHAR(100),
     state VARCHAR(100),
@@ -47,17 +55,22 @@ CREATE TABLE restaurant_addresses (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_restaurant_addresses_restaurant_id ON restaurant_addresses(restaurant_id);
+-- add for geographic search (delivery radius queries)
+CREATE INDEX idx_vendors_location ON vendor_addresses (latitude, longitude);
+CREATE INDEX idx_vendors_addresses_vendor_id ON vendor_addresses(vendor_id);
+CREATE INDEX idx_vendors_addresses_city ON vendor_addresses(city);
+CREATE INDEX idx_vendors_addresses_state ON vendor_addresses(state);
 
-CREATE TRIGGER set_updated_at_restaurant_addresses
-    BEFORE UPDATE ON restaurant_addresses
+
+CREATE TRIGGER set_updated_at_vendor_addresses
+    BEFORE UPDATE ON vendor_addresses
     FOR EACH ROW
     EXECUTE FUNCTION trigger_set_updated_at();
 
 -- -- Restaurant reviews
 -- CREATE TABLE restaurant_reviews (
 --     id UUID  PRIMARY KEY DEFAULT gen_random_uuid(),
---     restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
+--     restaurant_id UUID NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
 --     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 --     rating INT CHECK (rating BETWEEN 1 AND 5),
 --     review_text TEXT,
@@ -65,23 +78,24 @@ CREATE TRIGGER set_updated_at_restaurant_addresses
 --     updated_at TIMESTAMP DEFAULT NOW()
 -- );
 
-CREATE INDEX idx_reviews_restaurant_id ON restaurant_reviews(restaurant_id);
+-- CREATE INDEX idx_reviews_restaurant_id ON restaurant_reviews(restaurant_id);
 
-CREATE TRIGGER set_updated_at_restaurant_reviews
-    BEFORE UPDATE ON restaurant_reviews
-    FOR EACH ROW
-    EXECUTE FUNCTION trigger_set_updated_at();
+-- CREATE TRIGGER set_updated_at_restaurant_reviews
+--     BEFORE UPDATE ON restaurant_reviews
+--     FOR EACH ROW
+--     EXECUTE FUNCTION trigger_set_updated_at();
 
 
 -- Menu items
 CREATE TABLE menu_items (
 
     id UUID  PRIMARY KEY DEFAULT gen_random_uuid(),
-    restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
+    vendor_id UUID NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
     category_id UUID NOT NULL REFERENCES menu_categories(id) ON DELETE CASCADE,
     name VARCHAR(150) NOT NULL, -- e.g. "Chicken Momo (6 pcs)", "Dal Bhat Set"
     description TEXT,
     base_price DECIMAL(8,2) NOT NULL,
+    old_price DECIMAL(8,2) DEFAULT 0.0,
     image TEXT,
     is_available BOOLEAN DEFAULT TRUE,
     is_vegetarian BOOLEAN DEFAULT FALSE,
@@ -93,15 +107,32 @@ CREATE TABLE menu_items (
     additional_service_charge DECIMAL(5,2) DEFAULT 0.0, -- e.g. for extra cheese
     tags TEXT[],                    -- array of tags, e.g. ["Newari", "Spicy", "Set"]
     portion_size VARCHAR(50),               -- e.g. "Regular", "Large", "Family"
+    special_instructions TEXT,            -- e.g. "No onions, extra spicy"
+    keywords TEXT,                        -- for full-text search
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 
 )
 
+CREATE INDEX idx_menu_items_vendor ON menu_items(vendor_id);
+CREATE INDEX idx_menu_items_category ON menu_items(category_id);
+CREATE INDEX idx_menu_items_keywords ON menu_items USING GIN (to_tsvector('english', keywords));
+
+
+CREATE INDEX idx_menu_items_availability ON menu_items(is_available);
+CREATE INDEX idx_menu_items_popular ON menu_items(is_popular);
+CREATE INDEX idx_menu_items_tags ON menu_items USING GIN (tags);   -- full-text/tag search
+
+CREATE TRIGGER set_updated_at_menu_items
+    BEFORE UPDATE ON menu_items
+    FOR EACH ROW
+    EXECUTE FUNCTION trigger_set_updated_at();
+
+
 -- Menu item categories (Appetizers, Momo, Newari, Pizza, Thali, etc.)
 CREATE TABLE menu_categories (
     id SERIAL PRIMARY KEY,
-    restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
+    vendor_id UUID NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
     name VARCHAR(150) NOT NULL,         -- Nepali/English name: e.g. "Momo", "Juice & Drinks"
     description TEXT,
     position INT DEFAULT 0,             -- ordering in UI
@@ -110,6 +141,12 @@ CREATE TABLE menu_categories (
 );
 
 
+CREATE INDEX idx_menu_categories_vendor ON menu_categories(vendor_id);
+
+CREATE TRIGGER set_updated_at_menu_categories
+    BEFORE UPDATE ON menu_categories
+    FOR EACH ROW
+    EXECUTE FUNCTION trigger_set_updated_at();
 
 
 -- Add-on groups (Sauce, Topping, Drink, etc.)
@@ -131,6 +168,8 @@ CREATE TABLE addon_options (
     price DECIMAL(8,2) NOT NULL DEFAULT 0.0
 );
 
+CREATE INDEX idx_addon_options_group ON addon_options(group_id);
+
 -- Link menu item to addon groups (pizza has both sauce + topping options)
 CREATE TABLE menu_item_addons (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -138,6 +177,13 @@ CREATE TABLE menu_item_addons (
     addon_group_id UUID NOT NULL REFERENCES addon_groups(id) ON DELETE CASCADE,
     UNIQUE(menu_item_id, addon_group_id)
 );
+
+
+CREATE UNIQUE INDEX idx_menu_item_addons_unique 
+    ON menu_item_addons(menu_item_id, addon_group_id);
+
+CREATE INDEX idx_menu_item_addons_menu_item 
+    ON menu_item_addons(menu_item_id);
 
 
 -- Tracking popularity
@@ -159,6 +205,10 @@ CREATE TABLE menu_item_stats (
 );
 
 CREATE INDEX idx_menu_item_stats_menu_item_id ON menu_item_stats(menu_item_id);
+
+-- popular queries: "find trending dishes"
+CREATE INDEX idx_menu_item_stats_ordercount ON menu_item_stats(order_count DESC);
+CREATE INDEX idx_menu_item_stats_reorder_rate ON menu_item_stats(reorder_rate DESC);
 
 CREATE TRIGGER set_updated_at_menu_item_stats
     BEFORE UPDATE ON menu_item_stats

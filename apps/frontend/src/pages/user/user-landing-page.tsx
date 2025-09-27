@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -20,188 +20,240 @@ import {
   Heart,
   Truck,
   CreditCard,
+  Loader2,
+  RefreshCw,
 } from "lucide-react"
 import Link from "next/link"
+import {
+  convertFoodmanduRestaurant,
+  convertFoodmanduMenuItem,
+  convertFoodmanduMenuCategory,
+  type Vendor,
+  type MenuCategory,
+  type MenuItem,
+} from "@/types"
 
-// Mock data for restaurants and menu items
-const restaurants = [
-  {
-    id: 1,
-    name: "Spice Garden",
-    cuisine: "Indian",
-    rating: 4.5,
-    deliveryTime: "25-30 min",
-    deliveryFee: 2.99,
-    image: "/indian-restaurant-food.png",
-    featured: true,
-    categories: ["Curry", "Biryani", "Tandoor"],
-  },
-  {
-    id: 2,
-    name: "Pizza Palace",
-    cuisine: "Italian",
-    rating: 4.3,
-    deliveryTime: "20-25 min",
-    deliveryFee: 1.99,
-    image: "/bustling-pizza-restaurant.png",
-    featured: false,
-    categories: ["Pizza", "Pasta", "Salads"],
-  },
-  {
-    id: 3,
-    name: "Burger Barn",
-    cuisine: "American",
-    rating: 4.7,
-    deliveryTime: "15-20 min",
-    deliveryFee: 2.49,
-    image: "/burger-restaurant.png",
-    featured: true,
-    categories: ["Burgers", "Fries", "Shakes"],
-  },
-  {
-    id: 4,
-    name: "Sushi Zen",
-    cuisine: "Japanese",
-    rating: 4.8,
-    deliveryTime: "30-35 min",
-    deliveryFee: 3.99,
-    image: "/bustling-sushi-restaurant.png",
-    featured: false,
-    categories: ["Sushi", "Ramen", "Tempura"],
-  },
-]
 
-const menuItems = [
-  {
-    id: 1,
-    restaurantId: 1,
-    name: "Chicken Biryani",
-    description: "Aromatic basmati rice with tender chicken and traditional spices",
-    price: 14.99,
-    image: "/flavorful-chicken-biryani.png",
-    category: "Biryani",
-    popular: true,
-  },
-  {
-    id: 2,
-    restaurantId: 1,
-    name: "Butter Chicken",
-    description: "Creamy tomato-based curry with tender chicken pieces",
-    price: 16.99,
-    image: "/butter-chicken-curry.png",
-    category: "Curry",
-    popular: true,
-  },
-  {
-    id: 3,
-    restaurantId: 1,
-    name: "Tandoori Chicken",
-    description: "Marinated chicken cooked in traditional clay oven",
-    price: 18.99,
-    image: "/tandoori-chicken.png",
-    category: "Tandoor",
-    popular: false,
-  },
-  {
-    id: 4,
-    restaurantId: 2,
-    name: "Margherita Pizza",
-    description: "Fresh mozzarella, tomato sauce, and basil on crispy crust",
-    price: 12.99,
-    image: "/margherita-pizza.png",
-    category: "Pizza",
-    popular: false,
-  },
-  {
-    id: 5,
-    restaurantId: 2,
-    name: "Pepperoni Pizza",
-    description: "Classic pepperoni with mozzarella cheese",
-    price: 15.99,
-    image: "/pepperoni-pizza.png",
-    category: "Pizza",
-    popular: true,
-  },
-  {
-    id: 6,
-    restaurantId: 2,
-    name: "Chicken Alfredo Pasta",
-    description: "Creamy alfredo sauce with grilled chicken and fettuccine",
-    price: 17.99,
-    image: "/chicken-alfredo-pasta.png",
-    category: "Pasta",
-    popular: true,
-  },
-  {
-    id: 7,
-    restaurantId: 3,
-    name: "Classic Cheeseburger",
-    description: "Beef patty with cheese, lettuce, tomato, and special sauce",
-    price: 11.99,
-    image: "/classic-cheeseburger.png",
-    category: "Burgers",
-    popular: true,
-  },
-  {
-    id: 8,
-    restaurantId: 3,
-    name: "Crispy Chicken Burger",
-    description: "Crispy fried chicken with mayo and fresh vegetables",
-    price: 13.99,
-    image: "/crispy-chicken-burger.png",
-    category: "Burgers",
-    popular: false,
-  },
-  {
-    id: 9,
-    restaurantId: 3,
-    name: "Loaded Fries",
-    description: "Crispy fries topped with cheese, bacon, and green onions",
-    price: 8.99,
-    image: "/loaded-fries.png",
-    category: "Fries",
-    popular: true,
-  },
-  {
-    id: 10,
-    restaurantId: 4,
-    name: "Salmon Sashimi",
-    description: "Fresh salmon slices served with wasabi and ginger",
-    price: 19.99,
-    image: "/salmon-sashimi.png",
-    category: "Sushi",
-    popular: true,
-  },
-  {
-    id: 11,
-    restaurantId: 4,
-    name: "California Roll",
-    description: "Crab, avocado, and cucumber wrapped in seaweed and rice",
-    price: 12.99,
-    image: "/california-roll.png",
-    category: "Sushi",
-    popular: false,
-  },
-  {
-    id: 12,
-    restaurantId: 4,
-    name: "Chicken Ramen",
-    description: "Rich chicken broth with noodles, egg, and vegetables",
-    price: 15.99,
-    image: "/chicken-ramen-bowl.jpg",
-    category: "Ramen",
-    popular: true,
-  },
-]
+
+const getMockFoodmanduData = () => {
+  const mockRestaurants = [
+    {
+      Id: 989,
+      Name: "Fuchhey Restaurant",
+      VendorShortCut: "Fuchhey Restaurant",
+      ShortName: "Fuchhey Restaurant",
+      Address1: "Putalisadak",
+      Address2: "Putalisadak",
+      LocationLat: 27.704017,
+      LocationLng: 85.322399,
+      OpeningHours: "11:00 AM - 7:30 PM",
+      IsVendorClosed: false,
+      AcceptsTakeoutOrder: false,
+      AcceptsDeliveryOrder: true,
+      Cuisine: "Multi Cuisine",
+      CuisineTags: "Multi Cuisine | Local Snacks",
+      VendorType: "Restaurant",
+      IsFeaturedVendor: true,
+      VendorListingWebImageName: "/indian-restaurant-food.png",
+      VendorLogoImageName: "/indian-restaurant-food.png",
+      Distance: 0.1,
+      VendorRating: 3.23,
+      DeliveryCharge: { charge: "Rs. 20" },
+      MinimumOrderAmount: 0.0,
+    },
+    {
+      Id: 990,
+      Name: "Pizza Corner",
+      VendorShortCut: "Pizza Corner",
+      ShortName: "Pizza Corner",
+      Address1: "Thamel",
+      Address2: "Kathmandu",
+      LocationLat: 27.715,
+      LocationLng: 85.314,
+      OpeningHours: "10:00 AM - 10:00 PM",
+      IsVendorClosed: false,
+      AcceptsTakeoutOrder: true,
+      AcceptsDeliveryOrder: true,
+      Cuisine: "Italian",
+      CuisineTags: "Italian | Pizza | Fast Food",
+      VendorType: "Restaurant",
+      IsFeaturedVendor: false,
+      VendorListingWebImageName: "/bustling-pizza-restaurant.png",
+      VendorLogoImageName: "/bustling-pizza-restaurant.png",
+      Distance: 0.5,
+      VendorRating: 4.1,
+      DeliveryCharge: { charge: "Rs. 30" },
+      MinimumOrderAmount: 200.0,
+    },
+  ]
+
+  const mockMenuData = [
+    {
+      category: "Fuchhey Batuko",
+      categoryId: 40529,
+      categoryDesc: "Spicy noodle and rice dishes",
+      totalItems: 8,
+      hidden: false,
+      items: [
+        {
+          productId: 353621,
+          name: "Ramen Batuko",
+          price: 490.0,
+          oldprice: 0.0,
+          productDesc: "Served Hot & Spicy with Ramen Noodle",
+          ProductImage: "/flavorful-chicken-biryani.png",
+          IsFavouriteProduct: true,
+          tags: "spicy,noodles,popular",
+          itemDisplayTag: "Fuchhey Batuko",
+          type: "product",
+          Keyword: "Ramen Batuko,Fuchhey Batuko,",
+        },
+        {
+          productId: 353620,
+          name: "Ramen Batuko 2x",
+          price: 500.0,
+          oldprice: 0.0,
+          productDesc: "Served with 2x hotness",
+          ProductImage: "/tandoori-chicken.png",
+          IsFavouriteProduct: false,
+          tags: "extra spicy,noodles",
+          itemDisplayTag: "Fuchhey Batuko",
+          type: "product",
+          Keyword: "Ramen Batuko 2x,Fuchhey Batuko,",
+        },
+        {
+          productId: 353622,
+          name: "Veg Noodle Batuko",
+          price: 340.0,
+          oldprice: 0.0,
+          productDesc: "Vegetarian noodle dish with fresh vegetables",
+          ProductImage: "/butter-chicken-curry.png",
+          IsFavouriteProduct: false,
+          tags: "vegetarian,noodles",
+          itemDisplayTag: "Fuchhey Batuko",
+          type: "product",
+          Keyword: "Veg Noodle Batuko,Fuchhey Batuko,",
+        },
+      ],
+    },
+    {
+      category: "Pizza Specials",
+      categoryId: 40530,
+      categoryDesc: "Authentic Italian pizzas",
+      totalItems: 4,
+      hidden: false,
+      items: [
+        {
+          productId: 353700,
+          name: "Margherita Pizza",
+          price: 650.0,
+          oldprice: 700.0,
+          productDesc: "Fresh mozzarella, tomato sauce, and basil",
+          ProductImage: "/margherita-pizza.png",
+          IsFavouriteProduct: true,
+          tags: "vegetarian,classic,popular",
+          itemDisplayTag: "Pizza Specials",
+          type: "product",
+          Keyword: "Margherita Pizza,Pizza Specials,",
+        },
+        {
+          productId: 353701,
+          name: "Pepperoni Pizza",
+          price: 750.0,
+          oldprice: 0.0,
+          productDesc: "Classic pepperoni with mozzarella cheese",
+          ProductImage: "/pepperoni-pizza.png",
+          IsFavouriteProduct: true,
+          tags: "meat,popular,classic",
+          itemDisplayTag: "Pizza Specials",
+          type: "product",
+          Keyword: "Pepperoni Pizza,Pizza Specials,",
+        },
+      ],
+    },
+  ]
+
+  return { restaurants: mockRestaurants, menuData: mockMenuData }
+}
 
 export default function CustomerApp() {
-  const [selectedRestaurant, setSelectedRestaurant] = useState<number | null>(null)
-  const [cart, setCart] = useState<Array<{ id: number; name: string; price: number; quantity: number }>>([])
+  const [restaurants, setRestaurants] = useState<Vendor[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [selectedRestaurant, setSelectedRestaurant] = useState<string | null>(null)
+  const [menuCategories, setMenuCategories] = useState<MenuCategory[]>([])
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([])
+  const [cart, setCart] = useState<Array<{ id: string; name: string; price: number; quantity: number }>>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [loyaltyPoints] = useState(1250)
   const [activeTab, setActiveTab] = useState("restaurants")
 
-  const addToCart = (item: any) => {
+  useEffect(() => {
+    loadRestaurants()
+  }, [])
+
+  const loadRestaurants = async () => {
+    setLoading(true)
+    console.log("[v0] Loading restaurants with Foodmandu data structure...")
+
+    try {
+      const { restaurants: mockRestaurants } = getMockFoodmanduData()
+      const convertedRestaurants = mockRestaurants.map(convertFoodmanduRestaurant)
+
+      console.log("[v0] Loaded restaurants from Foodmandu format:", convertedRestaurants.length)
+      setRestaurants(convertedRestaurants)
+    } catch (error) {
+      console.error("[v0] Error loading restaurants:", error)
+      setRestaurants([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query)
+
+    if (query.trim() === "") {
+      loadRestaurants()
+      return
+    }
+
+    setSearchLoading(true)
+    console.log("[v0] Searching restaurants with query:", query)
+
+    try {
+      const filtered = restaurants.filter(
+        (restaurant) =>
+          restaurant.name.toLowerCase().includes(query.toLowerCase()) ||
+          restaurant.cuisine.toLowerCase().includes(query.toLowerCase()) ||
+          restaurant.cuisine_tags.some((tag) => tag.toLowerCase().includes(query.toLowerCase())),
+      )
+      setRestaurants(filtered)
+    } catch (error) {
+      console.error("[v0] Search error:", error)
+    } finally {
+      setSearchLoading(false)
+    }
+  }
+
+  const selectRestaurant = (restaurantId: string) => {
+    setSelectedRestaurant(restaurantId)
+    const restaurant = restaurants.find((r) => r.id === restaurantId)
+    if (restaurant) {
+      console.log("[v0] Loading menu for restaurant:", restaurant.name)
+
+      const { menuData } = getMockFoodmanduData()
+      const categories = menuData.map((cat, index) => convertFoodmanduMenuCategory(cat, restaurantId, index))
+      const items = menuData.flatMap((cat) =>
+        cat.items.map((item) => convertFoodmanduMenuItem(item, restaurantId, cat.categoryId.toString())),
+      )
+
+      setMenuCategories(categories)
+      setMenuItems(items)
+    }
+  }
+
+  const addToCart = (item: MenuItem) => {
     setCart((prev) => {
       const existing = prev.find((cartItem) => cartItem.id === item.id)
       if (existing) {
@@ -209,11 +261,11 @@ export default function CustomerApp() {
           cartItem.id === item.id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem,
         )
       }
-      return [...prev, { id: item.id, name: item.name, price: item.price, quantity: 1 }]
+      return [...prev, { id: item.id, name: item.name, price: item.base_price, quantity: 1 }]
     })
   }
 
-  const removeFromCart = (itemId: number) => {
+  const removeFromCart = (itemId: string) => {
     setCart((prev) => {
       const existing = prev.find((cartItem) => cartItem.id === itemId)
       if (existing && existing.quantity > 1) {
@@ -227,12 +279,6 @@ export default function CustomerApp() {
 
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0)
-
-  const filteredRestaurants = restaurants.filter(
-    (restaurant) =>
-      restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      restaurant.cuisine.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
 
   return (
     <div className="min-h-screen bg-background">
@@ -250,7 +296,7 @@ export default function CustomerApp() {
 
               <div className="hidden md:flex items-center gap-2 bg-muted rounded-lg px-3 py-2">
                 <MapPin className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm">Delivering to Downtown</span>
+                <span className="text-sm">{process.env.NEXT_PUBLIC_DEFAULT_CITY || "Delivering to Kathmandu"}</span>
               </div>
             </div>
 
@@ -291,139 +337,203 @@ export default function CustomerApp() {
                 <Input
                   placeholder="Search restaurants, cuisines, or dishes..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => handleSearch(e.target.value)}
                   className="pl-10 pr-4 py-3 text-base"
                 />
-                <Button size="sm" className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                  <Filter className="w-4 h-4" />
-                </Button>
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex gap-2">
+                  {searchLoading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+                  <Button size="sm" onClick={loadRestaurants} variant="outline">
+                    <RefreshCw className="w-4 h-4" />
+                  </Button>
+                  <Button size="sm">
+                    <Filter className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </div>
 
+            {/* Loading State */}
+            {loading && (
+              <div className="flex items-center justify-center py-12">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                  <span>Loading restaurants...</span>
+                </div>
+              </div>
+            )}
+
             {/* Tabs */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="restaurants">Restaurants</TabsTrigger>
-                <TabsTrigger value="menu">Menu</TabsTrigger>
-                <TabsTrigger value="orders">My Orders</TabsTrigger>
-              </TabsList>
+            {!loading && (
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="restaurants">Restaurants ({restaurants.length})</TabsTrigger>
+                  <TabsTrigger value="menu">Menu</TabsTrigger>
+                  <TabsTrigger value="orders">My Orders</TabsTrigger>
+                </TabsList>
 
-              <TabsContent value="restaurants" className="space-y-6">
-                {/* Featured Restaurants */}
-                <div>
-                  <h2 className="text-2xl font-bold mb-4">Featured Restaurants</h2>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    {filteredRestaurants
-                      .filter((r) => r.featured)
-                      .map((restaurant) => (
-                        <Card
-                          key={restaurant.id}
-                          className="hover:shadow-lg transition-shadow cursor-pointer"
-                          onClick={() => setSelectedRestaurant(restaurant.id)}
-                        >
-                          <div className="relative">
-                            <img
-                              src={restaurant.image || "/placeholder.svg"}
-                              alt={restaurant.name}
-                              className="w-full h-48 object-cover rounded-t-lg"
-                            />
-                            <Button size="sm" variant="secondary" className="absolute top-2 right-2">
-                              <Heart className="w-4 h-4" />
-                            </Button>
-                          </div>
-                          <CardContent className="p-4">
-                            <div className="flex justify-between items-start mb-2">
-                              <h3 className="font-semibold text-lg">{restaurant.name}</h3>
-                              <div className="flex items-center gap-1">
-                                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                <span className="text-sm font-medium">{restaurant.rating}</span>
+                <TabsContent value="restaurants" className="space-y-6">
+                  {/* Featured Restaurants */}
+                  {restaurants.filter((r) => r.is_featured).length > 0 && (
+                    <div>
+                      <h2 className="text-2xl font-bold mb-4">Featured Restaurants</h2>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        {restaurants
+                          .filter((r) => r.is_featured)
+                          .map((restaurant) => (
+                            <Card
+                              key={restaurant.id}
+                              className="hover:shadow-lg transition-shadow cursor-pointer"
+                              onClick={() => selectRestaurant(restaurant.id)}
+                            >
+                              <div className="relative">
+                                <img
+                                  src={restaurant.vendor_listing_image_name || "/placeholder.svg"}
+                                  alt={restaurant.name}
+                                  className="w-full h-48 object-cover rounded-t-lg"
+                                />
+                                <Button size="sm" variant="secondary" className="absolute top-2 right-2">
+                                  <Heart className="w-4 h-4" />
+                                </Button>
+                                {!restaurant.is_open && (
+                                  <Badge variant="destructive" className="absolute top-2 left-2">
+                                    Closed
+                                  </Badge>
+                                )}
+                                {restaurant.promo_text && (
+                                  <Badge className="absolute bottom-2 left-2 bg-green-500">
+                                    {restaurant.promo_text}
+                                  </Badge>
+                                )}
                               </div>
-                            </div>
-                            <p className="text-muted-foreground text-sm mb-2">{restaurant.cuisine}</p>
-                            <div className="flex items-center justify-between text-sm">
-                              <div className="flex items-center gap-1">
-                                <Clock className="w-4 h-4 text-muted-foreground" />
-                                <span>{restaurant.deliveryTime}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Truck className="w-4 h-4 text-muted-foreground" />
-                                <span>${restaurant.deliveryFee}</span>
-                              </div>
-                            </div>
-                            <div className="flex gap-1 mt-2">
-                              {restaurant.categories.slice(0, 2).map((category) => (
-                                <Badge key={category} variant="secondary" className="text-xs">
-                                  {category}
-                                </Badge>
-                              ))}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                  </div>
-                </div>
-
-                {/* All Restaurants */}
-                <div>
-                  <h2 className="text-2xl font-bold mb-4">All Restaurants</h2>
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredRestaurants.map((restaurant) => (
-                      <Card
-                        key={restaurant.id}
-                        className="hover:shadow-lg transition-shadow cursor-pointer"
-                        onClick={() => setSelectedRestaurant(restaurant.id)}
-                      >
-                        <div className="relative">
-                          <img
-                            src={restaurant.image || "/placeholder.svg"}
-                            alt={restaurant.name}
-                            className="w-full h-32 object-cover rounded-t-lg"
-                          />
-                        </div>
-                        <CardContent className="p-3">
-                          <div className="flex justify-between items-start mb-1">
-                            <h3 className="font-semibold">{restaurant.name}</h3>
-                            <div className="flex items-center gap-1">
-                              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                              <span className="text-xs font-medium">{restaurant.rating}</span>
-                            </div>
-                          </div>
-                          <p className="text-muted-foreground text-xs mb-2">{restaurant.cuisine}</p>
-                          <div className="flex items-center justify-between text-xs">
-                            <span>{restaurant.deliveryTime}</span>
-                            <span>${restaurant.deliveryFee} delivery</span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="menu" className="space-y-6">
-                {selectedRestaurant ? (
-                  <div>
-                    <div className="mb-6">
-                      <h2 className="text-2xl font-bold mb-2">
-                        {restaurants.find((r) => r.id === selectedRestaurant)?.name} Menu
-                      </h2>
-                      <p className="text-muted-foreground">
-                        {restaurants.find((r) => r.id === selectedRestaurant)?.cuisine} Cuisine
-                      </p>
+                              <CardContent className="p-4">
+                                <div className="flex justify-between items-start mb-2">
+                                  <h3 className="font-semibold text-lg">{restaurant.name}</h3>
+                                  <div className="flex items-center gap-1">
+                                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                                    <span className="text-sm font-medium">{restaurant.rating.toFixed(1)}</span>
+                                  </div>
+                                </div>
+                                <p className="text-muted-foreground text-sm mb-2">{restaurant.cuisine}</p>
+                                <p className="text-muted-foreground text-xs mb-2">{restaurant.address}</p>
+                                <div className="flex items-center justify-between text-sm mb-2">
+                                  <div className="flex items-center gap-1">
+                                    <Clock className="w-4 h-4 text-muted-foreground" />
+                                    <span>{restaurant.delivery_time_estimate}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <Truck className="w-4 h-4 text-muted-foreground" />
+                                    <span>Rs. {restaurant.delivery_fee}</span>
+                                  </div>
+                                </div>
+                                {restaurant.min_order_amount > 0 && (
+                                  <p className="text-xs text-muted-foreground mb-2">
+                                    Min order: Rs. {restaurant.min_order_amount}
+                                  </p>
+                                )}
+                                <div className="flex gap-1 flex-wrap">
+                                  {restaurant.cuisine_tags.slice(0, 3).map((tag) => (
+                                    <Badge key={tag} variant="secondary" className="text-xs">
+                                      {tag}
+                                    </Badge>
+                                  ))}
+                                  {/* <Badge variant="outline" className="text-xs">
+                                    {restaurant.distance.toFixed(1)} km
+                                  </Badge> */}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                      </div>
                     </div>
+                  )}
 
-                    {restaurants
-                      .find((r) => r.id === selectedRestaurant)
-                      ?.categories.map((category) => {
+                  {/* All Restaurants */}
+                  <div>
+                    <h2 className="text-2xl font-bold mb-4">
+                      {searchQuery ? `Search Results for "${searchQuery}"` : "All Restaurants"}
+                    </h2>
+                    {restaurants.length === 0 ? (
+                      <div className="text-center py-12">
+                        <h3 className="text-lg font-semibold mb-2">No restaurants found</h3>
+                        <p className="text-muted-foreground mb-4">
+                          {searchQuery ? "Try a different search term" : "Unable to load restaurants"}
+                        </p>
+                        <Button onClick={loadRestaurants}>
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                          Retry
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {restaurants.map((restaurant) => (
+                          <Card
+                            key={restaurant.id}
+                            className="hover:shadow-lg transition-shadow cursor-pointer"
+                            onClick={() => selectRestaurant(restaurant.id)}
+                          >
+                            <div className="relative">
+                              <img
+                                src={restaurant.vendor_listing_image_name || "/placeholder.svg"}
+                                alt={restaurant.name}
+                                className="w-full h-32 object-cover rounded-t-lg"
+                              />
+                              {!restaurant.is_open && (
+                                <Badge variant="destructive" className="absolute top-2 left-2 text-xs">
+                                  Closed
+                                </Badge>
+                              )}
+                            </div>
+                            <CardContent className="p-3">
+                              <div className="flex justify-between items-start mb-1">
+                                <h3 className="font-semibold">{restaurant.name}</h3>
+                                <div className="flex items-center gap-1">
+                                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                  <span className="text-xs font-medium">{restaurant.rating.toFixed(1)}</span>
+                                </div>
+                              </div>
+                              <p className="text-muted-foreground text-xs mb-2">{restaurant.cuisine}</p>
+                              <div className="flex items-center justify-between text-xs">
+                                <span>{restaurant.delivery_time_estimate}</span>
+                                <span>Rs. {restaurant.delivery_fee} delivery</span>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="menu" className="space-y-6">
+                  {selectedRestaurant ? (
+                    <div>
+                      <div className="mb-6">
+                        <h2 className="text-2xl font-bold mb-2">
+                          {restaurants.find((r) => r.id === selectedRestaurant)?.name} Menu
+                        </h2>
+                        <p className="text-muted-foreground">
+                          {restaurants.find((r) => r.id === selectedRestaurant)?.cuisine} Cuisine
+                        </p>
+                      </div>
+
+                      {menuCategories.map((category) => {
                         const categoryItems = menuItems.filter(
-                          (item) => item.restaurantId === selectedRestaurant && item.category === category,
+                          (item) => item.category_id === category.id && item.is_available,
                         )
 
                         if (categoryItems.length === 0) return null
 
                         return (
-                          <div key={category} className="mb-8">
-                            <h3 className="text-xl font-semibold mb-4">{category}</h3>
+                          <div key={category.id} className="mb-8">
+                            <div className="flex items-center justify-between mb-4">
+                              <h3 className="text-xl font-semibold">{category.name}</h3>
+                              <Badge variant="outline" className="text-xs">
+                                {category.total_items} items
+                              </Badge>
+                            </div>
+                            {category.description && (
+                              <p className="text-muted-foreground text-sm mb-4">{category.description}</p>
+                            )}
                             <div className="grid md:grid-cols-2 gap-4">
                               {categoryItems.map((item) => (
                                 <Card key={item.id} className="hover:shadow-lg transition-shadow">
@@ -431,15 +541,38 @@ export default function CustomerApp() {
                                     <div className="flex-1 p-4">
                                       <div className="flex items-start justify-between mb-2">
                                         <h3 className="font-semibold">{item.name}</h3>
-                                        {item.popular && (
-                                          <Badge variant="secondary" className="text-xs">
-                                            Popular
-                                          </Badge>
-                                        )}
+                                        <div className="flex gap-1">
+                                          {item.is_popular && (
+                                            <Badge variant="secondary" className="text-xs">
+                                              Popular
+                                            </Badge>
+                                          )}
+                                          {item.old_price > 0 && (
+                                            <Badge variant="destructive" className="text-xs">
+                                              Sale
+                                            </Badge>
+                                          )}
+                                        </div>
                                       </div>
                                       <p className="text-muted-foreground text-sm mb-3">{item.description}</p>
+                                      {item.tags && item.tags.length > 0 && (
+                                        <div className="flex gap-1 mb-3 flex-wrap">
+                                          {item.tags.slice(0, 2).map((tag) => (
+                                            <Badge key={tag} variant="outline" className="text-xs">
+                                              {tag}
+                                            </Badge>
+                                          ))}
+                                        </div>
+                                      )}
                                       <div className="flex items-center justify-between">
-                                        <span className="font-bold text-lg">${item.price}</span>
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-bold text-lg">Rs. {item.base_price}</span>
+                                          {item.old_price > 0 && (
+                                            <span className="text-sm text-muted-foreground line-through">
+                                              Rs. {item.old_price}
+                                            </span>
+                                          )}
+                                        </div>
                                         <div className="flex items-center gap-2">
                                           <Button size="sm" variant="outline" onClick={() => removeFromCart(item.id)}>
                                             <Minus className="w-3 h-3" />
@@ -467,70 +600,71 @@ export default function CustomerApp() {
                           </div>
                         )
                       })}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <h3 className="text-lg font-semibold mb-2">Select a Restaurant</h3>
-                    <p className="text-muted-foreground">Choose a restaurant from the list to view their menu</p>
-                  </div>
-                )}
-              </TabsContent>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <h3 className="text-lg font-semibold mb-2">Select a Restaurant</h3>
+                      <p className="text-muted-foreground">Choose a restaurant from the list to view their menu</p>
+                    </div>
+                  )}
+                </TabsContent>
 
-              <TabsContent value="orders" className="space-y-6">
-                <div>
-                  <h2 className="text-2xl font-bold mb-4">My Orders</h2>
-                  <div className="space-y-4">
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <h3 className="font-semibold">Order #1234</h3>
-                            <p className="text-muted-foreground text-sm">Spice Garden • 2 items</p>
+                <TabsContent value="orders" className="space-y-6">
+                  <div>
+                    <h2 className="text-2xl font-bold mb-4">My Orders</h2>
+                    <div className="space-y-4">
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h3 className="font-semibold">Order #1234</h3>
+                              <p className="text-muted-foreground text-sm">Spice Garden • 2 items</p>
+                            </div>
+                            <Badge variant="secondary">Delivered</Badge>
                           </div>
-                          <Badge variant="secondary">Delivered</Badge>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Jan 15, 2025</span>
-                          <span className="font-semibold">$31.98</span>
-                        </div>
-                      </CardContent>
-                    </Card>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">Jan 15, 2025</span>
+                            <span className="font-semibold">$31.98</span>
+                          </div>
+                        </CardContent>
+                      </Card>
 
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <h3 className="font-semibold">Order #1233</h3>
-                            <p className="text-muted-foreground text-sm">Pizza Palace • 1 item</p>
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h3 className="font-semibold">Order #1233</h3>
+                              <p className="text-muted-foreground text-sm">Pizza Palace • 1 item</p>
+                            </div>
+                            <Badge className="bg-green-500">Out for Delivery</Badge>
                           </div>
-                          <Badge className="bg-green-500">Out for Delivery</Badge>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Jan 15, 2025</span>
-                          <span className="font-semibold">$15.98</span>
-                        </div>
-                      </CardContent>
-                    </Card>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">Jan 15, 2025</span>
+                            <span className="font-semibold">$15.98</span>
+                          </div>
+                        </CardContent>
+                      </Card>
 
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <h3 className="font-semibold">Order #1232</h3>
-                            <p className="text-muted-foreground text-sm">Burger Barn • 3 items</p>
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h3 className="font-semibold">Order #1232</h3>
+                              <p className="text-muted-foreground text-sm">Burger Barn • 3 items</p>
+                            </div>
+                            <Badge variant="outline">Preparing</Badge>
                           </div>
-                          <Badge variant="outline">Preparing</Badge>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Jan 14, 2025</span>
-                          <span className="font-semibold">$28.47</span>
-                        </div>
-                      </CardContent>
-                    </Card>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">Jan 14, 2025</span>
+                            <span className="font-semibold">$28.47</span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
                   </div>
-                </div>
-              </TabsContent>
-            </Tabs>
+                </TabsContent>
+              </Tabs>
+            )}
           </div>
 
           {/* Cart Sidebar */}
