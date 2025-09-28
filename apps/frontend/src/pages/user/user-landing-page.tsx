@@ -25,155 +25,39 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import {
-  convertFoodmanduRestaurant,
-  convertFoodmanduMenuItem,
-  convertFoodmanduMenuCategory,
   type Vendor,
   type MenuCategory,
   type MenuItem,
+  type MenuData,
 } from "@/types"
+import mockRestaurants from "@/data/foodmandu_all_restaurants.json"
+import mockMenuData from "@/data/foodmandu_all_menu_items.json"
+import { convertFoodmanduMenuCategory, convertFoodmanduMenuData, convertFoodmanduRestaurant } from "@/lib/utils"
 
 
 
 const getMockFoodmanduData = () => {
-  const mockRestaurants = [
-    {
-      Id: 989,
-      Name: "Fuchhey Restaurant",
-      VendorShortCut: "Fuchhey Restaurant",
-      ShortName: "Fuchhey Restaurant",
-      Address1: "Putalisadak",
-      Address2: "Putalisadak",
-      LocationLat: 27.704017,
-      LocationLng: 85.322399,
-      OpeningHours: "11:00 AM - 7:30 PM",
-      IsVendorClosed: false,
-      AcceptsTakeoutOrder: false,
-      AcceptsDeliveryOrder: true,
-      Cuisine: "Multi Cuisine",
-      CuisineTags: "Multi Cuisine | Local Snacks",
-      VendorType: "Restaurant",
-      IsFeaturedVendor: true,
-      VendorListingWebImageName: "/indian-restaurant-food.png",
-      VendorLogoImageName: "/indian-restaurant-food.png",
-      Distance: 0.1,
-      VendorRating: 3.23,
-      DeliveryCharge: { charge: "Rs. 20" },
-      MinimumOrderAmount: 0.0,
-    },
-    {
-      Id: 990,
-      Name: "Pizza Corner",
-      VendorShortCut: "Pizza Corner",
-      ShortName: "Pizza Corner",
-      Address1: "Thamel",
-      Address2: "Kathmandu",
-      LocationLat: 27.715,
-      LocationLng: 85.314,
-      OpeningHours: "10:00 AM - 10:00 PM",
-      IsVendorClosed: false,
-      AcceptsTakeoutOrder: true,
-      AcceptsDeliveryOrder: true,
-      Cuisine: "Italian",
-      CuisineTags: "Italian | Pizza | Fast Food",
-      VendorType: "Restaurant",
-      IsFeaturedVendor: false,
-      VendorListingWebImageName: "/bustling-pizza-restaurant.png",
-      VendorLogoImageName: "/bustling-pizza-restaurant.png",
-      Distance: 0.5,
-      VendorRating: 4.1,
-      DeliveryCharge: { charge: "Rs. 30" },
-      MinimumOrderAmount: 200.0,
-    },
-  ]
+  const restaurant_ids: number[] = []
+  const restaurants: Vendor[] = []
+   const seenIds = new Set<number>() 
+  Object.values(mockRestaurants).forEach((restaurantList) => {
+      restaurantList.forEach((restaurant) => {
 
-  const mockMenuData = [
-    {
-      category: "Fuchhey Batuko",
-      categoryId: 40529,
-      categoryDesc: "Spicy noodle and rice dishes",
-      totalItems: 8,
-      hidden: false,
-      items: [
-        {
-          productId: 353621,
-          name: "Ramen Batuko",
-          price: 490.0,
-          oldprice: 0.0,
-          productDesc: "Served Hot & Spicy with Ramen Noodle",
-          ProductImage: "/flavorful-chicken-biryani.png",
-          IsFavouriteProduct: true,
-          tags: "spicy,noodles,popular",
-          itemDisplayTag: "Fuchhey Batuko",
-          type: "product",
-          Keyword: "Ramen Batuko,Fuchhey Batuko,",
-        },
-        {
-          productId: 353620,
-          name: "Ramen Batuko 2x",
-          price: 500.0,
-          oldprice: 0.0,
-          productDesc: "Served with 2x hotness",
-          ProductImage: "/tandoori-chicken.png",
-          IsFavouriteProduct: false,
-          tags: "extra spicy,noodles",
-          itemDisplayTag: "Fuchhey Batuko",
-          type: "product",
-          Keyword: "Ramen Batuko 2x,Fuchhey Batuko,",
-        },
-        {
-          productId: 353622,
-          name: "Veg Noodle Batuko",
-          price: 340.0,
-          oldprice: 0.0,
-          productDesc: "Vegetarian noodle dish with fresh vegetables",
-          ProductImage: "/butter-chicken-curry.png",
-          IsFavouriteProduct: false,
-          tags: "vegetarian,noodles",
-          itemDisplayTag: "Fuchhey Batuko",
-          type: "product",
-          Keyword: "Veg Noodle Batuko,Fuchhey Batuko,",
-        },
-      ],
-    },
-    {
-      category: "Pizza Specials",
-      categoryId: 40530,
-      categoryDesc: "Authentic Italian pizzas",
-      totalItems: 4,
-      hidden: false,
-      items: [
-        {
-          productId: 353700,
-          name: "Margherita Pizza",
-          price: 650.0,
-          oldprice: 700.0,
-          productDesc: "Fresh mozzarella, tomato sauce, and basil",
-          ProductImage: "/margherita-pizza.png",
-          IsFavouriteProduct: true,
-          tags: "vegetarian,classic,popular",
-          itemDisplayTag: "Pizza Specials",
-          type: "product",
-          Keyword: "Margherita Pizza,Pizza Specials,",
-        },
-        {
-          productId: 353701,
-          name: "Pepperoni Pizza",
-          price: 750.0,
-          oldprice: 0.0,
-          productDesc: "Classic pepperoni with mozzarella cheese",
-          ProductImage: "/pepperoni-pizza.png",
-          IsFavouriteProduct: true,
-          tags: "meat,popular,classic",
-          itemDisplayTag: "Pizza Specials",
-          type: "product",
-          Keyword: "Pepperoni Pizza,Pizza Specials,",
-        },
-      ],
-    },
-  ]
+      if (!seenIds.has(restaurant.Id)) {
+        restaurant_ids.push(restaurant.Id)
+        restaurants.push(convertFoodmanduRestaurant(restaurant as any))
+        seenIds.add(restaurant.Id) 
+      }
+      })
+    })
+  const menuData: MenuData[] = []
+    Object.entries(mockMenuData).forEach(([vendor_id, menuList]) => {
+    menuList.forEach((menuItem: any) => {
+      menuData.push(convertFoodmanduMenuData(menuItem, vendor_id))
+    })
+  })
 
-  return { restaurants: mockRestaurants, menuData: mockMenuData }
+  return { restaurants, restaurant_ids, menuData }
 }
 
 export default function CustomerApp() {
@@ -197,11 +81,10 @@ export default function CustomerApp() {
     console.log("[v0] Loading restaurants with Foodmandu data structure...")
 
     try {
-      const { restaurants: mockRestaurants } = getMockFoodmanduData()
-      const convertedRestaurants = mockRestaurants.map(convertFoodmanduRestaurant)
+      const { restaurants: mockRestaurants  } = getMockFoodmanduData()
 
-      console.log("[v0] Loaded restaurants from Foodmandu format:", convertedRestaurants.length)
-      setRestaurants(convertedRestaurants)
+      console.log("[v0] Loaded restaurants from Foodmandu format:", mockRestaurants.length)
+      setRestaurants(mockRestaurants)
     } catch (error) {
       console.error("[v0] Error loading restaurants:", error)
       setRestaurants([])
@@ -241,15 +124,19 @@ export default function CustomerApp() {
     const restaurant = restaurants.find((r) => r.id === restaurantId)
     if (restaurant) {
       console.log("[v0] Loading menu for restaurant:", restaurant.name)
-
+      console.log(restaurantId,'restaurantId');
+      
       const { menuData } = getMockFoodmanduData()
-      const categories = menuData.map((cat, index) => convertFoodmanduMenuCategory(cat, restaurantId, index))
+      const categories = menuData.map((cat) => cat.vendor_id === restaurantId ? convertFoodmanduMenuCategory(cat, cat.vendor_id) : null).filter(Boolean) as MenuCategory[]
       const items = menuData.flatMap((cat) =>
-        cat.items.map((item) => convertFoodmanduMenuItem(item, restaurantId, cat.categoryId.toString())),
-      )
-
+        cat.vendor_id === restaurantId ? cat.items : null,
+      ).filter(Boolean) as MenuItem[]
       setMenuCategories(categories)
       setMenuItems(items)
+         console.log(items[0],'menuItems');
+   
+    
+     
     }
   }
 
@@ -517,9 +404,12 @@ export default function CustomerApp() {
                       </div>
 
                       {menuCategories.map((category) => {
+                        console.log(category,'category');
+                        
                         const categoryItems = menuItems.filter(
                           (item) => item.category_id === category.id && item.is_available,
                         )
+                     
 
                         if (categoryItems.length === 0) return null
 
