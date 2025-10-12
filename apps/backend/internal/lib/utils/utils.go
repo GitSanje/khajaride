@@ -3,8 +3,10 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	
+	"strings"
+
 	"github.com/gitSanje/khajaride/internal/model/user"
+	"github.com/gitSanje/khajaride/internal/model/vendor"
 )
 
 func PrintJSON(v interface{}) {
@@ -15,6 +17,56 @@ func PrintJSON(v interface{}) {
 	}
 	fmt.Println("JSON:", string(json))
 }
+
+// --- helper functions ---
+
+func getString(m map[string]interface{}, key string) string {
+	if val, ok := m[key]; ok {
+		if s, ok := val.(string); ok {
+			return s
+		}
+	}
+	return ""
+}
+func getStringPtr(m map[string]interface{}, key string) *string {
+	str := getString(m, key)
+	if str == "" {
+		return nil
+	}
+	return &str
+}
+func getStringPtrFrom(m map[string]interface{}, key string) *string {
+	return getStringPtr(m, key)
+}
+
+func getFloat(m map[string]interface{}, key string) float64 {
+	if val, ok := m[key]; ok {
+		switch v := val.(type) {
+		case float64:
+			return v
+		case int:
+			return float64(v)
+		}
+	}
+	return 0
+}
+
+func getBool(m map[string]interface{}, key string) bool {
+	if val, ok := m[key]; ok {
+		if b, ok := val.(bool); ok {
+			return b
+		}
+	}
+	return false
+}
+
+func strPtr(s string) *string {
+	if s == "" {
+		return nil 
+	}
+	return &s
+}
+
 
 // ---------- Interfaces & Structs ----------
 type HasValue interface {
@@ -39,12 +91,8 @@ func (c ClerkPhoneNumber) GetValue() string { return c.PhoneNumber }
 func (c ClerkPhoneNumber) GetID() string    { return c.ID }
 
 
-func strPtr(s string) *string {
-	if s == "" {
-		return nil 
-	}
-	return &s
-}
+
+
 
 
 // ---------- Generic Helper ----------
@@ -87,3 +135,54 @@ func MapClerkUserToCreateUser(data json.RawMessage) (*user.CreateUserPayload, er
 		ProfilePicture: clerkUser.ProfileImage,
 	}, nil
 }
+
+
+//-----------------------------------BULK VENDOR INSERTION-----------------
+
+
+
+func TransformFoodManduVendors(flatJSON []byte) ([]vendor.VendorBulkInput, error) {
+	
+	var rawVendors []map[string]interface{}
+	if err := json.Unmarshal(flatJSON, &rawVendors); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal: %w", err)
+	}
+
+	vendors := make([]vendor.VendorBulkInput, 0, len(rawVendors))
+
+	for _, raw := range rawVendors {
+		v := vendor.VendorBulkInput{
+			Vendor: vendor.Vendor{
+				Name:              getString(raw, "Name"),
+				About:             "",
+				Cuisine:           getString(raw, "Cuisine"),
+				Rating:            getFloat(raw, "VendorRating"),
+				DeliveryAvailable: getBool(raw, "AcceptsDeliveryOrder"),
+				PickupAvailable:   getBool(raw, "AcceptsTakeoutOrder"),
+				IsFeatured:        getBool(raw, "IsFeaturedVendor"),
+				PromoText:         getString(raw, "PromoText"),
+				VendorNotice:      getString(raw, "VendorNotice"),
+				OpeningHours:      getStringPtr(raw, "OpeningHours"),
+				VendorListingImage: getStringPtrFrom(raw, "VendorListingWebImageName"),
+				VendorLogoImage:    getStringPtrFrom(raw, "VendorCoverImageName"),
+				VendorType:         getStringPtrFrom(raw, "VendorType"),
+				CuisineTags: strings.Split(
+					strings.TrimSpace(getString(raw, "CuisineTags")),
+					"|",
+				),
+			},
+			Address: &vendor.VendorAddress{
+				StreetAddress: getString(raw, "Address1"),
+				City:          "", // optional, if not in JSON
+				State:         "",
+				ZipCode:       "",
+				Latitude:      getFloat(raw, "LocationLat"),
+				Longitude:     getFloat(raw, "LocationLng"),
+			},
+		}
+		vendors = append(vendors, v)
+	}
+
+	return vendors, nil
+}
+

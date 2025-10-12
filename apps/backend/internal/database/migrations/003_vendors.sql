@@ -1,7 +1,7 @@
 
 -- Vendor table
 CREATE TABLE vendors (
-    id UUID  PRIMARY KEY DEFAULT gen_random_uuid(),
+    id TEXT  PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
     name VARCHAR(150) NOT NULL,
     about TEXT,                             -- Description/About section
     cuisine VARCHAR(100),                   -- e.g. Italian, Indian, Fusion
@@ -15,7 +15,7 @@ CREATE TABLE vendors (
     min_order_amount DECIMAL(8,2) DEFAULT 0.0,
     delivery_time_estimate VARCHAR(50),     -- "16-20 min" (approx, cached)
     is_open BOOLEAN DEFAULT TRUE,
-    opening_hours JSONB,                    -- {"mon":"09-22", "tue":"09-22"}
+    opening_hours TEXT,                    
     vendor_listing_image_name TEXT,                             -- logo/banner
     vendor_logo_image_name TEXT,                             -- array of images
     vendor_type VARCHAR(50),               -- 'restaurant', 'bakery','alcohol' etc.
@@ -43,8 +43,8 @@ CREATE TRIGGER set_updated_at_vendors
 
 -- Vendor addresses
 CREATE TABLE vendor_addresses (
-    id UUID  PRIMARY KEY DEFAULT gen_random_uuid(),
-    vendor_id UUID NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
+    id TEXT  PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    vendor_id TEXT NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
     street_address TEXT,
     city VARCHAR(100),
     state VARCHAR(100),
@@ -89,9 +89,9 @@ CREATE TRIGGER set_updated_at_vendor_addresses
 -- Menu items
 CREATE TABLE menu_items (
 
-    id UUID  PRIMARY KEY DEFAULT gen_random_uuid(),
-    vendor_id UUID NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
-    category_id UUID NOT NULL REFERENCES menu_categories(id) ON DELETE CASCADE,
+    id TEXT  PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    vendor_id TEXT NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
+    category_id TEXT NOT NULL REFERENCES menu_categories(id) ON DELETE CASCADE,
     name VARCHAR(150) NOT NULL, -- e.g. "Chicken Momo (6 pcs)", "Dal Bhat Set"
     description TEXT,
     base_price DECIMAL(8,2) NOT NULL,
@@ -107,7 +107,7 @@ CREATE TABLE menu_items (
     additional_service_charge DECIMAL(5,2) DEFAULT 0.0, -- e.g. for extra cheese
     tags TEXT[],                    -- array of tags, e.g. ["Newari", "Spicy", "Set"]
     portion_size VARCHAR(50),               -- e.g. "Regular", "Large", "Family"
-    special_instructions TEXT,            -- e.g. "No onions, extra spicy"
+    -- special_instructions TEXT,            -- e.g. "No onions, extra spicy" during order time
     keywords TEXT,                        -- for full-text search
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
@@ -131,14 +131,25 @@ CREATE TRIGGER set_updated_at_menu_items
 
 -- Menu item categories (Appetizers, Momo, Newari, Pizza, Thali, etc.)
 CREATE TABLE menu_categories (
-    id SERIAL PRIMARY KEY,
-    vendor_id UUID NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
     name VARCHAR(150) NOT NULL,         -- Nepali/English name: e.g. "Momo", "Juice & Drinks"
     description TEXT,
     position INT DEFAULT 0,             -- ordering in UI
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
+
+CREATE TABLE vendor_menu_categories (
+    vendor_id UUID NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
+    category_id INT NOT NULL REFERENCES menu_categories(id) ON DELETE CASCADE,
+    PRIMARY KEY (vendor_id, category_id)
+);
+CREATE UNIQUE INDEX idx_vendor_menu_categories_unique 
+    ON vendor_menu_categories(vendor_id, category_id);
+CREATE INDEX idx_vendor_menu_categories_category 
+    ON vendor_menu_categories(category_id);
+CREATE INDEX idx_vendor_menu_categories_vendor 
+    ON vendor_menu_categories(vendor_id);
 
 
 CREATE INDEX idx_menu_categories_vendor ON menu_categories(vendor_id);
@@ -151,7 +162,7 @@ CREATE TRIGGER set_updated_at_menu_categories
 
 -- Add-on groups (Sauce, Topping, Drink, etc.)
 CREATE TABLE addon_groups (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
     name VARCHAR(100) NOT NULL,               -- e.g. "Sauce Addition"
     min_choices INT DEFAULT 0,                -- minimum required (e.g. 0)
     max_choices INT DEFAULT 10,               -- max allowed (e.g. 10 toppings)
@@ -162,8 +173,8 @@ CREATE INDEX idx_addon_groups_name ON addon_groups(name);
 
 -- Add-on options (anchovies, ranch, etc.)
 CREATE TABLE addon_options (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    group_id UUID NOT NULL REFERENCES addon_groups(id) ON DELETE CASCADE,
+     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    group_id TEXT NOT NULL REFERENCES addon_groups(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,               -- e.g. "Sauce Addition->Ranch,Topping Addition->Bacon"
     price DECIMAL(8,2) NOT NULL DEFAULT 0.0
 );
@@ -172,9 +183,9 @@ CREATE INDEX idx_addon_options_group ON addon_options(group_id);
 
 -- Link menu item to addon groups (pizza has both sauce + topping options)
 CREATE TABLE menu_item_addons (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    menu_item_id UUID NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
-    addon_group_id UUID NOT NULL REFERENCES addon_groups(id) ON DELETE CASCADE,
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    menu_item_id TEXT NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
+    addon_group_id TEXT NOT NULL REFERENCES addon_groups(id) ON DELETE CASCADE,
     UNIQUE(menu_item_id, addon_group_id)
 );
 
@@ -188,8 +199,8 @@ CREATE INDEX idx_menu_item_addons_menu_item
 
 -- Tracking popularity
 CREATE TABLE menu_item_stats (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    menu_item_id UUID NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
+     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    menu_item_id TEXT NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
     
     -- Engagement metrics
     order_count INT DEFAULT 0,
@@ -219,10 +230,10 @@ CREATE TRIGGER set_updated_at_menu_item_stats
 
 -- Favorites (user saves an item/restaurant for later)
 CREATE TABLE favorites (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     entity_type VARCHAR(50) NOT NULL,   -- 'restaurant' | 'menu_item'
-    entity_id UUID NOT NULL,             -- restaurant.id or menu_items.id
+    entity_id TEXT NOT NULL,             -- restaurant.id or menu_items.id
     created_at TIMESTAMP DEFAULT NOW(),
     UNIQUE(user_id, entity_type, entity_id)
 );

@@ -27,3 +27,22 @@ type Vendor struct {
 	PromoText             string   `json:"promoText" db:"promo_text"`
 	VendorNotice          string   `json:"vendorNotice" db:"vendor_notice"`
 }
+
+
+type Category struct {
+	CategoryId  string `json:"category_id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Items       []MenuItem
+}
+type VendorPopulated struct {
+	Vendor
+	Address    *VendorAddress         `json:"address,omitempty"`
+	MenuCategories []Category `json:"categories"`
+}
+
+type VendorBulkInput struct{
+	Vendor
+	Address    *VendorAddress         `json:"address,omitempty"`
+}
+

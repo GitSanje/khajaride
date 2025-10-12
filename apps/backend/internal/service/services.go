@@ -9,6 +9,7 @@ import (
 type Services struct {
 	Auth *AuthService
 	Job  *job.JobService
+	Vendor *VendorService
 	User *UserService
 }
 
@@ -19,5 +20,6 @@ func NewServices(s *server.Server, repos *repository.Repositories) (*Services, e
 		Job:  s.Job,
 		Auth: authService,
 		User:  NewUserService(s, repos.User),
+		Vendor: NewVendorService(s, repos.Vendor),
 	}, nil
 }

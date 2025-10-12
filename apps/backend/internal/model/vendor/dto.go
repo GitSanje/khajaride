@@ -1,7 +1,9 @@
 package vendor
 
-import "github.com/go-playground/validator/v10"
-
+import (
+	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
+)
 
 // ------------------------- Vendor -------------------------
 
@@ -19,7 +21,7 @@ type CreateVendorPayload struct {
 	MinOrderAmount        *float64 `json:"minOrderAmount,omitempty" validate:"omitempty,min=0"`
 	DeliveryTimeEstimate  *string  `json:"deliveryTimeEstimate,omitempty"`
 	IsOpen                *bool    `json:"isOpen,omitempty"`
-	OpeningHours          *OpeningHours `json:"openingHours,omitempty" validate:"omitempty,dive,keys,required,endkeys,required"`
+	OpeningHours          *string `json:"openingHours,omitempty"`
 	VendorListingImage    *string  `json:"vendorListingImageName,omitempty"`
 	VendorLogoImage       *string  `json:"vendorLogoImageName,omitempty"`
 	VendorType            *string  `json:"vendorType,omitempty" validate:"omitempty,oneof=restaurant bakery alcohol cafe"`
@@ -110,6 +112,15 @@ func (q *GetVendorsQuery) Validate() error {
 	}
 
 	return nil
+}
+
+type GetVendorByIDPayload struct {
+	ID uuid.UUID `param:"id" validate:"required,uuid"`
+}
+
+func (p *GetVendorByIDPayload) Validate() error {
+	validate := validator.New()
+	return validate.Struct(p)
 }
 
 
@@ -266,6 +277,53 @@ func (p *DeleteMenuItemPayload) Validate() error {
 	validate := validator.New()
 	return validate.Struct(p)
 }
+
+// ---------------- Menu Category ----------------
+
+type CreateMenuCategoryPayload struct {
+
+	Name        string  `json:"name" validate:"required,min=2,max=100"`
+	Description *string `json:"description,omitempty"`
+	Position    *int    `json:"position,omitempty"`
+}
+
+func (p *CreateMenuCategoryPayload) Validate() error {
+	validate := validator.New()
+	return validate.Struct(p)
+}
+
+type UpdateMenuCategoryPayload struct {
+	ID          string  `json:"id" validate:"required,uuid4"`
+	Name        *string `json:"name,omitempty" validate:"omitempty,min=2,max=100"`
+	Description *string `json:"description,omitempty"`
+	Position    *int    `json:"position,omitempty"`
+}
+
+func (p *UpdateMenuCategoryPayload) Validate() error {
+	validate := validator.New()
+	return validate.Struct(p)
+}
+
+type DeleteMenuCategoryPayload struct {
+	ID string `param:"id" validate:"required,uuid4"`
+}
+
+func (p *DeleteMenuCategoryPayload) Validate() error {
+	validate := validator.New()
+	return validate.Struct(p)
+}
+
+type GetMenuCategoryByIDPayload struct {
+	ID string `param:"id" validate:"required,uuid4"`
+}
+
+func (p *GetMenuCategoryByIDPayload) Validate() error {
+	validate := validator.New()
+	return validate.Struct(p)
+}
+
+
+
 
 // ------------------------- Addon Group / Option -------------------------
 
