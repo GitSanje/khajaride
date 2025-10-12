@@ -9,6 +9,7 @@ import { ClerkProvider } from '@clerk/clerk-react';
 import { RouterProvider } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import router from './router.tsx';
+import { RestaurantsDataProvider } from './hooks/use-restaturants.tsx';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,7 +27,8 @@ const clerkPubKey = env.VITE_CLERK_PUBLISHABLE_KEY;
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ClerkProvider publishableKey={clerkPubKey}>
+    <RestaurantsDataProvider>
+      <ClerkProvider publishableKey={clerkPubKey}>
 
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
@@ -36,5 +38,6 @@ createRoot(document.getElementById('root')!).render(
         </ThemeProvider>
       </QueryClientProvider>
     </ClerkProvider>
+    </RestaurantsDataProvider>
   </StrictMode>,
 )

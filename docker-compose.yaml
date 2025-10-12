@@ -43,8 +43,36 @@ services:
     volumes:
       - ./data:/data
     command: server /data --console-address ":9001"
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node     # Run in single-node mode
+      - xpack.security.enabled=false   # Disable security for local dev
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m # Memory limit (adjust as needed)
+    ports:
+      - "9200:9200"
+      - "9300:9300" # Optional: for cluster communication
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+   kibana:
+    image: docker.elastic.co/kibana/kibana:8.15.0
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200  # Connect to Elasticsearch container
+    ports:
+      - "5601:5601"                                    # Kibana web UI
+    depends_on:
+      elasticsearch:
+        condition: service_healthy      
 
 volumes:
   pgdata:
   pgadmindata:
   redisdata:
+  esdata:

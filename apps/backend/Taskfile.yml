@@ -22,6 +22,10 @@ tasks:
     desc: run the cmd/khajaride application
     cmds:
     - go run ./cmd/khajaride
+  search-init:
+    desc: run the cmd/search-init
+    cmds:
+    - go run ./cmd/search-init
 
   migrations:new:
     desc: create a new database migration

@@ -113,7 +113,7 @@ CREATE TABLE menu_items (
     updated_at TIMESTAMP DEFAULT NOW()
 
 )
-
+CREATE INDEX idx_menu_items_name ON menu_items(name);
 CREATE INDEX idx_menu_items_vendor ON menu_items(vendor_id);
 CREATE INDEX idx_menu_items_category ON menu_items(category_id);
 CREATE INDEX idx_menu_items_keywords ON menu_items USING GIN (to_tsvector('english', keywords));

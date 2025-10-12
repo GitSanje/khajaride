@@ -20,7 +20,12 @@ type Config struct {
 	Integration   IntegrationConfig    `koanf:"integration" validate:"required"`
 	Observability *ObservabilityConfig `koanf:"observability"`
 	Webhooks      *WebhookConfig       `koanf:"webhooks"`
+	Elasticsearch  *ElasticsearchConfig `koanf:"elasticsearch"`
 
+}
+
+type ElasticsearchConfig struct {
+	Address string `koanf:"address" validate:"required"`
 }
 
 type Primary struct {

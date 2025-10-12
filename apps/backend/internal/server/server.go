@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	elasticsearch "github.com/elastic/go-elasticsearch/v8"
 	"github.com/gitSanje/khajaride/internal/config"
 	"github.com/gitSanje/khajaride/internal/database"
 	"github.com/gitSanje/khajaride/internal/lib/job"
@@ -24,6 +25,7 @@ type Server struct {
 	Redis         *redis.Client
 	httpServer    *http.Server
 	Job           *job.JobService
+	Elasticsearch *elasticsearch.Client
 }
 
 func New(cfg *config.Config, logger *zerolog.Logger, loggerService *loggerPkg.LoggerService) (*Server, error) {
@@ -41,6 +43,22 @@ func New(cfg *config.Config, logger *zerolog.Logger, loggerService *loggerPkg.Lo
 	if loggerService != nil && loggerService.GetApplication() != nil {
 		redisClient.AddHook(nrredis.NewHook(redisClient.Options()))
 	}
+    
+	// Elasticsearch client
+	var esClient *elasticsearch.Client
+	if cfg.Elasticsearch != nil {
+		esCfg := elasticsearch.Config{
+			Addresses: []string{cfg.Elasticsearch.Address},
+		}
+
+		var err error
+		esClient, err = elasticsearch.NewClient(esCfg) 
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize Elasticsearch client: %w", err)
+		}
+		logger.Info().Msg("connected to the Elasticsearch")
+	}
+
 
 	// Test Redis connection
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -67,6 +85,7 @@ func New(cfg *config.Config, logger *zerolog.Logger, loggerService *loggerPkg.Lo
 		DB:            db,
 		Redis:         redisClient,
 		Job:           jobService,
+		Elasticsearch: esClient,
 	}
 
 	// Start metrics collection

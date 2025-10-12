@@ -5,6 +5,7 @@ import { ProtectedRoute } from "./components/protected-route";
 import DashboardPage from "./pages/dashboard/dashboard";
 import { AuthLayout } from "./components/layouts/auth-layout";
 import CustomerApp from "./pages/user/user-landing-page";
+import VendorMenuPage from "./pages/user/vendor-details";
 
 
 
@@ -37,10 +38,19 @@ const routes = createRoutesFromElements(
     />
 
      <Route
-      path="/khajaride"
+      path="/khajaride*"
       element={
         <ProtectedRoute>
           <CustomerApp />
+        </ProtectedRoute>
+      }
+    />
+
+    <Route
+      path="/khajaride/vendor/:vendorId"
+      element={
+        <ProtectedRoute>
+          <VendorMenuPage />
         </ProtectedRoute>
       }
     />
