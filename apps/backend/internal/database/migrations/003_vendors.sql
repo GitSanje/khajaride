@@ -85,7 +85,15 @@ CREATE TRIGGER set_updated_at_vendor_addresses
 --     FOR EACH ROW
 --     EXECUTE FUNCTION trigger_set_updated_at();
 
-
+-- Menu item categories (Appetizers, Momo, Newari, Pizza, Thali, etc.)
+CREATE TABLE menu_categories (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    name VARCHAR(150) NOT NULL,         -- Nepali/English name: e.g. "Momo", "Juice & Drinks"
+    description TEXT,
+    position INT DEFAULT 0,             -- ordering in UI
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
 -- Menu items
 CREATE TABLE menu_items (
 
@@ -111,8 +119,7 @@ CREATE TABLE menu_items (
     keywords TEXT,                        -- for full-text search
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
-
-)
+);
 CREATE INDEX idx_menu_items_name ON menu_items(name);
 CREATE INDEX idx_menu_items_vendor ON menu_items(vendor_id);
 CREATE INDEX idx_menu_items_category ON menu_items(category_id);
@@ -129,19 +136,11 @@ CREATE TRIGGER set_updated_at_menu_items
     EXECUTE FUNCTION trigger_set_updated_at();
 
 
--- Menu item categories (Appetizers, Momo, Newari, Pizza, Thali, etc.)
-CREATE TABLE menu_categories (
-    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
-    name VARCHAR(150) NOT NULL,         -- Nepali/English name: e.g. "Momo", "Juice & Drinks"
-    description TEXT,
-    position INT DEFAULT 0,             -- ordering in UI
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-);
+
 
 CREATE TABLE vendor_menu_categories (
-    vendor_id UUID NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
-    category_id INT NOT NULL REFERENCES menu_categories(id) ON DELETE CASCADE,
+    vendor_id TEXT NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
+    category_id TEXT NOT NULL REFERENCES menu_categories(id) ON DELETE CASCADE,
     PRIMARY KEY (vendor_id, category_id)
 );
 CREATE UNIQUE INDEX idx_vendor_menu_categories_unique 
@@ -152,8 +151,8 @@ CREATE INDEX idx_vendor_menu_categories_vendor
     ON vendor_menu_categories(vendor_id);
 
 
-CREATE INDEX idx_menu_categories_vendor ON menu_categories(vendor_id);
 
+    
 CREATE TRIGGER set_updated_at_menu_categories
     BEFORE UPDATE ON menu_categories
     FOR EACH ROW

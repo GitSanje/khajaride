@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/gitSanje/khajaride/internal/model/user"
@@ -66,6 +67,18 @@ func strPtr(s string) *string {
 	}
 	return &s
 }
+func getInt(m map[string]interface{}, key string) int {
+    if val, ok := m[key]; ok {
+        switch v := val.(type) {
+        case float64:
+            return int(v)
+        case int:
+            return v
+        }
+    }
+    return 0
+}
+
 
 
 // ---------- Interfaces & Structs ----------
@@ -143,41 +156,53 @@ func MapClerkUserToCreateUser(data json.RawMessage) (*user.CreateUserPayload, er
 
 func TransformFoodManduVendors(flatJSON []byte) ([]vendor.VendorBulkInput, error) {
 	
-	var rawVendors []map[string]interface{}
-	if err := json.Unmarshal(flatJSON, &rawVendors); err != nil {
+	var vendorMapData map[string]interface{}
+	if err := json.Unmarshal(flatJSON, &vendorMapData); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal: %w", err)
 	}
+   
+	vendorMapVendors, ok := vendorMapData["vendors"].([]interface{})
+	if !ok {
+		return nil, fmt.Errorf(`key "vendors" not found or not an array`)
+	}
+	vendors := make([]vendor.VendorBulkInput, 0, len(vendorMapVendors))
 
-	vendors := make([]vendor.VendorBulkInput, 0, len(rawVendors))
+	for _, raw:= range vendorMapVendors {
+       vendorMap, ok := raw.(map[string]interface{})
+	   if !ok {
+			continue
+		}
 
-	for _, raw := range rawVendors {
 		v := vendor.VendorBulkInput{
+			
 			Vendor: vendor.Vendor{
-				Name:              getString(raw, "Name"),
+				ID: strconv.Itoa(getInt(vendorMap, "Id")),
+				Name:              getString(vendorMap, "Name"),
 				About:             "",
-				Cuisine:           getString(raw, "Cuisine"),
-				Rating:            getFloat(raw, "VendorRating"),
-				DeliveryAvailable: getBool(raw, "AcceptsDeliveryOrder"),
-				PickupAvailable:   getBool(raw, "AcceptsTakeoutOrder"),
-				IsFeatured:        getBool(raw, "IsFeaturedVendor"),
-				PromoText:         getString(raw, "PromoText"),
-				VendorNotice:      getString(raw, "VendorNotice"),
-				OpeningHours:      getStringPtr(raw, "OpeningHours"),
-				VendorListingImage: getStringPtrFrom(raw, "VendorListingWebImageName"),
-				VendorLogoImage:    getStringPtrFrom(raw, "VendorCoverImageName"),
-				VendorType:         getStringPtrFrom(raw, "VendorType"),
+				Cuisine:           getString(vendorMap, "Cuisine"),
+				Rating:            getFloat(vendorMap, "VendorRating"),
+				DeliveryAvailable: getBool(vendorMap, "AcceptsDeliveryOrder"),
+				PickupAvailable:   getBool(vendorMap, "AcceptsTakeoutOrder"),
+				IsFeatured:        getBool(vendorMap, "IsFeaturedVendor"),
+				PromoText:         getString(vendorMap, "PromoText"),
+				VendorNotice:      getString(vendorMap, "VendorNotice"),
+				OpeningHours:      getStringPtr(vendorMap, "OpeningHours"),
+				VendorListingImage: getStringPtrFrom(vendorMap, "VendorListingWebImageName"),
+				VendorLogoImage:    getStringPtrFrom(vendorMap, "VendorCoverImageName"),
+				VendorType:         getStringPtrFrom(vendorMap, "VendorType"),
 				CuisineTags: strings.Split(
-					strings.TrimSpace(getString(raw, "CuisineTags")),
+					strings.TrimSpace(getString(vendorMap, "CuisineTags")),
 					"|",
 				),
+				
 			},
 			Address: &vendor.VendorAddress{
-				StreetAddress: getString(raw, "Address1"),
+				StreetAddress: getString(vendorMap, "Address1"),
 				City:          "", // optional, if not in JSON
 				State:         "",
 				ZipCode:       "",
-				Latitude:      getFloat(raw, "LocationLat"),
-				Longitude:     getFloat(raw, "LocationLng"),
+				Latitude:      getFloat(vendorMap, "LocationLat"),
+				Longitude:     getFloat(vendorMap, "LocationLng"),
 			},
 		}
 		vendors = append(vendors, v)

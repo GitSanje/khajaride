@@ -1,9 +1,9 @@
 package vendor
 
-import "github.com/gitSanje/khajaride/internal/model"
 
 type Vendor struct {
-	model.Base
+	// model.Base
+	ID string `json:"id" db:"id"`
 	Name                  string   `json:"name" db:"name"`
 	About                 string   `json:"about" db:"about"`
 	Cuisine               string   `json:"cuisine" db:"cuisine"`

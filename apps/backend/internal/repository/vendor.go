@@ -211,11 +211,10 @@ func (r *VendorRepository) BulkInsertVendors(ctx context.Context, vendors []vend
 			v.ID,         
 			v.Name,                     // name
 			v.About,                    // about
+			v.Rating,
 			v.Cuisine,                  // cuisine
-			v.Phone,                    // phone
 			v.DeliveryAvailable,        // delivery_available
 			v.PickupAvailable,          // pickup_available
-			v.GroupOrderAvailable,      // group_order_available
 			v.DeliveryFee,              // delivery_fee
 			v.MinOrderAmount,           // min_order_amount
 			v.DeliveryTimeEstimate,     // delivery_time_estimate
@@ -224,7 +223,6 @@ func (r *VendorRepository) BulkInsertVendors(ctx context.Context, vendors []vend
 			v.VendorListingImage,          // vendor_listing_image_name
 			v.VendorLogoImage,      // vendor_logo_image_name
 			v.VendorType,               // vendor_type
-			v.IsFeatured,               // is_featured
 			v.CuisineTags,              // cuisine_tags (TEXT[])
 			v.PromoText,                // promo_text
 			v.VendorNotice,             // vendor_notice
@@ -232,7 +230,7 @@ func (r *VendorRepository) BulkInsertVendors(ctx context.Context, vendors []vend
 
 		addressRows = append(addressRows, []interface{}{
 			uuid.New().String(),
-			v.Address.VendorID,
+			v.ID,
 			v.Address.StreetAddress,
 			v.Address.City,
 			v.Address.State,
@@ -249,11 +247,10 @@ func (r *VendorRepository) BulkInsertVendors(ctx context.Context, vendors []vend
 			"id",
 			"name",
 			"about",
+			"rating",
 			"cuisine",
-			"phone",
 			"delivery_available",
 			"pickup_available",
-			"group_order_available",
 			"delivery_fee",
 			"min_order_amount",
 			"delivery_time_estimate",
@@ -262,7 +259,6 @@ func (r *VendorRepository) BulkInsertVendors(ctx context.Context, vendors []vend
 			"vendor_listing_image_name",
 			"vendor_logo_image_name",
 			"vendor_type",
-			"is_featured",
 			"cuisine_tags",
 			"promo_text",
 			"vendor_notice",

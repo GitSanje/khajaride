@@ -11,6 +11,6 @@ import (
 func registerVendorRoutes(r *echo.Group, h *handler.VendorHandler, auth *middleware.AuthMiddleware) {
 	// Protect all /users routes with auth middleware
 	vendor := r.Group("/vendors")
-	vendor.POST("/bulk", h.CreateVendors)      // POST /users
+	vendor.POST("/bulk", h.CreateVendors)      
 
 }

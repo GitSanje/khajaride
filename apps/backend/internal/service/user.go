@@ -156,7 +156,7 @@ func (s *UserService) CreateAddress(ctx echo.Context, userID string, payload *us
         return nil, err
     }
 
-    logger.Info().Str("address_id", address.ID.String()).Msg("Address created successfully")
+    logger.Info().Str("address_id", address.ID).Msg("Address created successfully")
     return address, nil
 }
 
@@ -204,7 +204,7 @@ func (s *UserService) UpdateAddress(ctx echo.Context, payload *user.UpdateAddres
         return nil, err
     }
 
-    logger.Info().Str("address_id", updatedAddress.ID.String()).Msg("Address updated successfully")
+    logger.Info().Str("address_id", updatedAddress.ID).Msg("Address updated successfully")
     return updatedAddress, nil
 }
 
