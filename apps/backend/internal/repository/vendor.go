@@ -295,6 +295,85 @@ func (r *VendorRepository) BulkInsertVendors(ctx context.Context, vendors []vend
 
 }
 
+
+
+func (r *VendorRepository) BulkInsertMenuData(ctx context.Context, categories []vendor.MenuCategory, items []vendor.MenuItem) error {
+	tx, err := r.server.DB.Pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	// ------------------- BULK INSERT CATEGORIES -------------------
+	categoryRows := make([][]interface{}, 0, len(categories))
+	for _, c := range categories {
+		categoryRows = append(categoryRows, []interface{}{
+			c.ID,
+			c.Name,
+			c.Description,
+		})
+	}
+
+	if len(categoryRows) > 0 {
+		_, err = tx.CopyFrom(
+			ctx,
+			pgx.Identifier{"menu_categories"},
+			[]string{"id", "name", "description"},
+			pgx.CopyFromRows(categoryRows),
+		)
+		if err != nil {
+			return fmt.Errorf("failed bulk insert categories: %w", err)
+		}
+	}
+
+	// ------------------- BULK INSERT MENU ITEMS -------------------
+	itemRows := make([][]interface{}, 0, len(items))
+	for _, i := range items {
+		itemRows = append(itemRows, []interface{}{
+			i.ID,
+			i.Name,
+			i.Description,
+			i.Image,
+			i.BasePrice,
+			i.OldPrice,
+			i.Keywords,
+			i.Tags,
+			i.CategoryID,
+			i.VendorID,
+		})
+	}
+
+	if len(itemRows) > 0 {
+		_, err = tx.CopyFrom(
+			ctx,
+			pgx.Identifier{"menu_items"},
+			[]string{
+				"id",
+				"name",
+				"description",
+				"image",
+				"base_price",
+				"old_price",
+				"keywords",
+				"tags",
+				"category_id",
+				"vendor_id",
+			},
+			pgx.CopyFromRows(itemRows),
+		)
+		if err != nil {
+			return fmt.Errorf("failed bulk insert menu items: %w", err)
+		}
+	}
+
+	// ------------------- COMMIT TRANSACTION -------------------
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
+}
+
 // ---------------- Vendor Address ----------------
 
 func (r *VendorRepository) CreateVendorAddress(ctx context.Context, payload *vendor.CreateVendorAddressPayload) (*vendor.VendorAddress, error) {

@@ -46,3 +46,4 @@ type VendorBulkInput struct{
 	Address    *VendorAddress         `json:"address,omitempty"`
 }
 
+

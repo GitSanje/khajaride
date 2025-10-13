@@ -3,6 +3,7 @@ package vendor
 import "github.com/gitSanje/khajaride/internal/model"
 
 type MenuItem struct {
+	ID string `json:"id" db:"id"`
 	model.Base
 	VendorID                string   `json:"vendorId" db:"vendor_id"`
 	CategoryID              string   `json:"categoryId" db:"category_id"`

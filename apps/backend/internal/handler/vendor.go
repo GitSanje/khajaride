@@ -74,3 +74,37 @@ func (h *VendorHandler) CreateVendors(c echo.Context) error {
 		"message": "vendors inserted successfully",
 	})
 }
+
+
+
+func (h *VendorHandler) CreateMenuItemsWithCategory(c echo.Context) error {
+    
+	// Try to get uploaded file first
+	file, err := c.FormFile("file")
+	var payload []byte
+   
+	if err != nil {
+      return  echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	} 
+
+	// File uploaded: read it
+	f, err := file.Open()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to open uploaded file")
+	}
+	defer f.Close()
+
+	payload, err = io.ReadAll(f)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to read uploaded file")
+	}
+	
+
+	if err := h.VendorService.CreateMenuItemsInBulk(c, payload); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{
+		"message": "menuItemsWithcategory inserted successfully",
+	})
+}

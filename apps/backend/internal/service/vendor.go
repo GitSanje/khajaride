@@ -35,3 +35,17 @@ func ( s *VendorService) CreateVendorInBulk ( ctx echo.Context, payload []byte )
     
     return  nil
 }
+
+
+func ( s *VendorService) CreateMenuItemsInBulk ( ctx echo.Context, payload []byte )  error{
+
+	menuItemBulkInputs,categoryBulkInputs, err := utils.TransformFoodManduMenuItems(payload)
+	if err != nil {
+      return  err
+	}
+	if err := s.vendorRepo.BulkInsertMenuData(ctx.Request().Context(), categoryBulkInputs, menuItemBulkInputs ); err != nil {
+		return  err
+	}
+    
+    return  nil
+}

@@ -211,3 +211,81 @@ func TransformFoodManduVendors(flatJSON []byte) ([]vendor.VendorBulkInput, error
 	return vendors, nil
 }
 
+
+
+func TransformFoodManduMenuItems(flatJSON []byte) ([]vendor.MenuItem, []vendor.MenuCategory, error) {
+	var rawMenuData map[string]interface{}
+
+	if err := json.Unmarshal(flatJSON, &rawMenuData); err != nil {
+		return nil, nil, fmt.Errorf("failed to unmarshal: %w", err)
+	}
+
+	uniqueCategoryId := make(map[int]struct{}) 
+	uniqueCategories := make([]vendor.MenuCategory, 0)
+	menuItems := make([]vendor.MenuItem, 0)
+
+	for vendorId, menuItemsByCategory := range rawMenuData {
+		categoryList, ok := menuItemsByCategory.([]interface{})
+		if !ok {
+			continue
+		}
+
+		for _, c := range categoryList {
+			categoryWithItems, ok := c.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			
+			idFloat, ok := categoryWithItems["categoryId"].(float64)
+			if !ok {
+				continue
+			}
+			cId := int(idFloat)
+
+			
+			if _, exists := uniqueCategoryId[cId]; !exists {
+				uniqueCategoryId[cId] = struct{}{}
+				category := vendor.MenuCategory{
+					ID:          strconv.Itoa(cId),
+					Name:        getString(categoryWithItems, "category"),
+					Description: getString(categoryWithItems, "categoryDesc"),
+				}
+				uniqueCategories = append(uniqueCategories, category)
+			}
+
+			
+			itemsList, ok := categoryWithItems["items"].([]interface{})
+			if !ok {
+				continue
+			}
+
+			for _, mi := range itemsList {
+				itemMap, ok := mi.(map[string]interface{})
+				if !ok {
+					continue
+				}
+
+				mItem := vendor.MenuItem{
+					ID:          strconv.Itoa(getInt(itemMap, "Id")),
+					Name:        getString(itemMap, "name"),
+					VendorID:    vendorId, // vendorId is string (map key)
+					Description: getString(itemMap, "productDesc"),
+					Image:       getString(itemMap, "ProductImage"),
+					BasePrice:   getFloat(itemMap, "price"),
+					OldPrice:    getFloat(itemMap, "oldprice"),
+					Keywords:    getString(itemMap, "Keyword"),
+					Tags: strings.Split(
+						strings.TrimSpace(getString(itemMap, "itemDisplayTag")),
+						"/",
+					),
+					CategoryID: strconv.Itoa(cId),
+				}
+
+				menuItems = append(menuItems, mItem)
+			}
+		}
+	}
+
+	return menuItems, uniqueCategories, nil
+}
