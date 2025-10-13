@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/gitSanje/khajaride/internal/lib/utils"
 	"github.com/gitSanje/khajaride/internal/middleware"
+	"github.com/gitSanje/khajaride/internal/model"
 	"github.com/gitSanje/khajaride/internal/model/vendor"
 	"github.com/gitSanje/khajaride/internal/repository"
 	"github.com/gitSanje/khajaride/internal/server"
@@ -64,4 +65,26 @@ func ( s *VendorService) CreateMenuItemsInBulk ( ctx echo.Context, payload []byt
 	}
     
     return  nil
+}
+
+
+func (s *VendorService) GetVendors(ctx echo.Context, query *vendor.GetVendorsQuery) (*model.PaginatedResponse[vendor.Vendor], error) {
+    logger := middleware.GetLogger(ctx)
+
+    
+    
+    vendorsPage, err := s.vendorRepo.GetVendors(ctx.Request().Context(), query)
+    if err != nil {
+        logger.Error().Err(err).Msg("Failed to fetch users from repository")
+        return nil, err
+    }
+
+    logger.Info().
+        Int("page", vendorsPage.Page).
+        Int("limit", vendorsPage.Limit).
+        Int("total", vendorsPage.Total).
+        Int("totalPages", vendorsPage.TotalPages).
+        Msg("Users fetched successfully")
+
+    return vendorsPage, nil
 }

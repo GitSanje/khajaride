@@ -14,8 +14,8 @@ func registerVendorRoutes(r *echo.Group, h *handler.VendorHandler, auth *middlew
 	vendor := r.Group("/vendors")
 	vendor.POST("/bulk", h.CreateVendors)
 	vendor.POST("/menuItemsWithCategory", h.CreateMenuItemsWithCategory)     
-
-
+    
+    vendor.GET("",h.GetVendors)
 	vendor.GET("/:id", h.GetVendorByID)
     
 

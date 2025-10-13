@@ -1686,7 +1686,7 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "items": {
+                    "data": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -1806,13 +1806,17 @@
                     },
                     "limit": {
                       "type": "number"
+                    },
+                    "totalPages": {
+                      "type": "number"
                     }
                   },
                   "required": [
-                    "items",
+                    "data",
                     "total",
                     "page",
-                    "limit"
+                    "limit",
+                    "totalPages"
                   ]
                 }
               }

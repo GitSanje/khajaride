@@ -31,14 +31,15 @@ import {
   type MenuData,
 } from "@/types"
 import { useRestaurants } from "@/hooks/use-restaturants"
+import { useGetAllVendors, type TGetVendorsQuery } from "@/api/hooks"
+import { useDebounce } from "@/api/hooks/use-debounce"
 
 
 
 export default function CustomerApp() {
 
   const { 
-    restaurants,
-    loading,
+    
     selectedRestaurant,
     menuCategories,
     menuItems,
@@ -53,33 +54,61 @@ export default function CustomerApp() {
 
    const [searchQuery, setSearchQuery] = useState("")
   const [searchLoading, setSearchLoading] = useState(false)
+  const [page, setPage] = useState(1);
+  const [sortBy, setSortBy] = useState<TGetVendorsQuery["sort"]>("updated_at");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const debouncedSearch = useDebounce(searchQuery, 300);
+
+   const { data: featuredvendorsData, isLoading: isFeaturedLoading } = useGetAllVendors({
+    query: {
+      page,
+      limit: 20,
+      search: debouncedSearch || undefined,
+      sort: sortBy,
+      order: sortOrder,
+      isFeatured : true
+    },
+  });
+
+  const { data: vendorsData, isLoading } = useGetAllVendors({
+    query: {
+      page,
+      limit: 20,
+      search: debouncedSearch || undefined,
+      sort: sortBy,
+      order: sortOrder,
+    },
+  });
+
+  const featuredvendors = featuredvendorsData?.data ?? [];
+  const vendors = vendorsData?.data ?? [];
 
   const [activeTab, setActiveTab] = useState("restaurants")
- const handleSearch = async (query: string) => {
-    setSearchQuery(query)
+//  const handleSearch = async (query: string) => {
+//     setSearchQuery(query)
 
-    if (query.trim() === "") {
-      loadRestaurants()
-      return
-    }
+//     if (query.trim() === "") {
+//       loadRestaurants()
+//       return
+//     }
 
-    setSearchLoading(true)
-    console.log("[v0] Searching restaurants with query:", query)
+//     setSearchLoading(true)
+//     console.log("[v0] Searching restaurants with query:", query)
 
-    try {
-      const filtered = restaurants.filter(
-        (restaurant) =>
-          restaurant.name.toLowerCase().includes(query.toLowerCase()) ||
-          restaurant.cuisine.toLowerCase().includes(query.toLowerCase()) ||
-          restaurant.cuisine_tags.some((tag) => tag.toLowerCase().includes(query.toLowerCase())),
-      )
-      setRestaurants(filtered)
-    } catch (error) {
-      console.error("[v0] Search error:", error)
-    } finally {
-      setSearchLoading(false)
-    }
-  }
+//     try {
+//       const filtered = restaurants.filter(
+//         (restaurant) =>
+//           restaurant.name.toLowerCase().includes(query.toLowerCase()) ||
+//           restaurant.cuisine.toLowerCase().includes(query.toLowerCase()) ||
+//           restaurant.cuisine_tags.some((tag) => tag.toLowerCase().includes(query.toLowerCase())),
+//       )
+//       setRestaurants(filtered)
+//     } catch (error) {
+//       console.error("[v0] Search error:", error)
+//     } finally {
+//       setSearchLoading(false)
+//     }
+//   }
  
 
 
@@ -143,7 +172,7 @@ export default function CustomerApp() {
                 <Input
                   placeholder="Search restaurants, cuisines, or dishes..."
                   value={searchQuery}
-                  onChange={(e) => handleSearch(e.target.value)}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 pr-4 py-3 text-base"
                 />
                 <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex gap-2">
@@ -159,7 +188,7 @@ export default function CustomerApp() {
             </div>
 
             {/* Loading State */}
-            {loading && (
+            {isLoading && (
               <div className="flex items-center justify-center py-12">
                 <div className="flex items-center gap-2">
                   <Loader2 className="w-6 h-6 animate-spin" />
@@ -169,22 +198,21 @@ export default function CustomerApp() {
             )}
 
             {/* Tabs */}
-            {!loading && (
+            {!isLoading && (
               <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
                 <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="restaurants">Restaurants ({restaurants.length})</TabsTrigger>
+                  <TabsTrigger value="restaurants">Restaurants ({vendors.length})</TabsTrigger>
                   <TabsTrigger value="menu">Menu</TabsTrigger>
                   <TabsTrigger value="orders">My Orders</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="restaurants" className="space-y-6">
                   {/* Featured Restaurants */}
-                  {restaurants.filter((r) => r.is_featured).length > 0 && (
+                  {featuredvendors.length > 0 && (
                     <div>
                       <h2 className="text-2xl font-bold mb-4">Featured Restaurants</h2>
                       <div className="grid md:grid-cols-2 gap-4">
-                        {restaurants
-                          .filter((r) => r.is_featured)
+                        {featuredvendors
                           .map((restaurant) => (
                             <Card
                               key={restaurant.id}
@@ -193,21 +221,21 @@ export default function CustomerApp() {
                             >
                               <div className="relative">
                                 <img
-                                  src={restaurant.vendor_listing_image_name || "/placeholder.svg"}
+                                  src={restaurant.vendorListingImage || "/placeholder.svg"}
                                   alt={restaurant.name}
                                   className="w-full h-48 object-cover rounded-t-lg"
                                 />
                                 <Button size="sm" variant="secondary" className="absolute top-2 right-2">
                                   <Heart className="w-4 h-4" />
                                 </Button>
-                                {!restaurant.is_open && (
+                                {!restaurant.isOpen && (
                                   <Badge variant="destructive" className="absolute top-2 left-2">
                                     Closed
                                   </Badge>
                                 )}
-                                {restaurant.promo_text && (
+                                {restaurant.promoText && (
                                   <Badge className="absolute bottom-2 left-2 bg-green-500">
-                                    {restaurant.promo_text}
+                                    {restaurant.promoText}
                                   </Badge>
                                 )}
                               </div>
@@ -220,24 +248,24 @@ export default function CustomerApp() {
                                   </div>
                                 </div>
                                 <p className="text-muted-foreground text-sm mb-2">{restaurant.cuisine}</p>
-                                <p className="text-muted-foreground text-xs mb-2">{restaurant.address}</p>
+                                {/* <p className="text-muted-foreground text-xs mb-2">{restaurant}</p> */}
                                 <div className="flex items-center justify-between text-sm mb-2">
                                   <div className="flex items-center gap-1">
                                     <Clock className="w-4 h-4 text-muted-foreground" />
-                                    <span>{restaurant.delivery_time_estimate}</span>
+                                    <span>{restaurant.deliveryTimeEstimate}</span>
                                   </div>
                                   <div className="flex items-center gap-1">
                                     <Truck className="w-4 h-4 text-muted-foreground" />
-                                    <span>Rs. {restaurant.delivery_fee}</span>
+                                    <span>Rs. {restaurant.deliveryFee}</span>
                                   </div>
                                 </div>
-                                {restaurant.min_order_amount > 0 && (
+                                {restaurant.minOrderAmount > 0 && (
                                   <p className="text-xs text-muted-foreground mb-2">
-                                    Min order: Rs. {restaurant.min_order_amount}
+                                    Min order: Rs. {restaurant.minOrderAmount}
                                   </p>
                                 )}
                                 <div className="flex gap-1 flex-wrap">
-                                  {restaurant.cuisine_tags.slice(0, 3).map((tag) => (
+                                  {restaurant.cuisineTags?.slice(0, 3).map((tag) => (
                                     <Badge key={tag} variant="secondary" className="text-xs">
                                       {tag}
                                     </Badge>
@@ -258,7 +286,7 @@ export default function CustomerApp() {
                     <h2 className="text-2xl font-bold mb-4">
                       {searchQuery ? `Search Results for "${searchQuery}"` : "All Restaurants"}
                     </h2>
-                    {restaurants.length === 0 ? (
+                    {vendors.length === 0 ? (
                       <div className="text-center py-12">
                         <h3 className="text-lg font-semibold mb-2">No restaurants found</h3>
                         <p className="text-muted-foreground mb-4">
@@ -271,7 +299,7 @@ export default function CustomerApp() {
                       </div>
                     ) : (
                       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {restaurants.map((restaurant) => (
+                        {vendors.map((restaurant) => (
                           <Card
                             key={restaurant.id}
                             className="hover:shadow-lg transition-shadow cursor-pointer"
@@ -279,11 +307,11 @@ export default function CustomerApp() {
                           >
                             <div className="relative">
                               <img
-                                src={restaurant.vendor_listing_image_name || "/placeholder.svg"}
+                                src={restaurant.vendorListingImage || "/placeholder.svg"}
                                 alt={restaurant.name}
                                 className="w-full h-32 object-cover rounded-t-lg"
                               />
-                              {!restaurant.is_open && (
+                              {!restaurant.isOpen && (
                                 <Badge variant="destructive" className="absolute top-2 left-2 text-xs">
                                   Closed
                                 </Badge>
@@ -299,8 +327,8 @@ export default function CustomerApp() {
                               </div>
                               <p className="text-muted-foreground text-xs mb-2">{restaurant.cuisine}</p>
                               <div className="flex items-center justify-between text-xs">
-                                <span>{restaurant.delivery_time_estimate}</span>
-                                <span>Rs. {restaurant.delivery_fee} delivery</span>
+                                <span>{restaurant.deliveryTimeEstimate}</span>
+                                <span>Rs. {restaurant.deliveryFee} delivery</span>
                               </div>
                             </CardContent>
                           </Card>
@@ -308,6 +336,34 @@ export default function CustomerApp() {
                       </div>
                     )}
                   </div>
+
+                   {/* Pagination */}
+                {vendorsData && vendorsData.totalPages > 1 && (
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">
+                      Showing {(page - 1) * 20 + 1} to{" "}
+                      {Math.min(page * 20, vendorsData.total)} of {vendorsData.total} tasks
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={page <= 1}
+                        onClick={() => setPage(page - 1)}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={page >= vendorsData.totalPages}
+                        onClick={() => setPage(page + 1)}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 </TabsContent>
 
                 <TabsContent value="menu" className="space-y-6">
@@ -315,10 +371,10 @@ export default function CustomerApp() {
                     <div>
                       <div className="mb-6">
                         <h2 className="text-2xl font-bold mb-2">
-                          {restaurants.find((r) => r.id === selectedRestaurant)?.name} Menu
+                          {vendors.find((r) => r.id === selectedRestaurant)?.name} Menu
                         </h2>
                         <p className="text-muted-foreground">
-                          {restaurants.find((r) => r.id === selectedRestaurant)?.cuisine} Cuisine
+                          {vendors.find((r) => r.id === selectedRestaurant)?.cuisine} Cuisine
                         </p>
                       </div>
 

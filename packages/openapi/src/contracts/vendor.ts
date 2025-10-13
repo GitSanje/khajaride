@@ -8,7 +8,8 @@ import {
   ZUpdateVendorPayload,
   ZDeleteVendorPayload,
   ZGetVendorsQuery,
-  ZVendorPopulated
+  ZVendorPopulated,
+  schemaWithPagination
 } from "@khajaride/zod";
 import { getSecurityMetadata } from "@/utils.js";
 
@@ -63,13 +64,8 @@ export const vendorContract = c.router({
     path: "/vendors",
     method: "GET",
     query: ZGetVendorsQuery,
-    responses: {
-      200: z.object({
-        items: z.array(ZVendor),
-        total: z.number(),
-        page: z.number(),
-        limit: z.number(),
-      }),
+    responses:{
+      200 : schemaWithPagination(ZVendor)
     },
     summary: "Get list of vendors with pagination/filter",
   metadata,

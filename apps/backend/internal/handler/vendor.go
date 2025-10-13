@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gitSanje/khajaride/internal/middleware"
+	"github.com/gitSanje/khajaride/internal/model"
 	"github.com/gitSanje/khajaride/internal/model/vendor"
 	"github.com/gitSanje/khajaride/internal/server"
 	"github.com/gitSanje/khajaride/internal/service"
@@ -122,4 +123,18 @@ func (h *VendorHandler) CreateMenuItemsWithCategory(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{
 		"message": "menuItemsWithcategory inserted successfully",
 	})
+}
+
+
+
+// ------------------- GET VENDORS (PAGINATED) -------------------
+func (h *VendorHandler) GetVendors(c echo.Context) error {
+	return Handle(
+		h.Handler,
+		func(c echo.Context, payload *vendor.GetVendorsQuery) (*model.PaginatedResponse[vendor.Vendor], error) {
+			return h.VendorService.GetVendors(c, payload)
+		},
+		http.StatusOK,
+		&vendor.GetVendorsQuery{},
+	)(c)
 }

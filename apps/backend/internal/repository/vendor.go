@@ -2,8 +2,11 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 
+	"github.com/gitSanje/khajaride/internal/model"
 	"github.com/gitSanje/khajaride/internal/model/vendor"
 	"github.com/gitSanje/khajaride/internal/server"
 	"github.com/google/uuid"
@@ -138,6 +141,8 @@ func (r *VendorRepository) UpdateVendor(ctx context.Context, payload *vendor.Upd
 	return &updatedVendor, nil
 }
 
+
+
 // ---------------- Delete Vendor ----------------
 
 func (r *VendorRepository) DeleteVendor(ctx context.Context, payload *vendor.DeleteVendorPayload) error {
@@ -150,8 +155,113 @@ func (r *VendorRepository) DeleteVendor(ctx context.Context, payload *vendor.Del
 }
 
 
+// ---------------- GET Vendors ----------------
+
+func (r *VendorRepository) GetVendors(ctx context.Context, query *vendor.GetVendorsQuery) (*model.PaginatedResponse[vendor.Vendor], error){
+
+	stmt := `SELECT * FROM vendors`
+	args := pgx.NamedArgs{}
+
+	conditions := []string{}
+
+	 if query.Search != nil {
+		conditions = append(conditions, "(name ILIKE @search OR about ILIKE @search OR cuisine ILIKE @search)")
+		args["search"] = "%" + *query.Search + "%"
+        
+
+	 }
+	 if query.Cuisine != nil {
+		conditions = append(conditions, "cuisine = @cuisine")
+		args["cuisine"] = *query.Cuisine
+	}
+	if query.IsOpen != nil {
+		conditions = append(conditions, "is_open = @is_open")
+		args["is_open"] = *query.IsOpen
+	}
+	if query.IsFeatured != nil {
+		conditions = append(conditions, "is_featured = @is_featured")
+		args["is_featured"] = *query.IsFeatured
+	}
+	if query.MinRating != nil {
+		conditions = append(conditions, "rating >= @min_rating")
+		args["min_rating"] = *query.MinRating
+	}
+
+	if len(conditions) > 0 {
+		stmt += " AND " + strings.Join(conditions, " AND ")
+	}
+
+	// ----------- Count total for pagination -----------
+	countStmt := "SELECT COUNT(*) FROM vendors"
+	if len(conditions) > 0 {
+		countStmt += " AND " + strings.Join(conditions, " AND ")
+	}
+
+	var total int
+	err := r.server.DB.Pool.QueryRow(ctx, countStmt, args).Scan(&total)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get total count of vendors: %w", err)
+	}
+
+	// ----------- Sorting -----------
+	sortField := "created_at"
+	if query.Sort != nil {
+		sortField = *query.Sort
+	}
+	stmt += " ORDER BY " + sortField
+
+	if query.Order != nil && *query.Order == "desc" {
+		stmt += " DESC"
+	} else {
+		stmt += " ASC"
+	}
 
 
+	// ----------- Pagination -----------
+	page := 1
+	limit := 10
+	if query.Page != nil {
+		page = *query.Page
+	}
+	if query.Limit != nil {
+		limit = *query.Limit
+	}
+
+	stmt += " LIMIT @limit OFFSET @offset"
+	args["limit"] = limit
+	args["offset"] = (page - 1) * limit
+
+	// ----------- Execute query -----------
+	rows, err := r.server.DB.Pool.Query(ctx, stmt, args)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute get vendors query: %w", err)
+	}
+	defer rows.Close()
+
+	vendors, err := pgx.CollectRows(rows, pgx.RowToStructByName[vendor.Vendor])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &model.PaginatedResponse[vendor.Vendor]{
+				Data:       []vendor.Vendor{},
+				Page:       page,
+				Limit:      limit,
+				Total:      0,
+				TotalPages: 0,
+			}, nil
+		}
+		return nil, fmt.Errorf("failed to collect vendors: %w", err)
+	}
+
+	return &model.PaginatedResponse[vendor.Vendor]{
+		Data:       vendors,
+		Page:       page,
+		Limit:      limit,
+		Total:      total,
+		TotalPages: (total + limit - 1) / limit,
+	}, nil
+
+
+}
 func (r *VendorRepository) GetVendorByID(ctx context.Context, payload *vendor.GetVendorByIDPayload) (*vendor.VendorPopulated, error) {
 	stmt := `SELECT 
 				v.*, 

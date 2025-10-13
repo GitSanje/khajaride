@@ -86,7 +86,7 @@ export const RestaurantsDataProvider = ({ children }: RestaurantDataProviderProp
       setLoading(false)
     }
   }
-   
+  
 
  
 
