@@ -1,10 +1,11 @@
 package handler
 
 import (
-	
 	"io"
 	"net/http"
+
 	"github.com/gitSanje/khajaride/internal/middleware"
+	"github.com/gitSanje/khajaride/internal/model/vendor"
 	"github.com/gitSanje/khajaride/internal/server"
 	"github.com/gitSanje/khajaride/internal/service"
 	"github.com/labstack/echo/v4"
@@ -26,11 +27,22 @@ func NewVendorHandler(s *server.Server, vs *service.VendorService) *VendorHandle
 }
 
 
-type CreateVendorsPayload struct{}
 
-func (p *CreateVendorsPayload) Validate() error {
-	return nil
+
+// ------------------- GET VENDOR BY ID -------------------
+func (h *VendorHandler) GetVendorByID(c echo.Context) error {
+	return Handle(
+		h.Handler,
+		func(c echo.Context, payload *vendor.GetVendorByIDPayload) (*vendor.VendorPopulated, error) {
+			return h.VendorService.GetVendorByID(c, payload)
+		},
+		http.StatusOK,
+		&vendor.GetVendorByIDPayload{},
+	)(c)
 }
+
+
+
 
 
 // curl -X POST http://localhost:8080/api/v1/vendors/bulk \
@@ -76,6 +88,9 @@ func (h *VendorHandler) CreateVendors(c echo.Context) error {
 }
 
 
+// curl -X POST http://localhost:8080/api/v1/vendors/menuItemsWithCategory \
+//   -F "file=@foodmandu_all_menu_items.json" \
+//   -H "Content-Type: multipart/form-data"
 
 func (h *VendorHandler) CreateMenuItemsWithCategory(c echo.Context) error {
     

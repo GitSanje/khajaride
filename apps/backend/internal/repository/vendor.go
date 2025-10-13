@@ -154,39 +154,40 @@ func (r *VendorRepository) DeleteVendor(ctx context.Context, payload *vendor.Del
 
 func (r *VendorRepository) GetVendorByID(ctx context.Context, payload *vendor.GetVendorByIDPayload) (*vendor.VendorPopulated, error) {
 	stmt := `SELECT 
-	       v.*, 
-		   to_jsonb(va.*) AS address,
-		   COALESCE( 
-		  jsonb_agg( 
-		    jsonb_build_object(
-			    'category_id', mc.id,
-                'name', mc.name,
-                'description', mc.description,
-				'items', COALESCE(mi.menu_item, '[]'::jsonb)
-			)
-		  ) FILTER (WHERE mc.id IS NOT NULL), '[]'::jsonb
-		) AS categories
-		 FROM vendors v
-		 LEFT JOIN vendor_addresses va ON v.id = va.vendor_id
-		 LEFT JOIN vendor_menu_categories vmc ON vmc.vendor_id = v.id
-		 LEFT JOIN menu_categories mc ON mc.id = vmc.category_id
-		 LEFT JOIN LATERAL (
-			SELECT to_jsonb(mi.*) AS menu_item
-			FROM menu_items  mi
-			WHERE mi.category_id = mc.id and mi.vendor_id = @ID
-			) mi ON true,
-		 WHERE v.id = @ID
-		 GROUP BY v.id, va.id
+				v.*, 
+				to_jsonb(va.*) AS address,
+				COALESCE( 
+					jsonb_agg( 
+						jsonb_build_object(
+							'category_id', mc.id,
+							'name', mc.name,
+							'description', mc.description,
+							'items', COALESCE(mi.menu_items, '[]'::jsonb)
+						)
+					) FILTER (WHERE mc.id IS NOT NULL), '[]'::jsonb
+				) AS categories
+			FROM vendors v
+			LEFT JOIN vendor_addresses va ON v.id = va.vendor_id
+			LEFT JOIN vendor_menu_categories vmc ON vmc.vendor_id = v.id
+			LEFT JOIN menu_categories mc ON mc.id = vmc.category_id
+			LEFT JOIN LATERAL (
+				SELECT jsonb_agg(to_jsonb(mi.*)) AS menu_items
+				FROM menu_items mi
+				WHERE mi.category_id = mc.id AND mi.vendor_id = @VendorID
+			) mi ON true
+			WHERE v.id = @VendorID
+			GROUP BY v.id, va.id;
+
 	`
 	rows,err := r.server.DB.Pool.Query(ctx, stmt, pgx.NamedArgs{"VendorID": payload.ID})
 
     if err != nil {
-		return nil, fmt.Errorf("failed to execute get vendor by id query for vendor_id=%s: %w", payload.ID.String(), err)
+		return nil, fmt.Errorf("failed to execute get vendor by id query for vendor_id=%s: %w", payload.ID, err)
 	}
 
 	vendorItem, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[vendor.VendorPopulated])
 	if err != nil {
-		return nil, fmt.Errorf("failed to collect row from table:vendors for vendor=%s: %w", payload.ID.String(), err)
+		return nil, fmt.Errorf("failed to collect row from table:vendors for vendor=%s: %w", payload.ID, err)
 	}
 	
 	return &vendorItem, nil
@@ -297,7 +298,12 @@ func (r *VendorRepository) BulkInsertVendors(ctx context.Context, vendors []vend
 
 
 
-func (r *VendorRepository) BulkInsertMenuData(ctx context.Context, categories []vendor.MenuCategory, items []vendor.MenuItem) error {
+func (r *VendorRepository) BulkInsertMenuData(
+	ctx context.Context,
+	categories []vendor.MenuCategory,
+	items []vendor.MenuItem,
+	vendorcategories []vendor.VendorCategoryLink,
+) error {
 	tx, err := r.server.DB.Pool.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
@@ -305,16 +311,16 @@ func (r *VendorRepository) BulkInsertMenuData(ctx context.Context, categories []
 	defer tx.Rollback(ctx)
 
 	// ------------------- BULK INSERT CATEGORIES -------------------
-	categoryRows := make([][]interface{}, 0, len(categories))
-	for _, c := range categories {
-		categoryRows = append(categoryRows, []interface{}{
-			c.ID,
-			c.Name,
-			c.Description,
-		})
-	}
+	if len(categories) > 0 {
+		categoryRows := make([][]interface{}, 0, len(categories))
+		for _, c := range categories {
+			categoryRows = append(categoryRows, []interface{}{
+				c.ID,
+				c.Name,
+				c.Description,
+			})
+		}
 
-	if len(categoryRows) > 0 {
 		_, err = tx.CopyFrom(
 			ctx,
 			pgx.Identifier{"menu_categories"},
@@ -327,23 +333,23 @@ func (r *VendorRepository) BulkInsertMenuData(ctx context.Context, categories []
 	}
 
 	// ------------------- BULK INSERT MENU ITEMS -------------------
-	itemRows := make([][]interface{}, 0, len(items))
-	for _, i := range items {
-		itemRows = append(itemRows, []interface{}{
-			i.ID,
-			i.Name,
-			i.Description,
-			i.Image,
-			i.BasePrice,
-			i.OldPrice,
-			i.Keywords,
-			i.Tags,
-			i.CategoryID,
-			i.VendorID,
-		})
-	}
+	if len(items) > 0 {
+		itemRows := make([][]interface{}, 0, len(items))
+		for _, i := range items {
+			itemRows = append(itemRows, []interface{}{
+				i.ID,
+				i.Name,
+				i.Description,
+				i.Image,
+				i.BasePrice,
+				i.OldPrice,
+				i.Keywords,
+				i.Tags,
+				i.CategoryID,
+				i.VendorID,
+			})
+		}
 
-	if len(itemRows) > 0 {
 		_, err = tx.CopyFrom(
 			ctx,
 			pgx.Identifier{"menu_items"},
@@ -366,6 +372,27 @@ func (r *VendorRepository) BulkInsertMenuData(ctx context.Context, categories []
 		}
 	}
 
+	// ------------------- BULK INSERT VENDOR–CATEGORY LINKS -------------------
+	if len(vendorcategories) > 0 {
+		linkRows := make([][]interface{}, 0, len(vendorcategories))
+		for _, vc := range vendorcategories {
+			linkRows = append(linkRows, []interface{}{
+				vc.VendorID,
+				vc.CategoryID,
+			})
+		}
+
+		_, err = tx.CopyFrom(
+			ctx,
+			pgx.Identifier{"vendor_menu_categories"},
+			[]string{"vendor_id", "category_id"},
+			pgx.CopyFromRows(linkRows),
+		)
+		if err != nil {
+			return fmt.Errorf("failed bulk insert vendor-menu-category links: %w", err)
+		}
+	}
+
 	// ------------------- COMMIT TRANSACTION -------------------
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
@@ -373,6 +400,7 @@ func (r *VendorRepository) BulkInsertMenuData(ctx context.Context, categories []
 
 	return nil
 }
+
 
 // ---------------- Vendor Address ----------------
 

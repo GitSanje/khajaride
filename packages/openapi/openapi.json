@@ -1369,6 +1369,1044 @@
           }
         ]
       }
+    },
+    "/v1/vendors": {
+      "post": {
+        "description": "Add vendor to database",
+        "summary": "Create a new vendor",
+        "tags": [
+          "Vendor"
+        ],
+        "parameters": [],
+        "operationId": "createVendor",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 150
+                  },
+                  "about": {
+                    "type": "string"
+                  },
+                  "cuisine": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "deliveryAvailable": {
+                    "type": "boolean"
+                  },
+                  "pickupAvailable": {
+                    "type": "boolean"
+                  },
+                  "groupOrderAvailable": {
+                    "type": "boolean"
+                  },
+                  "deliveryFee": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "minOrderAmount": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "deliveryTimeEstimate": {
+                    "type": "string"
+                  },
+                  "isOpen": {
+                    "type": "boolean"
+                  },
+                  "openingHours": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "vendorListingImageName": {
+                    "type": "string"
+                  },
+                  "vendorLogoImageName": {
+                    "type": "string"
+                  },
+                  "vendorType": {
+                    "type": "string",
+                    "enum": [
+                      "restaurant",
+                      "bakery",
+                      "alcohol",
+                      "cafe"
+                    ]
+                  },
+                  "isFeatured": {
+                    "type": "boolean"
+                  },
+                  "cuisineTags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "promoText": {
+                    "type": "string"
+                  },
+                  "vendorNotice": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "201",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "about": {
+                      "type": "string"
+                    },
+                    "cuisine": {
+                      "type": "string"
+                    },
+                    "phone": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "rating": {
+                      "type": "number"
+                    },
+                    "reviewCount": {
+                      "type": "number"
+                    },
+                    "deliveryAvailable": {
+                      "type": "boolean"
+                    },
+                    "pickupAvailable": {
+                      "type": "boolean"
+                    },
+                    "groupOrderAvailable": {
+                      "type": "boolean"
+                    },
+                    "deliveryFee": {
+                      "type": "number"
+                    },
+                    "minOrderAmount": {
+                      "type": "number"
+                    },
+                    "deliveryTimeEstimate": {
+                      "type": "string"
+                    },
+                    "isOpen": {
+                      "type": "boolean"
+                    },
+                    "openingHours": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "vendorListingImage": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "vendorLogoImage": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "vendorType": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "favoriteCount": {
+                      "type": "number"
+                    },
+                    "isFeatured": {
+                      "type": "boolean"
+                    },
+                    "cuisineTags": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "promoText": {
+                      "type": "string"
+                    },
+                    "vendorNotice": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "createdAt",
+                    "updatedAt",
+                    "name",
+                    "about",
+                    "cuisine",
+                    "rating",
+                    "reviewCount",
+                    "deliveryAvailable",
+                    "pickupAvailable",
+                    "groupOrderAvailable",
+                    "deliveryFee",
+                    "minOrderAmount",
+                    "deliveryTimeEstimate",
+                    "isOpen",
+                    "favoriteCount",
+                    "isFeatured",
+                    "promoText",
+                    "vendorNotice"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "get": {
+        "summary": "Get list of vendors with pagination/filter",
+        "tags": [
+          "Vendor"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "created_at",
+                "updated_at",
+                "rating",
+                "name"
+              ]
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 2
+            }
+          },
+          {
+            "name": "cuisine",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isOpen",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "isFeatured",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "minRating",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 5
+            }
+          }
+        ],
+        "operationId": "getVendors",
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "about": {
+                            "type": "string"
+                          },
+                          "cuisine": {
+                            "type": "string"
+                          },
+                          "phone": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "rating": {
+                            "type": "number"
+                          },
+                          "reviewCount": {
+                            "type": "number"
+                          },
+                          "deliveryAvailable": {
+                            "type": "boolean"
+                          },
+                          "pickupAvailable": {
+                            "type": "boolean"
+                          },
+                          "groupOrderAvailable": {
+                            "type": "boolean"
+                          },
+                          "deliveryFee": {
+                            "type": "number"
+                          },
+                          "minOrderAmount": {
+                            "type": "number"
+                          },
+                          "deliveryTimeEstimate": {
+                            "type": "string"
+                          },
+                          "isOpen": {
+                            "type": "boolean"
+                          },
+                          "openingHours": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "vendorListingImage": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "vendorLogoImage": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "vendorType": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "favoriteCount": {
+                            "type": "number"
+                          },
+                          "isFeatured": {
+                            "type": "boolean"
+                          },
+                          "cuisineTags": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "promoText": {
+                            "type": "string"
+                          },
+                          "vendorNotice": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "createdAt",
+                          "updatedAt",
+                          "name",
+                          "about",
+                          "cuisine",
+                          "rating",
+                          "reviewCount",
+                          "deliveryAvailable",
+                          "pickupAvailable",
+                          "groupOrderAvailable",
+                          "deliveryFee",
+                          "minOrderAmount",
+                          "deliveryTimeEstimate",
+                          "isOpen",
+                          "favoriteCount",
+                          "isFeatured",
+                          "promoText",
+                          "vendorNotice"
+                        ]
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    },
+                    "page": {
+                      "type": "number"
+                    },
+                    "limit": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "total",
+                    "page",
+                    "limit"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/vendors/{id}": {
+      "patch": {
+        "summary": "Update vendor by ID",
+        "tags": [
+          "Vendor"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "updateVendor",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 150
+                  },
+                  "about": {
+                    "type": "string"
+                  },
+                  "cuisine": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "deliveryAvailable": {
+                    "type": "boolean"
+                  },
+                  "pickupAvailable": {
+                    "type": "boolean"
+                  },
+                  "groupOrderAvailable": {
+                    "type": "boolean"
+                  },
+                  "deliveryFee": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "minOrderAmount": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "deliveryTimeEstimate": {
+                    "type": "string"
+                  },
+                  "isOpen": {
+                    "type": "boolean"
+                  },
+                  "openingHours": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "vendorListingImageName": {
+                    "type": "string"
+                  },
+                  "vendorLogoImageName": {
+                    "type": "string"
+                  },
+                  "vendorType": {
+                    "type": "string",
+                    "enum": [
+                      "restaurant",
+                      "bakery",
+                      "alcohol",
+                      "cafe"
+                    ]
+                  },
+                  "isFeatured": {
+                    "type": "boolean"
+                  },
+                  "cuisineTags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "promoText": {
+                    "type": "string"
+                  },
+                  "vendorNotice": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "about": {
+                      "type": "string"
+                    },
+                    "cuisine": {
+                      "type": "string"
+                    },
+                    "phone": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "rating": {
+                      "type": "number"
+                    },
+                    "reviewCount": {
+                      "type": "number"
+                    },
+                    "deliveryAvailable": {
+                      "type": "boolean"
+                    },
+                    "pickupAvailable": {
+                      "type": "boolean"
+                    },
+                    "groupOrderAvailable": {
+                      "type": "boolean"
+                    },
+                    "deliveryFee": {
+                      "type": "number"
+                    },
+                    "minOrderAmount": {
+                      "type": "number"
+                    },
+                    "deliveryTimeEstimate": {
+                      "type": "string"
+                    },
+                    "isOpen": {
+                      "type": "boolean"
+                    },
+                    "openingHours": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "vendorListingImage": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "vendorLogoImage": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "vendorType": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "favoriteCount": {
+                      "type": "number"
+                    },
+                    "isFeatured": {
+                      "type": "boolean"
+                    },
+                    "cuisineTags": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "promoText": {
+                      "type": "string"
+                    },
+                    "vendorNotice": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "createdAt",
+                    "updatedAt",
+                    "name",
+                    "about",
+                    "cuisine",
+                    "rating",
+                    "reviewCount",
+                    "deliveryAvailable",
+                    "pickupAvailable",
+                    "groupOrderAvailable",
+                    "deliveryFee",
+                    "minOrderAmount",
+                    "deliveryTimeEstimate",
+                    "isOpen",
+                    "favoriteCount",
+                    "isFeatured",
+                    "promoText",
+                    "vendorNotice"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Delete vendor by ID",
+        "tags": [
+          "Vendor"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "deleteVendor",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "204",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "get": {
+        "summary": "Get vendor details by ID",
+        "tags": [
+          "Vendor"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "getVendorByID",
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "about": {
+                      "type": "string"
+                    },
+                    "cuisine": {
+                      "type": "string"
+                    },
+                    "phone": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "rating": {
+                      "type": "number"
+                    },
+                    "reviewCount": {
+                      "type": "number"
+                    },
+                    "deliveryAvailable": {
+                      "type": "boolean"
+                    },
+                    "pickupAvailable": {
+                      "type": "boolean"
+                    },
+                    "groupOrderAvailable": {
+                      "type": "boolean"
+                    },
+                    "deliveryFee": {
+                      "type": "number"
+                    },
+                    "minOrderAmount": {
+                      "type": "number"
+                    },
+                    "deliveryTimeEstimate": {
+                      "type": "string"
+                    },
+                    "isOpen": {
+                      "type": "boolean"
+                    },
+                    "openingHours": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "vendorListingImage": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "vendorLogoImage": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "vendorType": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "favoriteCount": {
+                      "type": "number"
+                    },
+                    "isFeatured": {
+                      "type": "boolean"
+                    },
+                    "cuisineTags": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "promoText": {
+                      "type": "string"
+                    },
+                    "vendorNotice": {
+                      "type": "string"
+                    },
+                    "address": {
+                      "type": "object",
+                      "properties": {
+                        "vendorId": {
+                          "type": "string"
+                        },
+                        "streetAddress": {
+                          "type": "string"
+                        },
+                        "city": {
+                          "type": "string"
+                        },
+                        "state": {
+                          "type": "string"
+                        },
+                        "zipcode": {
+                          "type": "string"
+                        },
+                        "latitude": {
+                          "type": "number"
+                        },
+                        "longitude": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "vendorId",
+                        "streetAddress",
+                        "city",
+                        "state",
+                        "zipcode",
+                        "latitude",
+                        "longitude"
+                      ],
+                      "nullable": true
+                    },
+                    "menuCategories": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "categoryId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "createdAt": {
+                                  "type": "string"
+                                },
+                                "updatedAt": {
+                                  "type": "string"
+                                },
+                                "vendorId": {
+                                  "type": "string"
+                                },
+                                "categoryId": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "description": {
+                                  "type": "string"
+                                },
+                                "basePrice": {
+                                  "type": "number"
+                                },
+                                "oldPrice": {
+                                  "type": "number"
+                                },
+                                "image": {
+                                  "type": "string"
+                                },
+                                "isAvailable": {
+                                  "type": "boolean"
+                                },
+                                "isVegetarian": {
+                                  "type": "boolean"
+                                },
+                                "isVegan": {
+                                  "type": "boolean"
+                                },
+                                "isPopular": {
+                                  "type": "boolean"
+                                },
+                                "isGlutenFree": {
+                                  "type": "boolean"
+                                },
+                                "spicyLevel": {
+                                  "type": "number"
+                                },
+                                "mostLikedRank": {
+                                  "type": "number"
+                                },
+                                "additionalServiceCharge": {
+                                  "type": "number"
+                                },
+                                "tags": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "portionSize": {
+                                  "type": "string"
+                                },
+                                "specialInstructions": {
+                                  "type": "string"
+                                },
+                                "keywords": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "createdAt",
+                                "updatedAt",
+                                "vendorId",
+                                "categoryId",
+                                "name",
+                                "description",
+                                "basePrice",
+                                "oldPrice",
+                                "image",
+                                "isAvailable",
+                                "isVegetarian",
+                                "isVegan",
+                                "isPopular",
+                                "isGlutenFree",
+                                "spicyLevel",
+                                "mostLikedRank",
+                                "additionalServiceCharge",
+                                "portionSize",
+                                "specialInstructions",
+                                "keywords"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "categoryId",
+                          "name",
+                          "description"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "createdAt",
+                    "updatedAt",
+                    "name",
+                    "about",
+                    "cuisine",
+                    "rating",
+                    "reviewCount",
+                    "deliveryAvailable",
+                    "pickupAvailable",
+                    "groupOrderAvailable",
+                    "deliveryFee",
+                    "minOrderAmount",
+                    "deliveryTimeEstimate",
+                    "isOpen",
+                    "favoriteCount",
+                    "isFeatured",
+                    "promoText",
+                    "vendorNotice"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
     }
   },
   "info": {

@@ -213,14 +213,19 @@ func TransformFoodManduVendors(flatJSON []byte) ([]vendor.VendorBulkInput, error
 
 
 
-func TransformFoodManduMenuItems(flatJSON []byte) ([]vendor.MenuItem, []vendor.MenuCategory, error) {
+func TransformFoodManduMenuItems(flatJSON []byte) ([]vendor.MenuItem, []vendor.MenuCategory, []vendor.VendorCategoryLink, error) {
 	var rawMenuData map[string]interface{}
 
 	if err := json.Unmarshal(flatJSON, &rawMenuData); err != nil {
-		return nil, nil, fmt.Errorf("failed to unmarshal: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to unmarshal: %w", err)
 	}
 
-	uniqueCategoryId := make(map[int]struct{}) 
+	// Deduplication sets
+	uniqueCategoryId := make(map[int]struct{})
+	uniqueMenuItemId := make(map[int]struct{})
+	vendorCategorySet := make(map[string]map[string]struct{})
+
+	// Result containers
 	uniqueCategories := make([]vendor.MenuCategory, 0)
 	menuItems := make([]vendor.MenuItem, 0)
 
@@ -236,14 +241,14 @@ func TransformFoodManduMenuItems(flatJSON []byte) ([]vendor.MenuItem, []vendor.M
 				continue
 			}
 
-			
+			// --- Extract category info ---
 			idFloat, ok := categoryWithItems["categoryId"].(float64)
 			if !ok {
 				continue
 			}
 			cId := int(idFloat)
 
-			
+			// --- Add unique category ---
 			if _, exists := uniqueCategoryId[cId]; !exists {
 				uniqueCategoryId[cId] = struct{}{}
 				category := vendor.MenuCategory{
@@ -254,7 +259,13 @@ func TransformFoodManduMenuItems(flatJSON []byte) ([]vendor.MenuItem, []vendor.M
 				uniqueCategories = append(uniqueCategories, category)
 			}
 
-			
+			// --- Track vendor–category link ---
+			if _, ok := vendorCategorySet[vendorId]; !ok {
+				vendorCategorySet[vendorId] = make(map[string]struct{})
+			}
+			vendorCategorySet[vendorId][strconv.Itoa(cId)] = struct{}{}
+
+			// --- Extract menu items under this category ---
 			itemsList, ok := categoryWithItems["items"].([]interface{})
 			if !ok {
 				continue
@@ -266,26 +277,45 @@ func TransformFoodManduMenuItems(flatJSON []byte) ([]vendor.MenuItem, []vendor.M
 					continue
 				}
 
-				mItem := vendor.MenuItem{
-					ID:          strconv.Itoa(getInt(itemMap, "Id")),
-					Name:        getString(itemMap, "name"),
-					VendorID:    vendorId, // vendorId is string (map key)
-					Description: getString(itemMap, "productDesc"),
-					Image:       getString(itemMap, "ProductImage"),
-					BasePrice:   getFloat(itemMap, "price"),
-					OldPrice:    getFloat(itemMap, "oldprice"),
-					Keywords:    getString(itemMap, "Keyword"),
-					Tags: strings.Split(
-						strings.TrimSpace(getString(itemMap, "itemDisplayTag")),
-						"/",
-					),
-					CategoryID: strconv.Itoa(cId),
-				}
+				itemId := getInt(itemMap, "productId")
+				if _, exists := uniqueMenuItemId[itemId]; !exists {
+					
+				
+					uniqueMenuItemId[itemId] = struct{}{}
 
-				menuItems = append(menuItems, mItem)
+					mItem := vendor.MenuItem{
+						ID:          strconv.Itoa(itemId),
+						Name:        getString(itemMap, "name"),
+						VendorID:    vendorId,
+						Description: getString(itemMap, "productDesc"),
+						Image:       getString(itemMap, "ProductImage"),
+						BasePrice:   getFloat(itemMap, "price"),
+						OldPrice:    getFloat(itemMap, "oldprice"),
+						Keywords:    getString(itemMap, "Keyword"),
+						Tags: strings.Split(
+							strings.TrimSpace(getString(itemMap, "itemDisplayTag")),
+							"/",
+						),
+						CategoryID: strconv.Itoa(cId),
+					}
+				
+
+					menuItems = append(menuItems, mItem)
+			   }
 			}
 		}
 	}
 
-	return menuItems, uniqueCategories, nil
+	// --- Construct vendor-category links ---
+	vendorCategories := make([]vendor.VendorCategoryLink, 0)
+	for vendorID, cats := range vendorCategorySet {
+		for categoryID := range cats {
+			vendorCategories = append(vendorCategories, vendor.VendorCategoryLink{
+				VendorID:   vendorID,
+				CategoryID: categoryID,
+			})
+		}
+	}
+
+	return menuItems, uniqueCategories, vendorCategories, nil
 }

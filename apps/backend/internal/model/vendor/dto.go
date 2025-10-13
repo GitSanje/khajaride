@@ -2,7 +2,7 @@ package vendor
 
 import (
 	"github.com/go-playground/validator/v10"
-	"github.com/google/uuid"
+	
 )
 
 // ------------------------- Vendor -------------------------
@@ -115,7 +115,7 @@ func (q *GetVendorsQuery) Validate() error {
 }
 
 type GetVendorByIDPayload struct {
-	ID uuid.UUID `param:"id" validate:"required,uuid"`
+	ID string`param:"id" validate:"required"`
 }
 
 func (p *GetVendorByIDPayload) Validate() error {

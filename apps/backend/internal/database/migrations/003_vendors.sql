@@ -102,8 +102,8 @@ CREATE TABLE menu_items (
     category_id TEXT NOT NULL REFERENCES menu_categories(id) ON DELETE CASCADE,
     name VARCHAR(150) NOT NULL, -- e.g. "Chicken Momo (6 pcs)", "Dal Bhat Set"
     description TEXT,
-    base_price DECIMAL(8,2) NOT NULL,
-    old_price DECIMAL(8,2) DEFAULT 0.0,
+    base_price NUMERIC(10,2) NOT NULL,
+    old_price NUMERIC(10,2) DEFAULT 0.0,
     image TEXT,
     is_available BOOLEAN DEFAULT TRUE,
     is_vegetarian BOOLEAN DEFAULT FALSE,

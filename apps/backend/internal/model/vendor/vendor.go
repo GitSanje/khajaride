@@ -1,8 +1,10 @@
 package vendor
 
+import "github.com/gitSanje/khajaride/internal/model"
+
 
 type Vendor struct {
-	// model.Base
+	model.Base
 	ID string `json:"id" db:"id"`
 	Name                  string   `json:"name" db:"name"`
 	About                 string   `json:"about" db:"about"`
@@ -33,17 +35,22 @@ type Category struct {
 	CategoryId  string `json:"category_id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
-	Items       []MenuItem
+	Items       []MenuItem `json:"items"`
 }
 type VendorPopulated struct {
 	Vendor
 	Address    *VendorAddress         `json:"address,omitempty"`
-	MenuCategories []Category `json:"categories"`
+	Categories []Category `json:"categories"`
 }
 
 type VendorBulkInput struct{
 	Vendor
 	Address    *VendorAddress         `json:"address,omitempty"`
+}
+
+type VendorCategoryLink struct {
+	VendorID   string
+	CategoryID string
 }
 
 
