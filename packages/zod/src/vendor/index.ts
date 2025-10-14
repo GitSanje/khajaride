@@ -80,7 +80,7 @@ export const ZVendor =  ZBase.extend({
 // ----------------- VendorPopulated schema -----------------
 export const ZVendorPopulated = ZVendor.extend({
   address: ZVendorAddress.nullable().optional(),
-  menuCategories: z.array(ZCategory).optional(),
+  categories: z.array(ZCategory).optional(),
 });
 
 

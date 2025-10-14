@@ -11,6 +11,7 @@ type Services struct {
 	Job  *job.JobService
 	Vendor *VendorService
 	User *UserService
+	Search *SearchService
 }
 
 func NewServices(s *server.Server, repos *repository.Repositories) (*Services, error) {
@@ -21,5 +22,6 @@ func NewServices(s *server.Server, repos *repository.Repositories) (*Services, e
 		Auth: authService,
 		User:  NewUserService(s, repos.User),
 		Vendor: NewVendorService(s, repos.Vendor),
+		Search: NewSearchService(s, repos.Search),
 	}, nil
 }

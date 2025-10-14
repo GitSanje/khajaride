@@ -2256,7 +2256,7 @@
                       ],
                       "nullable": true
                     },
-                    "menuCategories": {
+                    "categories": {
                       "type": "array",
                       "items": {
                         "type": "object",

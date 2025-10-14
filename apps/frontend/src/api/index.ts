@@ -1,4 +1,4 @@
-import { API_URL } from "@/config/env";
+import { env } from "@/config/env";
 import { apiContract } from "@khajaride/openapi/contracts";
 import { useAuth } from "@clerk/clerk-react";
 import { initClient } from "@ts-rest/core";
@@ -31,7 +31,7 @@ export const useApiClient = ({ isBlob = false }: { isBlob?: boolean } = {}) => {
         try {
           const result = await axios.request({
             method: method as Method,
-            url: `${API_URL}/api${path}`,
+            url: `${env.VITE_API_URL}/api${path}`,
             headers: {
               ...headers,
               ...(token ? { Authorization: `Bearer ${token}` } : {}),

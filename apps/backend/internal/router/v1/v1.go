@@ -10,4 +10,5 @@ func RegisterV1Routes(router *echo.Group, handlers *handler.Handlers, middleware
 
 	registerUserRoutes(router, handlers.User, middleware.Auth)
 	registerVendorRoutes(router, handlers.Vendor, middleware.Auth)
+	registerSearchRoutes(router, handlers.Search, middleware.Auth)
 }

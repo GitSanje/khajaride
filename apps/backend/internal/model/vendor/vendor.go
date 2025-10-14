@@ -9,7 +9,7 @@ type Vendor struct {
 	Name                  string   `json:"name" db:"name"`
 	About                 string   `json:"about" db:"about"`
 	Cuisine               string   `json:"cuisine" db:"cuisine"`
-	Phone                 *string   `json:"phone" db:"phone"`
+	Phone                 *string  `json:"phone" db:"phone"`
 	Rating                float64  `json:"rating" db:"rating"`
 	ReviewCount           int      `json:"reviewCount" db:"review_count"`
 	DeliveryAvailable     bool     `json:"deliveryAvailable" db:"delivery_available"`
@@ -32,7 +32,7 @@ type Vendor struct {
 
 
 type Category struct {
-	CategoryId  string `json:"category_id"`
+	CategoryId  string `json:"categoryId"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Items       []MenuItem `json:"items"`

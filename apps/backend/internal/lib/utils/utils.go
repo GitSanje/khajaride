@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gitSanje/khajaride/internal/model/search"
 	"github.com/gitSanje/khajaride/internal/model/user"
 	"github.com/gitSanje/khajaride/internal/model/vendor"
 )
@@ -150,7 +151,7 @@ func MapClerkUserToCreateUser(data json.RawMessage) (*user.CreateUserPayload, er
 }
 
 
-//-----------------------------------BULK VENDOR INSERTION-----------------
+//-------------------- FOODMANDU VENDOR AND MENU TRANFORM FOR DB SCHEMA-----------------
 
 
 
@@ -318,4 +319,58 @@ func TransformFoodManduMenuItems(flatJSON []byte) ([]vendor.MenuItem, []vendor.M
 	}
 
 	return menuItems, uniqueCategories, vendorCategories, nil
+}
+
+
+
+
+//-------------------- FOODMANDU VENDOR AND MENU TRANFORM FOR ES-----------------
+
+func TransformFoodManduVendorsForES(flatJSON [] byte) ([]search.VendorIndex,error){
+
+
+	var rawVendorData map[string]interface{}
+
+	if err := json.Unmarshal(flatJSON, &rawVendorData); err != nil {
+		return  nil, fmt.Errorf("failed to unmarshal: %w", err)
+
+	}
+
+	 vendorMapVendors, ok := rawVendorData["vendors"].([]interface{})
+	 vendors := make([]search.VendorIndex, 0, len(vendorMapVendors))
+	if !ok {
+		return nil, fmt.Errorf(`key "vendors" not found or not an array`)
+	}
+	for _, raw := range vendorMapVendors{
+		vendorMap,ok := raw.(map[string]interface{})
+
+		if !ok {
+			continue
+		}
+
+		vendor := search.VendorIndex{
+			ID: strconv.Itoa(getInt(vendorMap, "Id")),
+				Name:              getString(vendorMap, "Name"),
+				About:             "",
+				Cuisine:           getString(vendorMap, "Cuisine"),
+				Rating:            getFloat(vendorMap, "VendorRating"),
+				DeliveryAvailable: getBool(vendorMap, "AcceptsDeliveryOrder"),
+				PickupAvailable:   getBool(vendorMap, "AcceptsTakeoutOrder"),
+				IsFeatured:        getBool(vendorMap, "IsFeaturedVendor"),
+				PromoText:         getString(vendorMap, "PromoText"),
+				VendorNotice:      getString(vendorMap, "VendorNotice"),
+				CuisineTags: getString(vendorMap, "CuisineTags"),
+				Location: search.GeoPoint{
+					Lat:getFloat(vendorMap, "LocationLat") ,
+					Lon: getFloat(vendorMap,"LocationLng"),
+				},
+				StreetAddress:  getString(vendorMap, "Address1"),
+					
+
+		}
+		vendors= append(vendors,vendor)
+
+
+	}
+   return  vendors,nil
 }

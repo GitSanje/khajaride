@@ -22,7 +22,6 @@ type MenuItem struct {
 	AdditionalServiceCharge float64  `json:"additionalServiceCharge" db:"additional_service_charge"`
 	Tags                    []string `json:"tags" db:"tags"`
 	PortionSize             string   `json:"portionSize" db:"portion_size"`
-	SpecialInstructions     string   `json:"specialInstructions" db:"special_instructions"`
 	Keywords                string   `json:"keywords" db:"keywords"`
 }
 

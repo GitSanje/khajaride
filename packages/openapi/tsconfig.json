@@ -30,7 +30,7 @@
     "baseUrl": "./src", // Base URL for module resolution
     "paths": {
       // Aliases for module paths
-      "@/*": ["./*"]
+     "@/*": ["src/*"]
     },
 
     // Type checking

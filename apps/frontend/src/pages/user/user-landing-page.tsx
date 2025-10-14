@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -40,76 +40,34 @@ export default function CustomerApp() {
 
   const { 
     
-    selectedRestaurant,
-    menuCategories,
-    menuItems,
     cart,
     loyaltyPoints,
-    loadRestaurants,
     selectRestaurant,
-    setRestaurants,
     addToCart,
     removeFromCart,
    } = useRestaurants();
 
-   const [searchQuery, setSearchQuery] = useState("")
-  const [searchLoading, setSearchLoading] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState<TGetVendorsQuery["sort"]>("updated_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const debouncedSearch = useDebounce(searchQuery, 300);
 
-   const { data: featuredvendorsData, isLoading: isFeaturedLoading } = useGetAllVendors({
-    query: {
-      page,
-      limit: 20,
-      search: debouncedSearch || undefined,
-      sort: sortBy,
-      order: sortOrder,
-      isFeatured : true
-    },
-  });
 
-  const { data: vendorsData, isLoading } = useGetAllVendors({
-    query: {
-      page,
-      limit: 20,
-      search: debouncedSearch || undefined,
-      sort: sortBy,
-      order: sortOrder,
-    },
-  });
+const { data: vendorsData, isLoading } = useGetAllVendors(
+  
+  { query: {
+    page,
+    limit: 20,
+    search: debouncedSearch || undefined,
+    sort: sortBy,
+    order: sortOrder,
+  }});
 
-  const featuredvendors = featuredvendorsData?.data ?? [];
-  const vendors = vendorsData?.data ?? [];
+// const featuredvendors = featuredvendorsData?.data ?? [];
+const vendors = vendorsData?.data ?? [];
 
-  const [activeTab, setActiveTab] = useState("restaurants")
-//  const handleSearch = async (query: string) => {
-//     setSearchQuery(query)
 
-//     if (query.trim() === "") {
-//       loadRestaurants()
-//       return
-//     }
-
-//     setSearchLoading(true)
-//     console.log("[v0] Searching restaurants with query:", query)
-
-//     try {
-//       const filtered = restaurants.filter(
-//         (restaurant) =>
-//           restaurant.name.toLowerCase().includes(query.toLowerCase()) ||
-//           restaurant.cuisine.toLowerCase().includes(query.toLowerCase()) ||
-//           restaurant.cuisine_tags.some((tag) => tag.toLowerCase().includes(query.toLowerCase())),
-//       )
-//       setRestaurants(filtered)
-//     } catch (error) {
-//       console.error("[v0] Search error:", error)
-//     } finally {
-//       setSearchLoading(false)
-//     }
-//   }
- 
 
 
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
@@ -176,8 +134,8 @@ export default function CustomerApp() {
                   className="pl-10 pr-4 py-3 text-base"
                 />
                 <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex gap-2">
-                  {searchLoading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
-                  <Button size="sm" onClick={loadRestaurants} variant="outline">
+                  {isLoading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+                  <Button size="sm"  variant="outline">
                     <RefreshCw className="w-4 h-4" />
                   </Button>
                   <Button size="sm">
@@ -199,21 +157,30 @@ export default function CustomerApp() {
 
             {/* Tabs */}
             {!isLoading && (
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="restaurants">Restaurants ({vendors.length})</TabsTrigger>
-                  <TabsTrigger value="menu">Menu</TabsTrigger>
-                  <TabsTrigger value="orders">My Orders</TabsTrigger>
-                </TabsList>
+              <div  className="space-y-6"> 
+                    <h2 className="text-2xl font-bold mb-4">
+                      {searchQuery ? `Search Results for "${searchQuery}"` : "VENDORS"}
+                  </h2>
 
-                <TabsContent value="restaurants" className="space-y-6">
-                  {/* Featured Restaurants */}
-                  {featuredvendors.length > 0 && (
-                    <div>
-                      <h2 className="text-2xl font-bold mb-4">Featured Restaurants</h2>
+                {vendors.length === 0 ?(
+                      <div className="text-center py-12">
+                        <h3 className="text-lg font-semibold mb-2">No restaurants found</h3>
+                        <p className="text-muted-foreground mb-4">
+                          {searchQuery ? "Try a different search term" : "Unable to load restaurants"}
+                        </p>
+                        <Button >
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                          Retry
+                        </Button>
+                      </div>): 
+                    (<div >
+
                       <div className="grid md:grid-cols-2 gap-4">
-                        {featuredvendors
+                        {vendors
                           .map((restaurant) => (
+                            <Link href={`/khajaride/vendor/${restaurant.id}`}>
+
+            
                             <Card
                               key={restaurant.id}
                               className="hover:shadow-lg transition-shadow cursor-pointer"
@@ -252,7 +219,7 @@ export default function CustomerApp() {
                                 <div className="flex items-center justify-between text-sm mb-2">
                                   <div className="flex items-center gap-1">
                                     <Clock className="w-4 h-4 text-muted-foreground" />
-                                    <span>{restaurant.deliveryTimeEstimate}</span>
+                                    <span>{restaurant.openingHours}</span>
                                   </div>
                                   <div className="flex items-center gap-1">
                                     <Truck className="w-4 h-4 text-muted-foreground" />
@@ -276,73 +243,16 @@ export default function CustomerApp() {
                                 </div>
                               </CardContent>
                             </Card>
+                              </Link>
                           ))}
                       </div>
                     </div>
                   )}
-
-                  {/* All Restaurants */}
-                  <div>
-                    <h2 className="text-2xl font-bold mb-4">
-                      {searchQuery ? `Search Results for "${searchQuery}"` : "All Restaurants"}
-                    </h2>
-                    {vendors.length === 0 ? (
-                      <div className="text-center py-12">
-                        <h3 className="text-lg font-semibold mb-2">No restaurants found</h3>
-                        <p className="text-muted-foreground mb-4">
-                          {searchQuery ? "Try a different search term" : "Unable to load restaurants"}
-                        </p>
-                        <Button onClick={loadRestaurants}>
-                          <RefreshCw className="w-4 h-4 mr-2" />
-                          Retry
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {vendors.map((restaurant) => (
-                          <Card
-                            key={restaurant.id}
-                            className="hover:shadow-lg transition-shadow cursor-pointer"
-                            onClick={() => selectRestaurant(restaurant.id)}
-                          >
-                            <div className="relative">
-                              <img
-                                src={restaurant.vendorListingImage || "/placeholder.svg"}
-                                alt={restaurant.name}
-                                className="w-full h-32 object-cover rounded-t-lg"
-                              />
-                              {!restaurant.isOpen && (
-                                <Badge variant="destructive" className="absolute top-2 left-2 text-xs">
-                                  Closed
-                                </Badge>
-                              )}
-                            </div>
-                            <CardContent className="p-3">
-                              <div className="flex justify-between items-start mb-1">
-                                <h3 className="font-semibold">{restaurant.name}</h3>
-                                <div className="flex items-center gap-1">
-                                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                  <span className="text-xs font-medium">{restaurant.rating.toFixed(1)}</span>
-                                </div>
-                              </div>
-                              <p className="text-muted-foreground text-xs mb-2">{restaurant.cuisine}</p>
-                              <div className="flex items-center justify-between text-xs">
-                                <span>{restaurant.deliveryTimeEstimate}</span>
-                                <span>Rs. {restaurant.deliveryFee} delivery</span>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                   {/* Pagination */}
-                {vendorsData && vendorsData.totalPages > 1 && (
+               {vendorsData && vendorsData.totalPages > 1 && (
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-muted-foreground">
                       Showing {(page - 1) * 20 + 1} to{" "}
-                      {Math.min(page * 20, vendorsData.total)} of {vendorsData.total} tasks
+                      {Math.min(page * 20, vendorsData.total)} of {vendorsData.total} vendors
                     </p>
                     <div className="flex gap-2">
                       <Button
@@ -364,171 +274,313 @@ export default function CustomerApp() {
                     </div>
                   </div>
                 )}
-                </TabsContent>
+              </div>
 
-                <TabsContent value="menu" className="space-y-6">
-                  {selectedRestaurant ? (
-                    <div>
-                      <div className="mb-6">
-                        <h2 className="text-2xl font-bold mb-2">
-                          {vendors.find((r) => r.id === selectedRestaurant)?.name} Menu
-                        </h2>
-                        <p className="text-muted-foreground">
-                          {vendors.find((r) => r.id === selectedRestaurant)?.cuisine} Cuisine
-                        </p>
-                      </div>
+//               <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+//                 {/* <TabsList className="grid w-full grid-cols-3">
+//                   <TabsTrigger value="restaurants">Restaurants ({vendors.length})</TabsTrigger>
+//                   <TabsTrigger value="menu">Menu</TabsTrigger>
+//                   <TabsTrigger value="orders">My Orders</TabsTrigger>
+//                 </TabsList> */}
 
-                      {menuCategories.map((category) => {
-                        console.log(category,'category');
+//                 <TabsContent value="restaurants" className="space-y-6">
+//                   {/* Featured Restaurants */}
+//                   {vendors.length > 0 && (
+//                     <div>
+//                       <h2 className="text-2xl font-bold mb-4">Vendors</h2>
+//                       <div className="grid md:grid-cols-2 gap-4">
+//                         {vendors
+//                           .map((restaurant) => (
+//                             <Card
+//                               key={restaurant.id}
+//                               className="hover:shadow-lg transition-shadow cursor-pointer"
+//                               onClick={() => selectRestaurant(restaurant.id)}
+//                             >
+//                               <div className="relative">
+//                                 <img
+//                                   src={restaurant.vendorListingImage || "/placeholder.svg"}
+//                                   alt={restaurant.name}
+//                                   className="w-full h-48 object-cover rounded-t-lg"
+//                                 />
+//                                 <Button size="sm" variant="secondary" className="absolute top-2 right-2">
+//                                   <Heart className="w-4 h-4" />
+//                                 </Button>
+//                                 {!restaurant.isOpen && (
+//                                   <Badge variant="destructive" className="absolute top-2 left-2">
+//                                     Closed
+//                                   </Badge>
+//                                 )}
+//                                 {restaurant.promoText && (
+//                                   <Badge className="absolute bottom-2 left-2 bg-green-500">
+//                                     {restaurant.promoText}
+//                                   </Badge>
+//                                 )}
+//                               </div>
+//                               <CardContent className="p-4">
+//                                 <div className="flex justify-between items-start mb-2">
+//                                   <h3 className="font-semibold text-lg">{restaurant.name}</h3>
+//                                   <div className="flex items-center gap-1">
+//                                     <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+//                                     <span className="text-sm font-medium">{restaurant.rating.toFixed(1)}</span>
+//                                   </div>
+//                                 </div>
+//                                 <p className="text-muted-foreground text-sm mb-2">{restaurant.cuisine}</p>
+//                                 {/* <p className="text-muted-foreground text-xs mb-2">{restaurant}</p> */}
+//                                 <div className="flex items-center justify-between text-sm mb-2">
+//                                   <div className="flex items-center gap-1">
+//                                     <Clock className="w-4 h-4 text-muted-foreground" />
+//                                     <span>{restaurant.openingHours}</span>
+//                                   </div>
+//                                   <div className="flex items-center gap-1">
+//                                     <Truck className="w-4 h-4 text-muted-foreground" />
+//                                     <span>Rs. {restaurant.deliveryFee}</span>
+//                                   </div>
+//                                 </div>
+//                                 {restaurant.minOrderAmount > 0 && (
+//                                   <p className="text-xs text-muted-foreground mb-2">
+//                                     Min order: Rs. {restaurant.minOrderAmount}
+//                                   </p>
+//                                 )}
+//                                 <div className="flex gap-1 flex-wrap">
+//                                   {restaurant.cuisineTags?.slice(0, 3).map((tag) => (
+//                                     <Badge key={tag} variant="secondary" className="text-xs">
+//                                       {tag}
+//                                     </Badge>
+//                                   ))}
+//                                   {/* <Badge variant="outline" className="text-xs">
+//                                     {restaurant.distance.toFixed(1)} km
+//                                   </Badge> */}
+//                                 </div>
+//                               </CardContent>
+//                             </Card>
+//                           ))}
+//                       </div>
+//                     </div>
+//                   )}
+
+//                   {/* All Restaurants */}
+//                   {/* <div>
+//                     <h2 className="text-2xl font-bold mb-4">
+//                       {searchQuery ? `Search Results for "${searchQuery}"` : "All Restaurants"}
+//                     </h2>
+//                     {vendors.length === 0 ? (
+//                       <div className="text-center py-12">
+//                         <h3 className="text-lg font-semibold mb-2">No restaurants found</h3>
+//                         <p className="text-muted-foreground mb-4">
+//                           {searchQuery ? "Try a different search term" : "Unable to load restaurants"}
+//                         </p>
+//                         <Button onClick={loadRestaurants}>
+//                           <RefreshCw className="w-4 h-4 mr-2" />
+//                           Retry
+//                         </Button>
+//                       </div>
+//                     ) : (
+//                       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+//                         {vendors.map((restaurant) => (
+//                           <Card
+//                             key={restaurant.id}
+//                             className="hover:shadow-lg transition-shadow cursor-pointer"
+//                             onClick={() => selectRestaurant(restaurant.id)}
+//                           >
+//                             <div className="relative">
+//                               <img
+//                                 src={restaurant.vendorListingImage || "/placeholder.svg"}
+//                                 alt={restaurant.name}
+//                                 className="w-full h-32 object-cover rounded-t-lg"
+//                               />
+//                               {!restaurant.isOpen && (
+//                                 <Badge variant="destructive" className="absolute top-2 left-2 text-xs">
+//                                   Closed
+//                                 </Badge>
+//                               )}
+//                             </div>
+//                             <CardContent className="p-3">
+//                               <div className="flex justify-between items-start mb-1">
+//                                 <h3 className="font-semibold">{restaurant.name}</h3>
+//                                 <div className="flex items-center gap-1">
+//                                   <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+//                                   <span className="text-xs font-medium">{restaurant.rating.toFixed(1)}</span>
+//                                 </div>
+//                               </div>
+//                               <p className="text-muted-foreground text-xs mb-2">{restaurant.cuisine}</p>
+//                               <div className="flex items-center justify-between text-xs">
+//                                 <span>{restaurant.deliveryTimeEstimate}</span>
+//                                 <span>Rs. {restaurant.deliveryFee} delivery</span>
+//                               </div>
+//                             </CardContent>
+//                           </Card>
+//                         ))}
+//                       </div>
+//                     )}
+//                   </div> */}
+
+//                    {/* Pagination */}
+               
+//                 </TabsContent>
+// {/* 
+//                 <TabsContent value="menu" className="space-y-6">
+//                   {selectedRestaurant ? (
+//                     <div>
+//                       <div className="mb-6">
+//                         <h2 className="text-2xl font-bold mb-2">
+//                           {vendors.find((r) => r.id === selectedRestaurant)?.name} Menu
+//                         </h2>
+//                         <p className="text-muted-foreground">
+//                           {vendors.find((r) => r.id === selectedRestaurant)?.cuisine} Cuisine
+//                         </p>
+//                       </div>
+
+//                       {menuCategories.map((category) => {
+//                         console.log(category,'category');
                         
-                        const categoryItems = menuItems.filter(
-                          (item) => item.category_id === category.id && item.is_available,
-                        )
+//                         const categoryItems = menuItems.filter(
+//                           (item) => item.category_id === category.id && item.is_available,
+//                         )
                      
 
-                        if (categoryItems.length === 0) return null
+//                         if (categoryItems.length === 0) return null
 
-                        return (
-                          <div key={category.id} className="mb-8">
-                            <div className="flex items-center justify-between mb-4">
-                              <h3 className="text-xl font-semibold">{category.name}</h3>
-                              <Badge variant="outline" className="text-xs">
-                                {category.total_items} items
-                              </Badge>
-                            </div>
-                            {category.description && (
-                              <p className="text-muted-foreground text-sm mb-4">{category.description}</p>
-                            )}
-                            <div className="grid md:grid-cols-2 gap-4">
-                              {categoryItems.map((item) => (
-                                <Card key={item.id} className="hover:shadow-lg transition-shadow">
-                                  <div className="flex">
-                                    <div className="flex-1 p-4">
-                                      <div className="flex items-start justify-between mb-2">
-                                        <h3 className="font-semibold">{item.name}</h3>
-                                        <div className="flex gap-1">
-                                          {item.is_popular && (
-                                            <Badge variant="secondary" className="text-xs">
-                                              Popular
-                                            </Badge>
-                                          )}
-                                          {item.old_price > 0 && (
-                                            <Badge variant="destructive" className="text-xs">
-                                              Sale
-                                            </Badge>
-                                          )}
-                                        </div>
-                                      </div>
-                                      <p className="text-muted-foreground text-sm mb-3">{item.description}</p>
-                                      {item.tags && item.tags.length > 0 && (
-                                        <div className="flex gap-1 mb-3 flex-wrap">
-                                          {item.tags.slice(0, 2).map((tag) => (
-                                            <Badge key={tag} variant="outline" className="text-xs">
-                                              {tag}
-                                            </Badge>
-                                          ))}
-                                        </div>
-                                      )}
-                                      <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                          <span className="font-bold text-lg">Rs. {item.base_price}</span>
-                                          {item.old_price > 0 && (
-                                            <span className="text-sm text-muted-foreground line-through">
-                                              Rs. {item.old_price}
-                                            </span>
-                                          )}
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                          <Button size="sm" variant="outline" onClick={() => removeFromCart(item.id)}>
-                                            <Minus className="w-3 h-3" />
-                                          </Button>
-                                          <span className="w-8 text-center">
-                                            {cart.find((cartItem) => cartItem.id === item.id)?.quantity || 0}
-                                          </span>
-                                          <Button size="sm" onClick={() => addToCart(item)}>
-                                            <Plus className="w-3 h-3" />
-                                          </Button>
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <div className="w-24 h-24 m-4">
-                                      <img
-                                        src={item.image || "/placeholder.svg"}
-                                        alt={item.name}
-                                        className="w-full h-full object-cover rounded-lg"
-                                      />
-                                    </div>
-                                  </div>
-                                </Card>
-                              ))}
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <h3 className="text-lg font-semibold mb-2">Select a Restaurant</h3>
-                      <p className="text-muted-foreground">Choose a restaurant from the list to view their menu</p>
-                    </div>
-                  )}
-                </TabsContent>
+//                         return (
+//                           <div key={category.id} className="mb-8">
+//                             <div className="flex items-center justify-between mb-4">
+//                               <h3 className="text-xl font-semibold">{category.name}</h3>
+//                               <Badge variant="outline" className="text-xs">
+//                                 {category.total_items} items
+//                               </Badge>
+//                             </div>
+//                             {category.description && (
+//                               <p className="text-muted-foreground text-sm mb-4">{category.description}</p>
+//                             )}
+//                             <div className="grid md:grid-cols-2 gap-4">
+//                               {categoryItems.map((item) => (
+//                                 <Card key={item.id} className="hover:shadow-lg transition-shadow">
+//                                   <div className="flex">
+//                                     <div className="flex-1 p-4">
+//                                       <div className="flex items-start justify-between mb-2">
+//                                         <h3 className="font-semibold">{item.name}</h3>
+//                                         <div className="flex gap-1">
+//                                           {item.is_popular && (
+//                                             <Badge variant="secondary" className="text-xs">
+//                                               Popular
+//                                             </Badge>
+//                                           )}
+//                                           {item.old_price > 0 && (
+//                                             <Badge variant="destructive" className="text-xs">
+//                                               Sale
+//                                             </Badge>
+//                                           )}
+//                                         </div>
+//                                       </div>
+//                                       <p className="text-muted-foreground text-sm mb-3">{item.description}</p>
+//                                       {item.tags && item.tags.length > 0 && (
+//                                         <div className="flex gap-1 mb-3 flex-wrap">
+//                                           {item.tags.slice(0, 2).map((tag) => (
+//                                             <Badge key={tag} variant="outline" className="text-xs">
+//                                               {tag}
+//                                             </Badge>
+//                                           ))}
+//                                         </div>
+//                                       )}
+//                                       <div className="flex items-center justify-between">
+//                                         <div className="flex items-center gap-2">
+//                                           <span className="font-bold text-lg">Rs. {item.base_price}</span>
+//                                           {item.old_price > 0 && (
+//                                             <span className="text-sm text-muted-foreground line-through">
+//                                               Rs. {item.old_price}
+//                                             </span>
+//                                           )}
+//                                         </div>
+//                                         <div className="flex items-center gap-2">
+//                                           <Button size="sm" variant="outline" onClick={() => removeFromCart(item.id)}>
+//                                             <Minus className="w-3 h-3" />
+//                                           </Button>
+//                                           <span className="w-8 text-center">
+//                                             {cart.find((cartItem) => cartItem.id === item.id)?.quantity || 0}
+//                                           </span>
+//                                           <Button size="sm" onClick={() => addToCart(item)}>
+//                                             <Plus className="w-3 h-3" />
+//                                           </Button>
+//                                         </div>
+//                                       </div>
+//                                     </div>
+//                                     <div className="w-24 h-24 m-4">
+//                                       <img
+//                                         src={item.image || "/placeholder.svg"}
+//                                         alt={item.name}
+//                                         className="w-full h-full object-cover rounded-lg"
+//                                       />
+//                                     </div>
+//                                   </div>
+//                                 </Card>
+//                               ))}
+//                             </div>
+//                           </div>
+//                         )
+//                       })}
+//                     </div>
+//                   ) : (
+//                     <div className="text-center py-12">
+//                       <h3 className="text-lg font-semibold mb-2">Select a Restaurant</h3>
+//                       <p className="text-muted-foreground">Choose a restaurant from the list to view their menu</p>
+//                     </div>
+//                   )}
+//                 </TabsContent> */}
 
-                <TabsContent value="orders" className="space-y-6">
-                  <div>
-                    <h2 className="text-2xl font-bold mb-4">My Orders</h2>
-                    <div className="space-y-4">
-                      <Card>
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start mb-2">
-                            <div>
-                              <h3 className="font-semibold">Order #1234</h3>
-                              <p className="text-muted-foreground text-sm">Spice Garden • 2 items</p>
-                            </div>
-                            <Badge variant="secondary">Delivered</Badge>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-muted-foreground">Jan 15, 2025</span>
-                            <span className="font-semibold">$31.98</span>
-                          </div>
-                        </CardContent>
-                      </Card>
+//                 {/* <TabsContent value="orders" className="space-y-6">
+//                   <div>
+//                     <h2 className="text-2xl font-bold mb-4">My Orders</h2>
+//                     <div className="space-y-4">
+//                       <Card>
+//                         <CardContent className="p-4">
+//                           <div className="flex justify-between items-start mb-2">
+//                             <div>
+//                               <h3 className="font-semibold">Order #1234</h3>
+//                               <p className="text-muted-foreground text-sm">Spice Garden • 2 items</p>
+//                             </div>
+//                             <Badge variant="secondary">Delivered</Badge>
+//                           </div>
+//                           <div className="flex justify-between items-center">
+//                             <span className="text-sm text-muted-foreground">Jan 15, 2025</span>
+//                             <span className="font-semibold">$31.98</span>
+//                           </div>
+//                         </CardContent>
+//                       </Card>
 
-                      <Card>
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start mb-2">
-                            <div>
-                              <h3 className="font-semibold">Order #1233</h3>
-                              <p className="text-muted-foreground text-sm">Pizza Palace • 1 item</p>
-                            </div>
-                            <Badge className="bg-green-500">Out for Delivery</Badge>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-muted-foreground">Jan 15, 2025</span>
-                            <span className="font-semibold">$15.98</span>
-                          </div>
-                        </CardContent>
-                      </Card>
+//                       <Card>
+//                         <CardContent className="p-4">
+//                           <div className="flex justify-between items-start mb-2">
+//                             <div>
+//                               <h3 className="font-semibold">Order #1233</h3>
+//                               <p className="text-muted-foreground text-sm">Pizza Palace • 1 item</p>
+//                             </div>
+//                             <Badge className="bg-green-500">Out for Delivery</Badge>
+//                           </div>
+//                           <div className="flex justify-between items-center">
+//                             <span className="text-sm text-muted-foreground">Jan 15, 2025</span>
+//                             <span className="font-semibold">$15.98</span>
+//                           </div>
+//                         </CardContent>
+//                       </Card>
 
-                      <Card>
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start mb-2">
-                            <div>
-                              <h3 className="font-semibold">Order #1232</h3>
-                              <p className="text-muted-foreground text-sm">Burger Barn • 3 items</p>
-                            </div>
-                            <Badge variant="outline">Preparing</Badge>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-muted-foreground">Jan 14, 2025</span>
-                            <span className="font-semibold">$28.47</span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
+//                       <Card>
+//                         <CardContent className="p-4">
+//                           <div className="flex justify-between items-start mb-2">
+//                             <div>
+//                               <h3 className="font-semibold">Order #1232</h3>
+//                               <p className="text-muted-foreground text-sm">Burger Barn • 3 items</p>
+//                             </div>
+//                             <Badge variant="outline">Preparing</Badge>
+//                           </div>
+//                           <div className="flex justify-between items-center">
+//                             <span className="text-sm text-muted-foreground">Jan 14, 2025</span>
+//                             <span className="font-semibold">$28.47</span>
+//                           </div>
+//                         </CardContent>
+//                       </Card>
+//                     </div>
+//                   </div>
+//                 </TabsContent> */}
+//               </Tabs>
             )}
           </div>
 

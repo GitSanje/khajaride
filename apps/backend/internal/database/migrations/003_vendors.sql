@@ -24,8 +24,9 @@ CREATE TABLE vendors (
     cuisine_tags TEXT[],                    -- array of tags, e.g. ["Italian", "Pizza", "Pasta"]
     promo_text TEXT,                  -- e.g. "Free delivery on orders over $20"
     vendor_notice TEXT,                     -- e.g. "We are short-staffed today..."
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
 );
 
 CREATE INDEX idx_vendors_name ON vendors(name);           -- good for search
@@ -51,8 +52,9 @@ CREATE TABLE vendor_addresses (
     zipcode VARCHAR(20),
     latitude DECIMAL(9,6),
     longitude DECIMAL(9,6),
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
 );
 
 -- add for geographic search (delivery radius queries)
@@ -91,8 +93,9 @@ CREATE TABLE menu_categories (
     name VARCHAR(150) NOT NULL,         -- Nepali/English name: e.g. "Momo", "Juice & Drinks"
     description TEXT,
     position INT DEFAULT 0,             -- ordering in UI
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
 );
 -- Menu items
 CREATE TABLE menu_items (
@@ -117,8 +120,9 @@ CREATE TABLE menu_items (
     portion_size VARCHAR(50),               -- e.g. "Regular", "Large", "Family"
     -- special_instructions TEXT,            -- e.g. "No onions, extra spicy" during order time
     keywords TEXT,                        -- for full-text search
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
 );
 CREATE INDEX idx_menu_items_name ON menu_items(name);
 CREATE INDEX idx_menu_items_vendor ON menu_items(vendor_id);
@@ -210,8 +214,9 @@ CREATE TABLE menu_item_stats (
     favorite_count INT DEFAULT 0,               -- how many users favorited this item
     
     last_ordered TIMESTAMP,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
 );
 
 CREATE INDEX idx_menu_item_stats_menu_item_id ON menu_item_stats(menu_item_id);
@@ -233,9 +238,18 @@ CREATE TABLE favorites (
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     entity_type VARCHAR(50) NOT NULL,   -- 'restaurant' | 'menu_item'
     entity_id TEXT NOT NULL,             -- restaurant.id or menu_items.id
-    created_at TIMESTAMP DEFAULT NOW(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
     UNIQUE(user_id, entity_type, entity_id)
 );
+
+CREATE TRIGGER set_updated_at_favorites
+    BEFORE UPDATE ON favorites
+    FOR EACH ROW
+    EXECUTE FUNCTION trigger_set_updated_at();
+
+
 
 CREATE INDEX idx_favorites_entity ON favorites(entity_type, entity_id);
 CREATE INDEX idx_favorites_user ON favorites(user_id);

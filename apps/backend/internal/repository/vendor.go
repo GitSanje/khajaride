@@ -188,13 +188,13 @@ func (r *VendorRepository) GetVendors(ctx context.Context, query *vendor.GetVend
 	}
 
 	if len(conditions) > 0 {
-		stmt += " AND " + strings.Join(conditions, " AND ")
+		stmt += " WHERE " + strings.Join(conditions, " AND ")
 	}
 
 	// ----------- Count total for pagination -----------
 	countStmt := "SELECT COUNT(*) FROM vendors"
 	if len(conditions) > 0 {
-		countStmt += " AND " + strings.Join(conditions, " AND ")
+		countStmt += " WHERE " + strings.Join(conditions, " AND ")
 	}
 
 	var total int
@@ -264,29 +264,29 @@ func (r *VendorRepository) GetVendors(ctx context.Context, query *vendor.GetVend
 }
 func (r *VendorRepository) GetVendorByID(ctx context.Context, payload *vendor.GetVendorByIDPayload) (*vendor.VendorPopulated, error) {
 	stmt := `SELECT 
-				v.*, 
-				to_jsonb(va.*) AS address,
-				COALESCE( 
-					jsonb_agg( 
-						jsonb_build_object(
-							'category_id', mc.id,
-							'name', mc.name,
-							'description', mc.description,
-							'items', COALESCE(mi.menu_items, '[]'::jsonb)
-						)
-					) FILTER (WHERE mc.id IS NOT NULL), '[]'::jsonb
-				) AS categories
-			FROM vendors v
-			LEFT JOIN vendor_addresses va ON v.id = va.vendor_id
-			LEFT JOIN vendor_menu_categories vmc ON vmc.vendor_id = v.id
-			LEFT JOIN menu_categories mc ON mc.id = vmc.category_id
-			LEFT JOIN LATERAL (
-				SELECT jsonb_agg(to_jsonb(mi.*)) AS menu_items
-				FROM menu_items mi
-				WHERE mi.category_id = mc.id AND mi.vendor_id = @VendorID
-			) mi ON true
-			WHERE v.id = @VendorID
-			GROUP BY v.id, va.id;
+		v.*, 
+		to_jsonb(va.*) AS address,
+		COALESCE( 
+			jsonb_agg( 
+				camel(jsonb_build_object(
+					'category_id', mc.id,
+					'name', mc.name,
+					'description', mc.description,
+					'items', COALESCE(mi.menu_items, '[]'::jsonb)
+              ))
+			) FILTER (WHERE mc.id IS NOT NULL), '[]'::jsonb
+		) AS categories
+		FROM vendors v
+		LEFT JOIN vendor_addresses va ON v.id = va.vendor_id
+		LEFT JOIN vendor_menu_categories vmc ON vmc.vendor_id = v.id
+		LEFT JOIN menu_categories mc ON mc.id = vmc.category_id
+		LEFT JOIN LATERAL (
+			SELECT jsonb_agg(to_jsonb(camel(mi.*))) AS menu_items
+			FROM menu_items mi
+			WHERE mi.category_id = mc.id AND mi.vendor_id =  @VendorID
+		) mi ON true
+		WHERE v.id = @VendorID
+		GROUP BY v.id, va.id;
 
 	`
 	rows,err := r.server.DB.Pool.Query(ctx, stmt, pgx.NamedArgs{"VendorID": payload.ID})
@@ -299,6 +299,7 @@ func (r *VendorRepository) GetVendorByID(ctx context.Context, payload *vendor.Ge
 	if err != nil {
 		return nil, fmt.Errorf("failed to collect row from table:vendors for vendor=%s: %w", payload.ID, err)
 	}
+	
 	
 	return &vendorItem, nil
 }

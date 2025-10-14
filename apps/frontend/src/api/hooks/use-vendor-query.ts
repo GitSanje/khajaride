@@ -11,6 +11,10 @@ import { QUERY_KEYS } from "../query-utils";
 
 export type TGetVendorsQuery = TRequests["Vendor"]["getVendors"]["query"];
 
+export type TGetVendorsByIDResponse = ServerInferResponseBody<
+  typeof apiContract.Vendor.getVendorByID,
+  200
+>;
 
 export type TGetVendorsResponse = ServerInferResponseBody<
   typeof apiContract.Vendor.getVendors,
@@ -26,14 +30,46 @@ const fetchAllVendors = async ({
   query?: TGetVendorsQuery;
 }): Promise<TGetVendorsResponse> => {
 
-    const res = await api.Vendor.getVendors({query})
-  if (res.status === 200) {
-    return res.body;
-  } else {
-    throw res.body;
-  }
+  try {
+    const res = await api.Vendor.getVendors({ query });
 
-}
+    // Check if the API returned successfully
+    if (res.status === 200) {
+      return res.body; // ✅ return the response data
+    } else {
+      throw res.body; // ❌ throw to be caught by React Query
+    }
+  } catch (err) {
+    console.error("Vendor fetch failed:", err);
+    throw err; // important: re-throw so React Query knows the query failed
+  }
+};
+
+
+
+const fetchVendorById= async ({
+  api,
+  id,
+}: {
+  api: TApiClient;
+  id: string;
+}): Promise<TGetVendorsByIDResponse> => {
+
+  try {
+    const res = await api.Vendor.getVendorByID({ params:{id} });
+
+    // Check if the API returned successfully
+    if (res.status === 200) {
+      return res.body; // ✅ return the response data
+    } else {
+      throw res.body; // ❌ throw to be caught by React Query
+    }
+  } catch (err) {
+    console.error("Vendor fetch failed:", err);
+    throw err; // important: re-throw so React Query knows the query failed
+  }
+};
+
 
 // React Query hooks
 
@@ -45,7 +81,11 @@ export const useGetAllVendors = ({
   const api = useApiClient();
 
   return useQuery({
-    queryKey: [QUERY_KEYS.VENDORS.ALL_VENDORSS, query],
+    queryKey: [
+      QUERY_KEYS.VENDORS.ALL_VENDORSS, 
+      query?.isFeatured ? "featured" : "regular",
+      query
+     ],
     queryFn: () => fetchAllVendors({ api, query }),
     placeholderData: {
       data: [],
@@ -57,3 +97,21 @@ export const useGetAllVendors = ({
   });
 
 }
+
+
+
+export const useGetVenoorById = ({
+  id,
+  enabled = true,
+}: {
+  id: string;
+  enabled?: boolean;
+}) => {
+  const api = useApiClient();
+
+  return useQuery({
+    queryKey: [QUERY_KEYS.VENDORS.GET_VENDOR_BY_ID, id],
+    queryFn: () => fetchVendorById({ api, id }),
+    enabled: enabled && !!id,
+  });
+};

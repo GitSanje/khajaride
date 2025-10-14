@@ -7,7 +7,8 @@ import {
   schemaWithPagination,
   ZGetUsersQuery
 } from "@khajaride/zod";
-import { getSecurityMetadata } from "@/utils.js";
+import { getSecurityMetadata } from "../utils.js";
+
 
 const c = initContract();
 const metadata = getSecurityMetadata();
