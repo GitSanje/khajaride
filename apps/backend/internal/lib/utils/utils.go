@@ -3,12 +3,10 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
-	"strings"
-
-	"github.com/gitSanje/khajaride/internal/model/search"
 	"github.com/gitSanje/khajaride/internal/model/user"
 	"github.com/gitSanje/khajaride/internal/model/vendor"
+	"strconv"
+	"strings"
 )
 
 func PrintJSON(v interface{}) {
@@ -64,23 +62,21 @@ func getBool(m map[string]interface{}, key string) bool {
 
 func strPtr(s string) *string {
 	if s == "" {
-		return nil 
+		return nil
 	}
 	return &s
 }
 func getInt(m map[string]interface{}, key string) int {
-    if val, ok := m[key]; ok {
-        switch v := val.(type) {
-        case float64:
-            return int(v)
-        case int:
-            return v
-        }
-    }
-    return 0
+	if val, ok := m[key]; ok {
+		switch v := val.(type) {
+		case float64:
+			return int(v)
+		case int:
+			return v
+		}
+	}
+	return 0
 }
-
-
 
 // ---------- Interfaces & Structs ----------
 type HasValue interface {
@@ -104,11 +100,6 @@ type ClerkPhoneNumber struct {
 func (c ClerkPhoneNumber) GetValue() string { return c.PhoneNumber }
 func (c ClerkPhoneNumber) GetID() string    { return c.ID }
 
-
-
-
-
-
 // ---------- Generic Helper ----------
 func findPrimaryValue[T HasValue](data []T, primaryID string) string {
 	for _, item := range data {
@@ -118,17 +109,18 @@ func findPrimaryValue[T HasValue](data []T, primaryID string) string {
 	}
 	return ""
 }
+
 // MapClerkUserToCreateUser maps the "data" field from a Clerk webhook payload to CreateUserPayload
 func MapClerkUserToCreateUser(data json.RawMessage) (*user.CreateUserPayload, error) {
-	
+
 	var clerkUser struct {
-		ID           *string  `json:"id"`
-		EmailAddresses        []ClerkEmail `json:"email_addresses"`
-		PhoneNumbers  []ClerkPhoneNumber `json:"phone_numbers"`
-		ProfileImage *string `json:"image_url"`
-		Username     string  `json:"username"`
-		PrimaryEmailAddressID string       `json:"primary_email_address_id"`
-		PrimaryPhoneNumberID   string       `json:"primary_phone_number_id"`
+		ID                    *string            `json:"id"`
+		EmailAddresses        []ClerkEmail       `json:"email_addresses"`
+		PhoneNumbers          []ClerkPhoneNumber `json:"phone_numbers"`
+		ProfileImage          *string            `json:"image_url"`
+		Username              string             `json:"username"`
+		PrimaryEmailAddressID string             `json:"primary_email_address_id"`
+		PrimaryPhoneNumberID  string             `json:"primary_phone_number_id"`
 	}
 
 	// Unmarshal only the data portion
@@ -138,7 +130,7 @@ func MapClerkUserToCreateUser(data json.RawMessage) (*user.CreateUserPayload, er
 
 	email := findPrimaryValue(clerkUser.EmailAddresses, clerkUser.PrimaryEmailAddressID)
 	phoneNumber := findPrimaryValue(clerkUser.PhoneNumbers, clerkUser.PrimaryPhoneNumberID)
-    
+
 	return &user.CreateUserPayload{
 		ID:             clerkUser.ID,
 		Email:          email,
@@ -150,44 +142,41 @@ func MapClerkUserToCreateUser(data json.RawMessage) (*user.CreateUserPayload, er
 	}, nil
 }
 
-
 //-------------------- FOODMANDU VENDOR AND MENU TRANFORM FOR DB SCHEMA-----------------
 
-
-
 func TransformFoodManduVendors(flatJSON []byte) ([]vendor.VendorBulkInput, error) {
-	
+
 	var vendorMapData map[string]interface{}
 	if err := json.Unmarshal(flatJSON, &vendorMapData); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal: %w", err)
 	}
-   
+
 	vendorMapVendors, ok := vendorMapData["vendors"].([]interface{})
 	if !ok {
 		return nil, fmt.Errorf(`key "vendors" not found or not an array`)
 	}
 	vendors := make([]vendor.VendorBulkInput, 0, len(vendorMapVendors))
 
-	for _, raw:= range vendorMapVendors {
-       vendorMap, ok := raw.(map[string]interface{})
-	   if !ok {
+	for _, raw := range vendorMapVendors {
+		vendorMap, ok := raw.(map[string]interface{})
+		if !ok {
 			continue
 		}
 
 		v := vendor.VendorBulkInput{
-			
+
 			Vendor: vendor.Vendor{
-				ID: strconv.Itoa(getInt(vendorMap, "Id")),
-				Name:              getString(vendorMap, "Name"),
-				About:             "",
-				Cuisine:           getString(vendorMap, "Cuisine"),
-				Rating:            getFloat(vendorMap, "VendorRating"),
-				DeliveryAvailable: getBool(vendorMap, "AcceptsDeliveryOrder"),
-				PickupAvailable:   getBool(vendorMap, "AcceptsTakeoutOrder"),
-				IsFeatured:        getBool(vendorMap, "IsFeaturedVendor"),
-				PromoText:         getString(vendorMap, "PromoText"),
-				VendorNotice:      getString(vendorMap, "VendorNotice"),
-				OpeningHours:      getStringPtr(vendorMap, "OpeningHours"),
+				ID:                 strconv.Itoa(getInt(vendorMap, "Id")),
+				Name:               getString(vendorMap, "Name"),
+				About:              "",
+				Cuisine:            getString(vendorMap, "Cuisine"),
+				Rating:             getFloat(vendorMap, "VendorRating"),
+				DeliveryAvailable:  getBool(vendorMap, "AcceptsDeliveryOrder"),
+				PickupAvailable:    getBool(vendorMap, "AcceptsTakeoutOrder"),
+				IsFeatured:         getBool(vendorMap, "IsFeaturedVendor"),
+				PromoText:          getString(vendorMap, "PromoText"),
+				VendorNotice:       getString(vendorMap, "VendorNotice"),
+				OpeningHours:       getStringPtr(vendorMap, "OpeningHours"),
 				VendorListingImage: getStringPtrFrom(vendorMap, "VendorListingWebImageName"),
 				VendorLogoImage:    getStringPtrFrom(vendorMap, "VendorCoverImageName"),
 				VendorType:         getStringPtrFrom(vendorMap, "VendorType"),
@@ -195,7 +184,6 @@ func TransformFoodManduVendors(flatJSON []byte) ([]vendor.VendorBulkInput, error
 					strings.TrimSpace(getString(vendorMap, "CuisineTags")),
 					"|",
 				),
-				
 			},
 			Address: &vendor.VendorAddress{
 				StreetAddress: getString(vendorMap, "Address1"),
@@ -211,8 +199,6 @@ func TransformFoodManduVendors(flatJSON []byte) ([]vendor.VendorBulkInput, error
 
 	return vendors, nil
 }
-
-
 
 func TransformFoodManduMenuItems(flatJSON []byte) ([]vendor.MenuItem, []vendor.MenuCategory, []vendor.VendorCategoryLink, error) {
 	var rawMenuData map[string]interface{}
@@ -280,8 +266,7 @@ func TransformFoodManduMenuItems(flatJSON []byte) ([]vendor.MenuItem, []vendor.M
 
 				itemId := getInt(itemMap, "productId")
 				if _, exists := uniqueMenuItemId[itemId]; !exists {
-					
-				
+
 					uniqueMenuItemId[itemId] = struct{}{}
 
 					mItem := vendor.MenuItem{
@@ -299,10 +284,9 @@ func TransformFoodManduMenuItems(flatJSON []byte) ([]vendor.MenuItem, []vendor.M
 						),
 						CategoryID: strconv.Itoa(cId),
 					}
-				
 
 					menuItems = append(menuItems, mItem)
-			   }
+				}
 			}
 		}
 	}
@@ -321,56 +305,126 @@ func TransformFoodManduMenuItems(flatJSON []byte) ([]vendor.MenuItem, []vendor.M
 	return menuItems, uniqueCategories, vendorCategories, nil
 }
 
-
-
-
 //-------------------- FOODMANDU VENDOR AND MENU TRANFORM FOR ES-----------------
 
-func TransformFoodManduVendorsForES(flatJSON [] byte) ([]search.VendorIndex,error){
-
-
+func TransformFoodManduVendorsForES(flatJSON []byte) ([]map[string]interface{}, error) {
 	var rawVendorData map[string]interface{}
-
 	if err := json.Unmarshal(flatJSON, &rawVendorData); err != nil {
-		return  nil, fmt.Errorf("failed to unmarshal: %w", err)
-
+		return nil, fmt.Errorf("failed to unmarshal: %w", err)
 	}
 
-	 vendorMapVendors, ok := rawVendorData["vendors"].([]interface{})
-	 vendors := make([]search.VendorIndex, 0, len(vendorMapVendors))
+	vendorList, ok := rawVendorData["vendors"].([]interface{})
 	if !ok {
 		return nil, fmt.Errorf(`key "vendors" not found or not an array`)
 	}
-	for _, raw := range vendorMapVendors{
-		vendorMap,ok := raw.(map[string]interface{})
 
+	vendors := make([]map[string]interface{}, 0, len(vendorList))
+
+	for _, raw := range vendorList {
+		vendorMap, ok := raw.(map[string]interface{})
 		if !ok {
 			continue
 		}
 
-		vendor := search.VendorIndex{
-			ID: strconv.Itoa(getInt(vendorMap, "Id")),
-				Name:              getString(vendorMap, "Name"),
-				About:             "",
-				Cuisine:           getString(vendorMap, "Cuisine"),
-				Rating:            getFloat(vendorMap, "VendorRating"),
-				DeliveryAvailable: getBool(vendorMap, "AcceptsDeliveryOrder"),
-				PickupAvailable:   getBool(vendorMap, "AcceptsTakeoutOrder"),
-				IsFeatured:        getBool(vendorMap, "IsFeaturedVendor"),
-				PromoText:         getString(vendorMap, "PromoText"),
-				VendorNotice:      getString(vendorMap, "VendorNotice"),
-				CuisineTags: getString(vendorMap, "CuisineTags"),
-				Location: search.GeoPoint{
-					Lat:getFloat(vendorMap, "LocationLat") ,
-					Lon: getFloat(vendorMap,"LocationLng"),
-				},
-				StreetAddress:  getString(vendorMap, "Address1"),
-					
-
+		v := map[string]interface{}{
+			"id":                 strconv.Itoa(getInt(vendorMap, "Id")),
+			"name":               getString(vendorMap, "Name"),
+			"about":              getString(vendorMap, "About"),
+			"cuisine":            getString(vendorMap, "Cuisine"),
+			"cuisine_tags":       getString(vendorMap, "CuisineTags"),
+			"vendor_type":        getString(vendorMap, "VendorType"),
+			"rating":             getFloat(vendorMap, "VendorRating"),
+			"favorite_count":     getInt(vendorMap, "FavoriteCount"),
+			"is_open":            getBool(vendorMap, "IsOpen"),
+			"is_featured":        getBool(vendorMap, "IsFeaturedVendor"),
+			"delivery_available": getBool(vendorMap, "AcceptsDeliveryOrder"),
+			"pickup_available":   getBool(vendorMap, "AcceptsTakeoutOrder"),
+			"delivery_fee":       getFloat(vendorMap, "DeliveryFee"),
+			"min_order_amount":   getFloat(vendorMap, "MinOrderAmount"),
+			"promo_text":         getString(vendorMap, "PromoText"),
+			"vendor_notice":      getString(vendorMap, "VendorNotice"),
+			"location": map[string]interface{}{
+				"lat": getFloat(vendorMap, "LocationLat"),
+				"lon": getFloat(vendorMap, "LocationLng"),
+			},
+			"street_address": getString(vendorMap, "Address1"),
+			"city":           getString(vendorMap, "City"),
+			"state":          getString(vendorMap, "State"),
+			"zip_code":       getString(vendorMap, "ZipCode"),
 		}
-		vendors= append(vendors,vendor)
 
-
+		vendors = append(vendors, v)
 	}
-   return  vendors,nil
+
+	return vendors, nil
+}
+
+func TransformFoodManduMenuItemsForES(flatJSON []byte) ([]map[string]interface{}, error) {
+	var rawMenuData map[string]interface{}
+	if err := json.Unmarshal(flatJSON, &rawMenuData); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal: %w", err)
+	}
+
+	menuItems := make([]map[string]interface{}, 0)
+	uniqueMenuItemId := make(map[int]struct{})
+
+	for VendorId, menuItemsByCategory := range rawMenuData {
+		categoryList, ok := menuItemsByCategory.([]interface{})
+		if !ok {
+			continue
+		}
+
+		for _, c := range categoryList {
+			categoryWithItems, ok := c.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			itemsList, ok := categoryWithItems["items"].([]interface{})
+			if !ok {
+				continue
+			}
+
+			cId := getInt(categoryWithItems, "categoryId")
+			cName := getString(categoryWithItems, "category") 
+
+			for _, mi := range itemsList {
+				itemMap, ok := mi.(map[string]interface{})
+				if !ok {
+					continue
+				}
+
+				itemId := getInt(itemMap, "productId")
+				if _, exists := uniqueMenuItemId[itemId]; exists {
+					continue
+				}
+				uniqueMenuItemId[itemId] = struct{}{}
+
+				menuItem := map[string]interface{}{
+					"id":          strconv.Itoa(itemId),
+					"vendor_id":   VendorId,
+					"name":        getString(itemMap, "name"),
+					"description": getString(itemMap, "productDesc"),
+					"base_price":  getFloat(itemMap, "price"),
+					"keywords":    getString(itemMap, "Keyword"),
+					"tags":        getString(itemMap, "itemDisplayTag"),
+					"is_available": true, 
+					"is_popular":   false, 
+					"is_vegetarian": false,
+					"is_vegan":     false,
+					"is_gluten_free": false,
+					"spicy_level":   0,
+					"portion_size":  "",
+					"category": map[string]interface{}{
+						"id":   strconv.Itoa(cId),
+						"name": cName,
+					},
+				}
+
+				menuItems = append(menuItems, menuItem)
+			}
+		}
+	}
+
+	return menuItems, nil
 }

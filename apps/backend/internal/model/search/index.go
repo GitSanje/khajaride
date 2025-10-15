@@ -36,8 +36,8 @@ type MenuIndex struct {
 	VendorID     string   `json:"vendor_id"`    // keyword
 	Name         string   `json:"name"`         // text
 	Description  string   `json:"description"`  // text
-	Tags         []string `json:"tags"`         // text array
-	Keywords     []string `json:"keywords"`     // text array
+	Tags         string   `json:"tags"`         // text 
+	Keywords     string   `json:"keywords"`     // text 
 	BasePrice    float64  `json:"base_price"`   // float
 	IsAvailable  bool     `json:"is_available"` // boolean
 	IsPopular    bool     `json:"is_popular"`   // boolean
