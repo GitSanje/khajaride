@@ -13,4 +13,6 @@ func registerSearchRoutes(r *echo.Group, h *handler.SearchHandler, auth *middlew
 	// ------------------- Search -------------------
 	vendor := r.Group("/search")
 	vendor.POST("/bulk-insert", h.InsertBulkDocs)
+	vendor.POST("/doc-insert",h.InsertDocument)
+	
 }

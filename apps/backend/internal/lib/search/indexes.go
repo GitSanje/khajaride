@@ -40,7 +40,6 @@ func (i *Indexes) CreateIndexes() error {
 				"city": {"type": "keyword"},
 				"state": {"type": "keyword"},
 				"zip_code": {"type": "keyword"}
-
 				}
 			    }
 			  }

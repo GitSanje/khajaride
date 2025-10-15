@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/gitSanje/khajaride/internal/model/search"
 	"github.com/gitSanje/khajaride/internal/server"
 	"github.com/gitSanje/khajaride/internal/service"
 	"github.com/labstack/echo/v4"
@@ -63,4 +65,22 @@ func (h *SearchHandler) InsertBulkDocs(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{
 		"message": fmt.Sprintf("Bulk documents inserted successfully into index '%s'", indexName),
 	})
+}
+
+
+func (h *SearchHandler) InsertDocument(c echo.Context) error {
+
+
+	return  Handle(
+		h.Handler,
+		func(c echo.Context, payload *search.InsertDocPayload) (interface{}, error) {
+			err := h.SearchService.InsertDocument(c, payload)
+			if err != nil {
+				return nil, err
+			}
+			return map[string]string{"message": "document inserted successfully"}, nil
+         },
+		http.StatusCreated,
+		&search.InsertDocPayload{},
+		)(c)
 }

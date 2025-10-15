@@ -5,7 +5,9 @@ import (
 	"log"
 	"sync"
 
+	"github.com/gitSanje/khajaride/internal/model/search"
 	"github.com/gitSanje/khajaride/internal/lib/utils"
+	"github.com/gitSanje/khajaride/internal/middleware"
 	"github.com/gitSanje/khajaride/internal/repository"
 	"github.com/gitSanje/khajaride/internal/server"
 	"github.com/labstack/echo/v4"
@@ -67,4 +69,24 @@ func (s *SearchService) BulkInsertIndexes(ctx echo.Context, indexName string, pa
     wg.Wait()
 
     return nil
+}
+
+
+func ( s *SearchService) InsertDocument ( ctx echo.Context,  payload *search.InsertDocPayload) error {
+	logger := middleware.GetLogger(ctx)
+
+
+    err := s.searchRepo.InsertDocument(ctx.Request().Context(), payload.IndexName, payload.Doc)
+    if err != nil {
+        logger.Error().
+            Err(err).
+            Str("index_name", payload.IndexName).
+            Msg("Failed to insert index in repository")
+        return  err
+    }
+
+	 logger.Info().
+        Msg("Doc on {indexName} inserted successfully")
+
+    return  nil
 }

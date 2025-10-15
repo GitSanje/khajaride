@@ -2411,6 +2411,68 @@
           }
         ]
       }
+    },
+    "/v1/search/doc-insert": {
+      "post": {
+        "description": "Insert a single document into the specified Elasticsearch index",
+        "summary": "Insert a single document into an Elasticsearch index",
+        "tags": [
+          "Search"
+        ],
+        "parameters": [],
+        "operationId": "insertDocument",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "index_name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "doc": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "nullable": true
+                    }
+                  }
+                },
+                "required": [
+                  "index_name",
+                  "doc"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "201",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
     }
   },
   "info": {
