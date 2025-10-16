@@ -6,6 +6,7 @@ import DashboardPage from "./pages/dashboard/dashboard";
 import { AuthLayout } from "./components/layouts/auth-layout";
 import CustomerApp from "./pages/user/user-landing-page";
 import VendorMenuPage from "./pages/user/vendor-details";
+import SearchPage from "./pages/search/SearchVendor";
 
 
 
@@ -51,6 +52,14 @@ const routes = createRoutesFromElements(
       element={
         <ProtectedRoute>
           <VendorMenuPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/khajaride/search"
+      element={
+        <ProtectedRoute>
+          <SearchPage />
         </ProtectedRoute>
       }
     />

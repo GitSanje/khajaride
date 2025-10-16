@@ -27,8 +27,8 @@ func NewSearchHandler(s *server.Server, ss *service.SearchService) *SearchHandle
 }
 
 // curl -X POST http://localhost:8080/api/v1/search/bulk-insert \
-//   -F "index_name=vendors" \
-//   -F "file=@new_vendors.json"
+//   -F "index_name=vendor_menu" \
+//   -F "file=@new_menu_vendor.json"
 
 
 
@@ -82,5 +82,23 @@ func (h *SearchHandler) InsertDocument(c echo.Context) error {
          },
 		http.StatusCreated,
 		&search.InsertDocPayload{},
+		)(c)
+}
+
+
+func (h *SearchHandler) FullTextSearch(c echo.Context) error {
+
+
+	return  Handle(
+		h.Handler,
+		func(c echo.Context, payload *search.SearchParamsPayload) (map[string]interface{}, error) {
+			result, err := h.SearchService.FullTextSearch(c, payload)
+			if err != nil {
+				return nil, err
+			}
+			return result, nil
+         },
+		http.StatusOK,
+		&search.SearchParamsPayload{},
 		)(c)
 }

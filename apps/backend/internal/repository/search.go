@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 
+	"github.com/gitSanje/khajaride/internal/model/search"
 	"github.com/gitSanje/khajaride/internal/server"
 )
 
@@ -112,4 +114,133 @@ func (r *SearchRepository) InsertDocument(ctx context.Context, indexName string,
 
     log.Printf("Document successfully indexed in %s", indexName)
     return nil
+}
+
+
+
+func (r *SearchRepository) FullTextSearch(ctx context.Context, payload *search.SearchParamsPayload) (map[string]interface{}, error){
+
+    // Default page size
+	if payload.PageSize <= 0 {
+		payload.PageSize = 20
+	}
+
+    // Escape double quotes and special JSON chars
+	escapedQuery := strings.ReplaceAll(payload.Query, `"`, `\"`)
+    // --------------------- Build Filter Clauses ---------------------
+	filters := []string{`{ "term": { "is_available": true } }`}
+
+    if payload.IsVegetarian != nil {
+		filters = append(filters, fmt.Sprintf(`{ "term": { "is_vegetarian": %v } }`, *payload.IsVegetarian))
+	}
+
+	if payload.City != "" {
+		filters = append(filters, fmt.Sprintf(`{ "term": { "vendor.city": "%s" } }`, payload.City))
+	}
+
+    // Join filters
+	filterClause := strings.Join(filters, ",")
+
+    // --------------------- Build Base Query ---------------------
+    query := fmt.Sprintf(`
+	{
+	  "query": {
+	    "bool": {
+	      "must": [
+	        {
+	          "multi_match": {
+	            "query": "%s",
+	            "fields": [
+	              "menu_name^5",
+	              "menu_description^2",
+	              "tags^3",
+	              "keywords^3",
+	              "category.name^2",
+	              "vendor.name^2",
+	              "vendor.cuisine^2"
+	            ],
+	            "fuzziness": "AUTO",
+	            "operator": "and"
+	          }
+	        }
+	      ],
+	      "filter": [%s],
+	      "should": [
+	        { "term": { "is_popular": true } },
+	        { "range": { "vendor.rating": { "gte": 4.2, "boost": 2 } } }
+	      ]
+	    }
+	  },
+	  "sort": [
+	    { "_score": "desc" },
+	    { "vendor.rating": "desc" }
+	  ], 
+      "size": %d
+	}`, escapedQuery, filterClause, payload.PageSize)
+
+
+    // --------------------- Add search_after (for deep pagination) ---------------------
+    if len(payload.LastSort) > 0 {
+		sortJSON, err := json.Marshal(payload.LastSort)
+		if err != nil {
+			return nil, fmt.Errorf("invalid search_after sort values: %w", err)
+		}
+		query = strings.TrimSuffix(query, "}") + fmt.Sprintf(`, "search_after": %s}`, sortJSON)
+	}
+
+    // --------------------- Execute Search ---------------------
+	res, err := r.server.Elasticsearch.Search(
+		r.server.Elasticsearch.Search.WithContext(ctx),
+		r.server.Elasticsearch.Search.WithIndex("vendor_menu"),
+		r.server.Elasticsearch.Search.WithBody(strings.NewReader(query)),
+		r.server.Elasticsearch.Search.WithTrackTotalHits(true),
+	)
+    if err != nil {
+		return nil, fmt.Errorf("elasticsearch search error: %w", err)
+	}
+    defer res.Body.Close()
+
+    if res.IsError() {
+		return nil, fmt.Errorf("search response error: %s", res.String())
+	}
+
+    var raw map[string]interface{}
+	if err := json.NewDecoder(res.Body).Decode(&raw); err != nil {
+		return nil, fmt.Errorf("error parsing ES response: %w", err)
+	}
+
+	hitsData := raw["hits"].(map[string]interface{})
+    hitsArray := hitsData["hits"].([]interface{})
+    results := make([]map[string]interface{}, 0, len(hitsArray))
+	for _, h := range hitsArray {
+		hit := h.(map[string]interface{})
+		source := hit["_source"].(map[string]interface{})
+		sortVal := hit["sort"]
+		source["sort"] = sortVal
+		results = append(results, source)
+	}
+
+	total := int64(0)
+	if t, ok := hitsData["total"].(map[string]interface{}); ok {
+		if v, ok := t["value"].(float64); ok {
+			total = int64(v)
+		}
+	}
+	lastSort := []interface{}{}
+	if len(hitsArray) > 0 {
+		lastHit := hitsArray[len(hitsArray)-1].(map[string]interface{})
+		if s, ok := lastHit["sort"].([]interface{}); ok {
+			lastSort = s
+		}
+	}
+	response := map[string]interface{}{
+		"results":   results,
+		"total":     total,
+		"took":      raw["took"],
+		"last_sort": lastSort,
+	}
+
+    return  response,nil
+
+
 }

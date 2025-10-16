@@ -33,7 +33,7 @@ import {
 import { useRestaurants } from "@/hooks/use-restaturants"
 import { useGetAllVendors, type TGetVendorsQuery } from "@/api/hooks"
 import { useDebounce } from "@/api/hooks/use-debounce"
-
+import { useNavigate } from "react-router-dom"; 
 
 
 export default function CustomerApp() {
@@ -59,16 +59,22 @@ const { data: vendorsData, isLoading } = useGetAllVendors(
   { query: {
     page,
     limit: 20,
-    search: debouncedSearch || undefined,
+    // search: debouncedSearch || undefined,
     sort: sortBy,
     order: sortOrder,
   }});
 
 // const featuredvendors = featuredvendorsData?.data ?? [];
 const vendors = vendorsData?.data ?? [];
-
-
-
+const navigate = useNavigate();
+ const handleSearch = () => {
+  navigate(`/khajaride/search?q=${encodeURIComponent(searchQuery)}`);
+  }
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
 
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0)
@@ -131,6 +137,7 @@ const vendors = vendorsData?.data ?? [];
                   placeholder="Search restaurants, cuisines, or dishes..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleKeyDown} 
                   className="pl-10 pr-4 py-3 text-base"
                 />
                 <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex gap-2">

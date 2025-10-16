@@ -3,7 +3,9 @@ import { initContract } from "@ts-rest/core";
 import { getSecurityMetadata } from "../utils.js";
 
 import {
-  ZInsertDocPayloadSchema
+  ZInsertDocPayloadSchema,
+  ZSearchParamsPayloadSchema,
+  ZSearchResponseSchema
 } from "@khajaride/zod";
 
 
@@ -26,6 +28,20 @@ export const searchContract = c.router({
     },
     metadata,
   },
+
+  fullTextSearch: {
+      summary: "Perform a full-text search on vendor_menu index",
+      path: "/search/full-text",
+      method: "POST",
+      description:
+        "Performs a multi-field full-text search with optional filters and deep pagination",
+      body: ZSearchParamsPayloadSchema,
+      responses: {
+        200: ZSearchResponseSchema
+      },
+      metadata,
+    },
+  
 },{
     pathPrefix: "/v1",
   });

@@ -18,7 +18,6 @@ export interface Vendor {
   vendor_type: string
   is_featured: boolean
   cuisine_tags: string[]
-
   address: string
   latitude: number
   longitude: number

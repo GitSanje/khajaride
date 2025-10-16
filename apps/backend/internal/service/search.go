@@ -1,13 +1,11 @@
 package service
 
 import (
-	"fmt"
+	"encoding/json"
 	"log"
 	"sync"
-
-	"github.com/gitSanje/khajaride/internal/model/search"
-	"github.com/gitSanje/khajaride/internal/lib/utils"
 	"github.com/gitSanje/khajaride/internal/middleware"
+	"github.com/gitSanje/khajaride/internal/model/search"
 	"github.com/gitSanje/khajaride/internal/repository"
 	"github.com/gitSanje/khajaride/internal/server"
 	"github.com/labstack/echo/v4"
@@ -32,16 +30,10 @@ func NewSearchService(server *server.Server, searchRepo *repository.SearchReposi
 func (s *SearchService) BulkInsertIndexes(ctx echo.Context, indexName string, payload []byte) error {
     var BulkInputs []map[string]interface{}
 
-    switch indexName {
-    case "vendors":
-        BulkInputs, _ = utils.TransformFoodManduVendorsForES(payload)
-       
-    case "menus":
-        BulkInputs, _ = utils.TransformFoodManduMenuItemsForES(payload)
-		
-    default:
-        return fmt.Errorf("unsupported index name: %s", indexName)
+    if err := json.Unmarshal(payload,&BulkInputs); err != nil {
+        return err
     }
+    
 	log.Println("length of docs", len(BulkInputs), BulkInputs[0])
      
     const maxWorkers = 5
@@ -89,4 +81,19 @@ func ( s *SearchService) InsertDocument ( ctx echo.Context,  payload *search.Ins
         Msg("Doc on {indexName} inserted successfully")
 
     return  nil
+}
+
+func ( s *SearchService) FullTextSearch ( ctx echo.Context,  payload *search.SearchParamsPayload) (map[string]interface{}, error) {
+	logger := middleware.GetLogger(ctx)
+
+
+    result, err := s.searchRepo.FullTextSearch(ctx.Request().Context(), payload)
+    if err != nil {
+        logger.Error().
+            Err(err).
+            Msg("Failed to search")
+        return nil, err
+    }
+	
+    return  result, nil
 }

@@ -53,3 +53,4 @@ type Category struct {
 	ID   string `json:"id"`   // keyword
 	Name string `json:"name"` // text with raw keyword field
 }
+
