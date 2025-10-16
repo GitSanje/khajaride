@@ -1,3 +1,2792 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:4f968e8688637501cd267c3da85e8d27de26845a4517c30ce238b2eb7e4c3536
-size 84556
+{
+  "openapi": "3.0.2",
+  "paths": {
+    "/status": {
+      "get": {
+        "description": "Get health status",
+        "summary": "Get health",
+        "tags": [
+          "Health"
+        ],
+        "parameters": [],
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "healthy",
+                        "unhealthy"
+                      ]
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "environment": {
+                      "type": "string"
+                    },
+                    "checks": {
+                      "type": "object",
+                      "properties": {
+                        "database": {
+                          "type": "object",
+                          "properties": {
+                            "status": {
+                              "type": "string"
+                            },
+                            "response_time": {
+                              "type": "string"
+                            },
+                            "error": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "status",
+                            "response_time"
+                          ]
+                        },
+                        "redis": {
+                          "type": "object",
+                          "properties": {
+                            "status": {
+                              "type": "string"
+                            },
+                            "response_time": {
+                              "type": "string"
+                            },
+                            "error": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "status",
+                            "response_time"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "database"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "timestamp",
+                    "environment",
+                    "checks"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/users": {
+      "post": {
+        "description": "Create user after Clerk signup, sync to DB",
+        "summary": "Create a new user",
+        "tags": [
+          "User"
+        ],
+        "parameters": [],
+        "operationId": "createUser",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "username": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 50
+                  },
+                  "phoneNumber": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 6
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "user",
+                      "restaurant_manager",
+                      "delivery_partner",
+                      "admin"
+                    ]
+                  },
+                  "profilePicture": {
+                    "type": "string",
+                    "format": "uri"
+                  }
+                },
+                "required": [
+                  "email",
+                  "username",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "201",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "username": {
+                      "type": "string"
+                    },
+                    "password": {
+                      "type": "string"
+                    },
+                    "phoneNumber": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "role": {
+                      "type": "string"
+                    },
+                    "isVerified": {
+                      "type": "boolean"
+                    },
+                    "isActive": {
+                      "type": "boolean"
+                    },
+                    "loyaltyPoints": {
+                      "type": "number"
+                    },
+                    "profilePicture": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "twoFactorEnabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "createdAt",
+                    "updatedAt",
+                    "email",
+                    "username",
+                    "password",
+                    "phoneNumber",
+                    "role",
+                    "isVerified",
+                    "isActive",
+                    "loyaltyPoints",
+                    "profilePicture",
+                    "twoFactorEnabled"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/users/me": {
+      "get": {
+        "description": "Get currently authenticated user's profile",
+        "summary": "Get my profile",
+        "tags": [
+          "User"
+        ],
+        "parameters": [],
+        "operationId": "getMyProfile",
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "username": {
+                      "type": "string"
+                    },
+                    "password": {
+                      "type": "string"
+                    },
+                    "phoneNumber": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "role": {
+                      "type": "string"
+                    },
+                    "isVerified": {
+                      "type": "boolean"
+                    },
+                    "isActive": {
+                      "type": "boolean"
+                    },
+                    "loyaltyPoints": {
+                      "type": "number"
+                    },
+                    "profilePicture": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "twoFactorEnabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "createdAt",
+                    "updatedAt",
+                    "email",
+                    "username",
+                    "password",
+                    "phoneNumber",
+                    "role",
+                    "isVerified",
+                    "isActive",
+                    "loyaltyPoints",
+                    "profilePicture",
+                    "twoFactorEnabled"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "description": "Update profile (name, phone, picture, etc.)",
+        "summary": "Update my profile",
+        "tags": [
+          "User"
+        ],
+        "parameters": [],
+        "operationId": "updateMyProfile",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "username": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 50
+                  },
+                  "phoneNumber": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 6
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "user",
+                      "restaurant_manager",
+                      "delivery_partner",
+                      "admin"
+                    ]
+                  },
+                  "profilePicture": {
+                    "type": "string",
+                    "format": "uri"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "username": {
+                      "type": "string"
+                    },
+                    "password": {
+                      "type": "string"
+                    },
+                    "phoneNumber": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "role": {
+                      "type": "string"
+                    },
+                    "isVerified": {
+                      "type": "boolean"
+                    },
+                    "isActive": {
+                      "type": "boolean"
+                    },
+                    "loyaltyPoints": {
+                      "type": "number"
+                    },
+                    "profilePicture": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "twoFactorEnabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "createdAt",
+                    "updatedAt",
+                    "email",
+                    "username",
+                    "password",
+                    "phoneNumber",
+                    "role",
+                    "isVerified",
+                    "isActive",
+                    "loyaltyPoints",
+                    "profilePicture",
+                    "twoFactorEnabled"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "description": "Soft delete account (set deleted_at)",
+        "summary": "Delete my account",
+        "tags": [
+          "User"
+        ],
+        "parameters": [],
+        "operationId": "deleteMyAccount",
+        "responses": {
+          "204": {
+            "description": "204",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/users/list": {
+      "get": {
+        "description": "List users with pagination, filtering, sorting",
+        "summary": "List users",
+        "tags": [
+          "User"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "created_at",
+                "updated_at",
+                "email",
+                "username",
+                "role"
+              ]
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "user",
+                "restaurant_manager",
+                "delivery_partner",
+                "admin"
+              ]
+            }
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "verified",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "operationId": "listUsers",
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "type": "string"
+                          },
+                          "email": {
+                            "type": "string",
+                            "format": "email"
+                          },
+                          "username": {
+                            "type": "string"
+                          },
+                          "password": {
+                            "type": "string"
+                          },
+                          "phoneNumber": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "role": {
+                            "type": "string"
+                          },
+                          "isVerified": {
+                            "type": "boolean"
+                          },
+                          "isActive": {
+                            "type": "boolean"
+                          },
+                          "loyaltyPoints": {
+                            "type": "number"
+                          },
+                          "profilePicture": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "twoFactorEnabled": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "createdAt",
+                          "updatedAt",
+                          "email",
+                          "username",
+                          "password",
+                          "phoneNumber",
+                          "role",
+                          "isVerified",
+                          "isActive",
+                          "loyaltyPoints",
+                          "profilePicture",
+                          "twoFactorEnabled"
+                        ]
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    },
+                    "page": {
+                      "type": "number"
+                    },
+                    "limit": {
+                      "type": "number"
+                    },
+                    "totalPages": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "total",
+                    "page",
+                    "limit",
+                    "totalPages"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/users/me/addresses": {
+      "post": {
+        "summary": "Add address",
+        "tags": [
+          "User"
+        ],
+        "parameters": [],
+        "operationId": "createAddress",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 20
+                  },
+                  "latitude": {
+                    "type": "number"
+                  },
+                  "longitude": {
+                    "type": "number"
+                  },
+                  "isDefault": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "label",
+                  "latitude",
+                  "longitude"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "201",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "userId": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "latitude": {
+                      "type": "number"
+                    },
+                    "longitude": {
+                      "type": "number"
+                    },
+                    "isDefault": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "createdAt",
+                    "updatedAt",
+                    "userId",
+                    "label",
+                    "latitude",
+                    "longitude",
+                    "isDefault"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "get": {
+        "summary": "List my addresses",
+        "tags": [
+          "User"
+        ],
+        "parameters": [],
+        "operationId": "listAddresses",
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "createdAt": {
+                        "type": "string"
+                      },
+                      "updatedAt": {
+                        "type": "string"
+                      },
+                      "userId": {
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "latitude": {
+                        "type": "number"
+                      },
+                      "longitude": {
+                        "type": "number"
+                      },
+                      "isDefault": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "createdAt",
+                      "updatedAt",
+                      "userId",
+                      "label",
+                      "latitude",
+                      "longitude",
+                      "isDefault"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/users/me/addresses/{id}": {
+      "patch": {
+        "summary": "Update address",
+        "tags": [
+          "User"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "updateAddress",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 20
+                  },
+                  "latitude": {
+                    "type": "number"
+                  },
+                  "longitude": {
+                    "type": "number"
+                  },
+                  "isDefault": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "userId": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "latitude": {
+                      "type": "number"
+                    },
+                    "longitude": {
+                      "type": "number"
+                    },
+                    "isDefault": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "createdAt",
+                    "updatedAt",
+                    "userId",
+                    "label",
+                    "latitude",
+                    "longitude",
+                    "isDefault"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Delete address",
+        "tags": [
+          "User"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "deleteAddress",
+        "responses": {
+          "204": {
+            "description": "204",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/users/me/addresses/{id}/default": {
+      "patch": {
+        "summary": "Set default address",
+        "tags": [
+          "User"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "operationId": "setDefaultAddress",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string",
+                "format": "null",
+                "nullable": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "userId": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "latitude": {
+                      "type": "number"
+                    },
+                    "longitude": {
+                      "type": "number"
+                    },
+                    "isDefault": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "createdAt",
+                    "updatedAt",
+                    "userId",
+                    "label",
+                    "latitude",
+                    "longitude",
+                    "isDefault"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/users/me/loyalty": {
+      "get": {
+        "summary": "Get user loyalty history",
+        "tags": [
+          "User"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "transactionType",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "EARN",
+                "REDEEM",
+                "ADJUST"
+              ]
+            }
+          },
+          {
+            "name": "fromDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "operationId": "getLoyaltyHistory",
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "type": "string"
+                          },
+                          "userId": {
+                            "type": "string"
+                          },
+                          "transactionType": {
+                            "type": "string",
+                            "enum": [
+                              "EARN",
+                              "REDEEM",
+                              "ADJUST"
+                            ]
+                          },
+                          "pointsChange": {
+                            "type": "number"
+                          },
+                          "balanceAfter": {
+                            "type": "number"
+                          },
+                          "reason": {
+                            "type": "string"
+                          },
+                          "referenceId": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "referenceType": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "performedBy": {
+                            "type": "string"
+                          },
+                          "performedAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "createdAt",
+                          "updatedAt",
+                          "userId",
+                          "transactionType",
+                          "pointsChange",
+                          "balanceAfter",
+                          "reason",
+                          "referenceId",
+                          "referenceType",
+                          "performedBy",
+                          "performedAt"
+                        ]
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    },
+                    "page": {
+                      "type": "number"
+                    },
+                    "limit": {
+                      "type": "number"
+                    },
+                    "totalPages": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "total",
+                    "page",
+                    "limit",
+                    "totalPages"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/users/me/loyalty/balance": {
+      "get": {
+        "summary": "Get current balance",
+        "tags": [
+          "User"
+        ],
+        "parameters": [],
+        "operationId": "getCurrentBalance",
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "balance": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "balance"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/loyalty/redeem": {
+      "post": {
+        "summary": "Redeem points",
+        "tags": [
+          "User"
+        ],
+        "parameters": [],
+        "operationId": "redeemPoints",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "points": {
+                    "type": "number",
+                    "minimum": 0,
+                    "exclusiveMinimum": 0
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 255
+                  }
+                },
+                "required": [
+                  "points",
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/loyalty/adjust": {
+      "post": {
+        "summary": "Adjust points (admin/system)",
+        "tags": [
+          "User"
+        ],
+        "parameters": [],
+        "operationId": "adjustPoints",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "pointsChange": {
+                    "type": "number"
+                  },
+                  "transactionType": {
+                    "type": "string",
+                    "enum": [
+                      "EARN",
+                      "REDEEM",
+                      "ADJUST"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 255
+                  },
+                  "performedBy": {
+                    "type": "string"
+                  },
+                  "referenceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true
+                  },
+                  "referenceType": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "userId",
+                  "pointsChange",
+                  "transactionType",
+                  "reason",
+                  "performedBy"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/vendors": {
+      "post": {
+        "description": "Add vendor to database",
+        "summary": "Create a new vendor",
+        "tags": [
+          "Vendor"
+        ],
+        "parameters": [],
+        "operationId": "createVendor",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 150
+                  },
+                  "about": {
+                    "type": "string"
+                  },
+                  "cuisine": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "deliveryAvailable": {
+                    "type": "boolean"
+                  },
+                  "pickupAvailable": {
+                    "type": "boolean"
+                  },
+                  "groupOrderAvailable": {
+                    "type": "boolean"
+                  },
+                  "deliveryFee": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "minOrderAmount": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "deliveryTimeEstimate": {
+                    "type": "string"
+                  },
+                  "isOpen": {
+                    "type": "boolean"
+                  },
+                  "openingHours": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "vendorListingImageName": {
+                    "type": "string"
+                  },
+                  "vendorLogoImageName": {
+                    "type": "string"
+                  },
+                  "vendorType": {
+                    "type": "string",
+                    "enum": [
+                      "restaurant",
+                      "bakery",
+                      "alcohol",
+                      "cafe"
+                    ]
+                  },
+                  "isFeatured": {
+                    "type": "boolean"
+                  },
+                  "cuisineTags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "promoText": {
+                    "type": "string"
+                  },
+                  "vendorNotice": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "201",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "about": {
+                      "type": "string"
+                    },
+                    "cuisine": {
+                      "type": "string"
+                    },
+                    "phone": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "rating": {
+                      "type": "number"
+                    },
+                    "reviewCount": {
+                      "type": "number"
+                    },
+                    "deliveryAvailable": {
+                      "type": "boolean"
+                    },
+                    "pickupAvailable": {
+                      "type": "boolean"
+                    },
+                    "groupOrderAvailable": {
+                      "type": "boolean"
+                    },
+                    "deliveryFee": {
+                      "type": "number"
+                    },
+                    "minOrderAmount": {
+                      "type": "number"
+                    },
+                    "deliveryTimeEstimate": {
+                      "type": "string"
+                    },
+                    "isOpen": {
+                      "type": "boolean"
+                    },
+                    "openingHours": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "vendorListingImage": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "vendorLogoImage": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "vendorType": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "favoriteCount": {
+                      "type": "number"
+                    },
+                    "isFeatured": {
+                      "type": "boolean"
+                    },
+                    "cuisineTags": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "promoText": {
+                      "type": "string"
+                    },
+                    "vendorNotice": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "createdAt",
+                    "updatedAt",
+                    "name",
+                    "about",
+                    "cuisine",
+                    "rating",
+                    "reviewCount",
+                    "deliveryAvailable",
+                    "pickupAvailable",
+                    "groupOrderAvailable",
+                    "deliveryFee",
+                    "minOrderAmount",
+                    "deliveryTimeEstimate",
+                    "isOpen",
+                    "favoriteCount",
+                    "isFeatured",
+                    "promoText",
+                    "vendorNotice"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "get": {
+        "summary": "Get list of vendors with pagination/filter",
+        "tags": [
+          "Vendor"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "created_at",
+                "updated_at",
+                "rating",
+                "name"
+              ]
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 2
+            }
+          },
+          {
+            "name": "cuisine",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isOpen",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "isFeatured",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "minRating",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 5
+            }
+          }
+        ],
+        "operationId": "getVendors",
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "about": {
+                            "type": "string"
+                          },
+                          "cuisine": {
+                            "type": "string"
+                          },
+                          "phone": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "rating": {
+                            "type": "number"
+                          },
+                          "reviewCount": {
+                            "type": "number"
+                          },
+                          "deliveryAvailable": {
+                            "type": "boolean"
+                          },
+                          "pickupAvailable": {
+                            "type": "boolean"
+                          },
+                          "groupOrderAvailable": {
+                            "type": "boolean"
+                          },
+                          "deliveryFee": {
+                            "type": "number"
+                          },
+                          "minOrderAmount": {
+                            "type": "number"
+                          },
+                          "deliveryTimeEstimate": {
+                            "type": "string"
+                          },
+                          "isOpen": {
+                            "type": "boolean"
+                          },
+                          "openingHours": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "vendorListingImage": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "vendorLogoImage": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "vendorType": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "favoriteCount": {
+                            "type": "number"
+                          },
+                          "isFeatured": {
+                            "type": "boolean"
+                          },
+                          "cuisineTags": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "promoText": {
+                            "type": "string"
+                          },
+                          "vendorNotice": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "createdAt",
+                          "updatedAt",
+                          "name",
+                          "about",
+                          "cuisine",
+                          "rating",
+                          "reviewCount",
+                          "deliveryAvailable",
+                          "pickupAvailable",
+                          "groupOrderAvailable",
+                          "deliveryFee",
+                          "minOrderAmount",
+                          "deliveryTimeEstimate",
+                          "isOpen",
+                          "favoriteCount",
+                          "isFeatured",
+                          "promoText",
+                          "vendorNotice"
+                        ]
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    },
+                    "page": {
+                      "type": "number"
+                    },
+                    "limit": {
+                      "type": "number"
+                    },
+                    "totalPages": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "total",
+                    "page",
+                    "limit",
+                    "totalPages"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/vendors/{id}": {
+      "patch": {
+        "summary": "Update vendor by ID",
+        "tags": [
+          "Vendor"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "updateVendor",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 150
+                  },
+                  "about": {
+                    "type": "string"
+                  },
+                  "cuisine": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "deliveryAvailable": {
+                    "type": "boolean"
+                  },
+                  "pickupAvailable": {
+                    "type": "boolean"
+                  },
+                  "groupOrderAvailable": {
+                    "type": "boolean"
+                  },
+                  "deliveryFee": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "minOrderAmount": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "deliveryTimeEstimate": {
+                    "type": "string"
+                  },
+                  "isOpen": {
+                    "type": "boolean"
+                  },
+                  "openingHours": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "vendorListingImageName": {
+                    "type": "string"
+                  },
+                  "vendorLogoImageName": {
+                    "type": "string"
+                  },
+                  "vendorType": {
+                    "type": "string",
+                    "enum": [
+                      "restaurant",
+                      "bakery",
+                      "alcohol",
+                      "cafe"
+                    ]
+                  },
+                  "isFeatured": {
+                    "type": "boolean"
+                  },
+                  "cuisineTags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "promoText": {
+                    "type": "string"
+                  },
+                  "vendorNotice": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "about": {
+                      "type": "string"
+                    },
+                    "cuisine": {
+                      "type": "string"
+                    },
+                    "phone": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "rating": {
+                      "type": "number"
+                    },
+                    "reviewCount": {
+                      "type": "number"
+                    },
+                    "deliveryAvailable": {
+                      "type": "boolean"
+                    },
+                    "pickupAvailable": {
+                      "type": "boolean"
+                    },
+                    "groupOrderAvailable": {
+                      "type": "boolean"
+                    },
+                    "deliveryFee": {
+                      "type": "number"
+                    },
+                    "minOrderAmount": {
+                      "type": "number"
+                    },
+                    "deliveryTimeEstimate": {
+                      "type": "string"
+                    },
+                    "isOpen": {
+                      "type": "boolean"
+                    },
+                    "openingHours": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "vendorListingImage": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "vendorLogoImage": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "vendorType": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "favoriteCount": {
+                      "type": "number"
+                    },
+                    "isFeatured": {
+                      "type": "boolean"
+                    },
+                    "cuisineTags": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "promoText": {
+                      "type": "string"
+                    },
+                    "vendorNotice": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "createdAt",
+                    "updatedAt",
+                    "name",
+                    "about",
+                    "cuisine",
+                    "rating",
+                    "reviewCount",
+                    "deliveryAvailable",
+                    "pickupAvailable",
+                    "groupOrderAvailable",
+                    "deliveryFee",
+                    "minOrderAmount",
+                    "deliveryTimeEstimate",
+                    "isOpen",
+                    "favoriteCount",
+                    "isFeatured",
+                    "promoText",
+                    "vendorNotice"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Delete vendor by ID",
+        "tags": [
+          "Vendor"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "deleteVendor",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "204",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "get": {
+        "summary": "Get vendor details by ID",
+        "tags": [
+          "Vendor"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "getVendorByID",
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "about": {
+                      "type": "string"
+                    },
+                    "cuisine": {
+                      "type": "string"
+                    },
+                    "phone": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "rating": {
+                      "type": "number"
+                    },
+                    "reviewCount": {
+                      "type": "number"
+                    },
+                    "deliveryAvailable": {
+                      "type": "boolean"
+                    },
+                    "pickupAvailable": {
+                      "type": "boolean"
+                    },
+                    "groupOrderAvailable": {
+                      "type": "boolean"
+                    },
+                    "deliveryFee": {
+                      "type": "number"
+                    },
+                    "minOrderAmount": {
+                      "type": "number"
+                    },
+                    "deliveryTimeEstimate": {
+                      "type": "string"
+                    },
+                    "isOpen": {
+                      "type": "boolean"
+                    },
+                    "openingHours": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "vendorListingImage": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "vendorLogoImage": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "vendorType": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "favoriteCount": {
+                      "type": "number"
+                    },
+                    "isFeatured": {
+                      "type": "boolean"
+                    },
+                    "cuisineTags": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "promoText": {
+                      "type": "string"
+                    },
+                    "vendorNotice": {
+                      "type": "string"
+                    },
+                    "address": {
+                      "type": "object",
+                      "properties": {
+                        "vendorId": {
+                          "type": "string"
+                        },
+                        "streetAddress": {
+                          "type": "string"
+                        },
+                        "city": {
+                          "type": "string"
+                        },
+                        "state": {
+                          "type": "string"
+                        },
+                        "zipcode": {
+                          "type": "string"
+                        },
+                        "latitude": {
+                          "type": "number"
+                        },
+                        "longitude": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "vendorId",
+                        "streetAddress",
+                        "city",
+                        "state",
+                        "zipcode",
+                        "latitude",
+                        "longitude"
+                      ],
+                      "nullable": true
+                    },
+                    "categories": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "categoryId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "createdAt": {
+                                  "type": "string"
+                                },
+                                "updatedAt": {
+                                  "type": "string"
+                                },
+                                "vendorId": {
+                                  "type": "string"
+                                },
+                                "categoryId": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "description": {
+                                  "type": "string"
+                                },
+                                "basePrice": {
+                                  "type": "number"
+                                },
+                                "oldPrice": {
+                                  "type": "number"
+                                },
+                                "image": {
+                                  "type": "string"
+                                },
+                                "isAvailable": {
+                                  "type": "boolean"
+                                },
+                                "isVegetarian": {
+                                  "type": "boolean"
+                                },
+                                "isVegan": {
+                                  "type": "boolean"
+                                },
+                                "isPopular": {
+                                  "type": "boolean"
+                                },
+                                "isGlutenFree": {
+                                  "type": "boolean"
+                                },
+                                "spicyLevel": {
+                                  "type": "number"
+                                },
+                                "mostLikedRank": {
+                                  "type": "number"
+                                },
+                                "additionalServiceCharge": {
+                                  "type": "number"
+                                },
+                                "tags": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "portionSize": {
+                                  "type": "string"
+                                },
+                                "specialInstructions": {
+                                  "type": "string"
+                                },
+                                "keywords": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "createdAt",
+                                "updatedAt",
+                                "vendorId",
+                                "categoryId",
+                                "name",
+                                "description",
+                                "basePrice",
+                                "oldPrice",
+                                "image",
+                                "isAvailable",
+                                "isVegetarian",
+                                "isVegan",
+                                "isPopular",
+                                "isGlutenFree",
+                                "spicyLevel",
+                                "mostLikedRank",
+                                "additionalServiceCharge",
+                                "portionSize",
+                                "specialInstructions",
+                                "keywords"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "categoryId",
+                          "name",
+                          "description"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "createdAt",
+                    "updatedAt",
+                    "name",
+                    "about",
+                    "cuisine",
+                    "rating",
+                    "reviewCount",
+                    "deliveryAvailable",
+                    "pickupAvailable",
+                    "groupOrderAvailable",
+                    "deliveryFee",
+                    "minOrderAmount",
+                    "deliveryTimeEstimate",
+                    "isOpen",
+                    "favoriteCount",
+                    "isFeatured",
+                    "promoText",
+                    "vendorNotice"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/search/doc-insert": {
+      "post": {
+        "description": "Insert a single document into the specified Elasticsearch index",
+        "summary": "Insert a single document into an Elasticsearch index",
+        "tags": [
+          "Search"
+        ],
+        "parameters": [],
+        "operationId": "insertDocument",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "index_name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "doc": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "nullable": true
+                    }
+                  }
+                },
+                "required": [
+                  "index_name",
+                  "doc"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "201",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/search/full-text": {
+      "post": {
+        "description": "Performs a multi-field full-text search with optional filters and deep pagination",
+        "summary": "Perform a full-text search on vendor_menu index",
+        "tags": [
+          "Search"
+        ],
+        "parameters": [],
+        "operationId": "fullTextSearch",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "page_size": {
+                    "default": 20,
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": 0,
+                    "description": "Number of results per page"
+                  },
+                  "last_sort": {
+                    "type": "array",
+                    "items": {
+                      "nullable": true
+                    },
+                    "description": "Used for deep pagination (Elasticsearch search_after)"
+                  },
+                  "is_vegetarian": {
+                    "type": "boolean",
+                    "description": "Filter for vegetarian menus",
+                    "nullable": true
+                  },
+                  "city": {
+                    "type": "string",
+                    "description": "Filter by vendor city"
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "menu_id": {
+                            "type": "string"
+                          },
+                          "menu_name": {
+                            "type": "string"
+                          },
+                          "menu_description": {
+                            "type": "string"
+                          },
+                          "tags": {
+                            "type": "string"
+                          },
+                          "keywords": {
+                            "type": "string"
+                          },
+                          "base_price": {
+                            "type": "number"
+                          },
+                          "is_available": {
+                            "type": "boolean"
+                          },
+                          "is_popular": {
+                            "type": "boolean"
+                          },
+                          "is_vegetarian": {
+                            "default": false,
+                            "type": "boolean"
+                          },
+                          "is_vegan": {
+                            "default": false,
+                            "type": "boolean"
+                          },
+                          "is_gluten_free": {
+                            "default": false,
+                            "type": "boolean"
+                          },
+                          "spicy_level": {
+                            "default": 0,
+                            "type": "number"
+                          },
+                          "portion_size": {
+                            "default": "",
+                            "type": "string"
+                          },
+                          "category": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ]
+                          },
+                          "vendor": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "about": {
+                                "type": "string"
+                              },
+                              "cuisine": {
+                                "type": "string"
+                              },
+                              "cuisine_tags": {
+                                "type": "string"
+                              },
+                              "vendor_type": {
+                                "type": "string"
+                              },
+                              "rating": {
+                                "type": "number"
+                              },
+                              "favorite_count": {
+                                "type": "number"
+                              },
+                              "is_open": {
+                                "type": "boolean"
+                              },
+                              "is_featured": {
+                                "type": "boolean"
+                              },
+                              "delivery_available": {
+                                "type": "boolean"
+                              },
+                              "pickup_available": {
+                                "type": "boolean"
+                              },
+                              "delivery_fee": {
+                                "type": "number"
+                              },
+                              "min_order_amount": {
+                                "type": "number"
+                              },
+                              "promo_text": {
+                                "type": "string"
+                              },
+                              "vendor_notice": {
+                                "type": "string"
+                              },
+                              "location": {
+                                "type": "object",
+                                "properties": {
+                                  "lat": {
+                                    "type": "number"
+                                  },
+                                  "lon": {
+                                    "type": "number"
+                                  }
+                                },
+                                "required": [
+                                  "lat",
+                                  "lon"
+                                ]
+                              },
+                              "street_address": {
+                                "type": "string"
+                              },
+                              "city": {
+                                "type": "string"
+                              },
+                              "state": {
+                                "type": "string"
+                              },
+                              "zip_code": {
+                                "type": "string"
+                              },
+                              "opening_hours": {
+                                "type": "string"
+                              },
+                              "vendor_listing_image_name": {
+                                "type": "string"
+                              },
+                              "vendor_logo_image_name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "about",
+                              "cuisine",
+                              "cuisine_tags",
+                              "vendor_type",
+                              "rating",
+                              "favorite_count",
+                              "is_open",
+                              "is_featured",
+                              "delivery_available",
+                              "pickup_available",
+                              "delivery_fee",
+                              "min_order_amount",
+                              "promo_text",
+                              "vendor_notice",
+                              "location",
+                              "street_address",
+                              "city",
+                              "state",
+                              "zip_code",
+                              "opening_hours",
+                              "vendor_listing_image_name",
+                              "vendor_logo_image_name"
+                            ]
+                          },
+                          "sort": {
+                            "type": "array",
+                            "items": {
+                              "type": "number"
+                            }
+                          }
+                        },
+                        "required": [
+                          "menu_id",
+                          "menu_name",
+                          "menu_description",
+                          "tags",
+                          "keywords",
+                          "base_price",
+                          "is_available",
+                          "is_popular",
+                          "category",
+                          "vendor"
+                        ]
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    },
+                    "took": {
+                      "type": "number"
+                    },
+                    "last_sort": {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      }
+                    }
+                  },
+                  "required": [
+                    "results",
+                    "total",
+                    "took"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "info": {
+    "version": "1.0.0",
+    "title": "Boilerplate REST API - Documentation",
+    "description": "Boilerplate REST API - Documentation"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080/api",
+      "description": "Local Server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "x-service-token": {
+        "type": "apiKey",
+        "name": "x-service-token",
+        "in": "header"
+      }
+    }
+  }
+}
