@@ -138,7 +138,7 @@ func loadVendors(path string) (map[string]interface{}, error) {
 			"zip_code":       getString(vendorMap, "ZipCode"),
 			"opening_hours":       getString(vendorMap, "OpeningHours"),
 			"vendor_listing_image_name":getString(vendorMap, "VendorListingWebImageName"),
-			"vendor_logo_image_name":getString(vendorMap, "VendorLogoImageName"),
+			"vendor_logo_image_name":getString(vendorMap, "VendorCoverImageName"),
 
 		}
 	}
