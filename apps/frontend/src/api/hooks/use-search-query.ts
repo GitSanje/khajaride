@@ -50,5 +50,6 @@ export const useGetSearchQuery = ({
     queryKey: [QUERY_KEYS.SEARCH.FULL_TEXT_SEARCH,data],
     queryFn: () => fetchSearchQuery({ api, data }),
     staleTime:1000 * 60,
+    enabled: data.query.trim() !==""
   });
 };

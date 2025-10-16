@@ -15,6 +15,7 @@ import type { TVendorMenuSearchRes, TVendorSearchRes } from "@khajaride/zod"
 import { useDebounce } from "@/api/hooks/use-debounce"
 import { useGetSearchQuery } from "@/api/hooks/use-search-query"
 import { useNavigate, useSearchParams } from "react-router-dom"
+import { VendorMap } from "../vendor/vendor-map"
 
 
 function SearchPageContent() {
@@ -25,7 +26,7 @@ function SearchPageContent() {
   const initialQuery = searchParams.get("q") || ""
 
   const [searchQuery, setSearchQuery] = useState(initialQuery)
-
+ 
   const [activeCategory, setActiveCategory] = useState("all")
   const [loyaltyPoints] = useState(1250)
   const [cartItemCount] = useState(3)
@@ -39,19 +40,17 @@ function SearchPageContent() {
     dietary: [],
     sortBy: "relevance",
   })
-
-  const debouncedSearch = useDebounce(searchQuery, 300);
+ const [searchTerm, setSearchTerm] = useState(initialQuery);
+  // const debouncedSearch = useDebounce(searchQuery, 300);
 
   const { data: ESResponse, isLoading } = useGetSearchQuery({
     data: {
-      query: debouncedSearch || "",
+      query: searchTerm || "",
       page_size: 20,
       last_sort:lastSort
     }
   })
-  // useEffect(() => {
-  //    setLastSort(ESResponse?.last_sort ?? [])
-  // },[ESResponse])
+  
 
   const searchResults = ESResponse?.results || []
   const [showFilters, setShowFilters] = useState(false)
@@ -60,8 +59,13 @@ function SearchPageContent() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-     setLastSort([])
-    navigate(`/khajaride/search?q=${encodeURIComponent(searchQuery)}`)
+
+     if (searchQuery.trim() !== "") {
+    setLastSort([]);
+    navigate(`/khajaride/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    setSearchTerm(searchQuery);
+  }
+     
   }
 
   const handleCategoryChange = (category: string) => {
@@ -109,7 +113,7 @@ function SearchPageContent() {
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between gap-4">
-            <Link href="/app" className="flex items-center gap-2 flex-shrink-0">
+            <Link href="/khajaride" className="flex items-center gap-2 flex-shrink-0">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <span className="text-primary-foreground font-bold text-lg">K</span>
               </div>
@@ -117,12 +121,13 @@ function SearchPageContent() {
             </Link>
 
             {/* Search Bar */}
-            <form onSubmit={handleSearch} className="flex-1 max-w-2xl">
+            <form  onSubmit= {handleSearch}className="flex-1 max-w-2xl">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Search for restaurants, cuisines, or dishes..."
                   value={searchQuery}
+                  // onKeyDown={handleKeyPress}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 pr-4 py-2"
                 />
@@ -174,23 +179,15 @@ function SearchPageContent() {
             Restaurants
           </button>
           <button
-            onClick={() => handleCategoryChange("grocery")}
-            className={`pb-3 px-2 text-sm font-medium transition-colors ${activeCategory === "grocery"
+            onClick={() => handleCategoryChange("map")}
+            className={`pb-3 px-2 text-sm font-medium transition-colors ${activeCategory === "map"
               ? "text-foreground border-b-2 border-foreground"
               : "text-muted-foreground hover:text-foreground"
               }`}
           >
-            Grocery
+            Map
           </button>
-          <button
-            onClick={() => handleCategoryChange("alcohol")}
-            className={`pb-3 px-2 text-sm font-medium transition-colors ${activeCategory === "alcohol"
-              ? "text-foreground border-b-2 border-foreground"
-              : "text-muted-foreground hover:text-foreground"
-              }`}
-          >
-            Alcohol
-          </button>
+          
         </div>
 
         {/* Filters Bar */}
@@ -376,7 +373,13 @@ function SearchPageContent() {
 
         {/* Results */}
         {!isLoading && searchResults.length > 0 && (
+             <>
+          {activeCategory === "map" ? (
+              <VendorMap vendors={vendorResults} className="h-[600px] w-full" />
+            ) :(
           <div className="space-y-6">
+
+             
             {activeCategory === "restaurants" ? (
               // Restaurant grouped view
               vendorResults.map(({ vendor, items }) => (
@@ -499,7 +502,11 @@ function SearchPageContent() {
             </Button>
 
             
-          </div>
+          </div>)
+
+          }
+          </>
+          
         )}
 
         {/* No Results */}
@@ -513,7 +520,7 @@ function SearchPageContent() {
         )}
 
         {/* Empty State */}
-        {!isLoading && !searchQuery && (
+        {!isLoading && !initialQuery && (
           <div className="text-center py-12">
             <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">Start searching</h3>

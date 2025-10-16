@@ -2516,6 +2516,18 @@
                   "city": {
                     "type": "string",
                     "description": "Filter by vendor city"
+                  },
+                  "user_latitude": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "user_longitude": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "radius_meters": {
+                    "type": "number",
+                    "nullable": true
                   }
                 },
                 "required": [

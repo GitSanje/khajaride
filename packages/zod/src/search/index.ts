@@ -37,6 +37,10 @@ export const ZSearchParamsPayloadSchema = z.object({
     .string()
     .optional()
     .describe("Filter by vendor city"),
+  user_latitude : z.number().optional().nullable(),
+  user_longitude : z.number().optional().nullable(),
+  radius_meters: z.number().optional().nullable()
+
 });
 
 

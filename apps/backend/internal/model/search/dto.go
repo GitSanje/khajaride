@@ -20,8 +20,7 @@ func (p InsertDocPayload) Validate() error {
     }
     return nil
 }
-
-
+//27.687584, 85.242394
 // ---------------------Search Query Params -----------
 type SearchParamsPayload struct {
 
@@ -30,6 +29,9 @@ type SearchParamsPayload struct {
    LastSort []interface{} `json:"last_sort,omitempty"` // Used for deep pagination (Elasticsearch's search_after)
    IsVegetarian *bool `json:"is_vegetarian,omitempty"`
    City string `json:"city,omitempty"`
+   UserLatitude  *float64      `json:"user_latitude,omitempty"`
+   UserLongitude *float64      `json:"user_longitude,omitempty"`
+   RadiusMeters  *float64      `json:"radius_meters,omitempty"` 
 	
 
 }
@@ -41,5 +43,11 @@ func (p *SearchParamsPayload) Validate() error {
 	if p.PageSize <= 0 {
 		p.PageSize = 20
 	}
+
+   if p.UserLatitude != nil && p.UserLongitude != nil && p.RadiusMeters == nil {
+		defaultRadius := 5000.0
+		p.RadiusMeters = &defaultRadius
+	}
+
 	return nil
 }
