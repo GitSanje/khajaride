@@ -1,1 +1,1 @@
-fetch_restaurants/new_menu_vendor.json filter=lfs diff=lfs merge=lfs -text
+*.json filter=lfs diff=lfs merge=lfs -text

@@ -1,33 +1,3 @@
-{
-    "$schema": "https://turbo.build/schema.json",
-    "ui": "tui",
-    "tasks": {
-      "build": {
-        "dependsOn": ["^build"],
-        "inputs": ["$TURBO_DEFAULT$", ".env*"]
-      },
-      "lint": {
-        "dependsOn": ["^lint"]
-      },
-      "lint:fix": {
-        "dependsOn": ["^lint:fix"]
-      },
-      "format": {
-        "dependsOn": ["^format"]
-      },
-      "format:fix": {
-        "dependsOn": ["^format:fix"]
-      },
-      "typecheck": {
-        "dependsOn": ["^typecheck"]
-      },
-      "clean": {
-        "cache": false
-      },
-      "dev": {
-        "cache": false,
-        "persistent": true
-      }
-    }
-  }
-  
+version https://git-lfs.github.com/spec/v1
+oid sha256:6af80000770f3ff73c74be569da4855ad61a6fcd80e73bdf48fcf90a5a15aca0
+size 639
