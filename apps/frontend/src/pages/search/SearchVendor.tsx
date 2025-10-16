@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, Suspense } from "react"
+import { useState, Suspense, useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -10,18 +10,18 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Search, Star, ShoppingCart, User, Gift, ChevronDown, SlidersHorizontal, X } from "lucide-react"
 import Link from "next/link"
-import type {  SearchFilters } from "@/types/elasticsearch-types"
-import type {TVendorMenuSearchRes,TVendorSearchRes} from "@khajaride/zod"
+import type { SearchFilters } from "@/types/elasticsearch-types"
+import type { TVendorMenuSearchRes, TVendorSearchRes } from "@khajaride/zod"
 import { useDebounce } from "@/api/hooks/use-debounce"
 import { useGetSearchQuery } from "@/api/hooks/use-search-query"
-import { useNavigate,useSearchParams } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 
 
 function SearchPageContent() {
   const [searchParams] = useSearchParams()
-   const navigate = useNavigate() 
-   console.log(searchParams);
-   
+  const navigate = useNavigate()
+  console.log(searchParams);
+
   const initialQuery = searchParams.get("q") || ""
 
   const [searchQuery, setSearchQuery] = useState(initialQuery)
@@ -30,6 +30,7 @@ function SearchPageContent() {
   const [loyaltyPoints] = useState(1250)
   const [cartItemCount] = useState(3)
 
+  const [lastSort, setLastSort] = useState<number[]>([])
   // Filters state
   const [filters, setFilters] = useState<SearchFilters>({
     offers: false,
@@ -39,58 +40,28 @@ function SearchPageContent() {
     sortBy: "relevance",
   })
 
-    const debouncedSearch = useDebounce(searchQuery, 300);
+  const debouncedSearch = useDebounce(searchQuery, 300);
 
-    const {data:ESResponse , isLoading} = useGetSearchQuery({
-      data: {
-        query:debouncedSearch || "",
-        page_size:20
-      }
-    })
+  const { data: ESResponse, isLoading } = useGetSearchQuery({
+    data: {
+      query: debouncedSearch || "",
+      page_size: 20,
+      last_sort:lastSort
+    }
+  })
+  // useEffect(() => {
+  //    setLastSort(ESResponse?.last_sort ?? [])
+  // },[ESResponse])
 
-    console.log(ESResponse,"ESResponse");
-    
   const searchResults = ESResponse?.results || []
   const [showFilters, setShowFilters] = useState(false)
-   const totalResults = ESResponse?.total || 0
-  // useEffect(() => {
-  //   if (initialQuery) {
-  //     performSearch(initialQuery, activeCategory, filters)
-  //   }
-  // }, [])
+  const totalResults = ESResponse?.total || 0
 
-  // const performSearch = async (query: string, category: string, searchFilters: SearchFilters) => {
-  //   if (!query.trim()) return
-
-   
-  //   console.log("[v0] Performing search:", query, category, searchFilters)
-
-  //   try {
-  //     const params = new URLSearchParams({
-  //       q: query,
-  //       category,
-  //       filters: JSON.stringify(searchFilters),
-  //     })
-
-  //     const response = await fetch(`/api/search?${params}`)
-  //     const data = await response.json()
-
-  //     console.log("[v0] Search results:", data)
-     
-  //     setTotalResults(data.total || 0)
-  //   } catch (error) {
-  //     console.error("[v0] Search error:", error)
-    
-  //     setTotalResults(0)
-  //   } finally {
-  //     setLoading(false)
-  //   }
-  // }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    // performSearch(searchQuery, activeCategory, filters)
-     navigate(`/khajaride/search?q=${encodeURIComponent(searchQuery)}`)
+     setLastSort([])
+    navigate(`/khajaride/search?q=${encodeURIComponent(searchQuery)}`)
   }
 
   const handleCategoryChange = (category: string) => {
@@ -124,10 +95,10 @@ function SearchPageContent() {
           items: [],
         }
       }
-      acc[vendorId].items.push(item as TVendorMenuSearchRes )
+      acc[vendorId].items.push(item as TVendorMenuSearchRes)
       return acc
     },
-    {} as Record<string, { vendor:TVendorSearchRes; items: TVendorMenuSearchRes[] }>,
+    {} as Record<string, { vendor: TVendorSearchRes; items: TVendorMenuSearchRes[] }>,
   )
 
   const vendorResults = Object.values(groupedByVendor)
@@ -186,41 +157,37 @@ function SearchPageContent() {
         <div className="flex items-center gap-4 mb-4 border-b border-border">
           <button
             onClick={() => handleCategoryChange("all")}
-            className={`pb-3 px-2 text-sm font-medium transition-colors ${
-              activeCategory === "all"
-                ? "text-foreground border-b-2 border-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
+            className={`pb-3 px-2 text-sm font-medium transition-colors ${activeCategory === "all"
+              ? "text-foreground border-b-2 border-foreground"
+              : "text-muted-foreground hover:text-foreground"
+              }`}
           >
             All
           </button>
           <button
             onClick={() => handleCategoryChange("restaurants")}
-            className={`pb-3 px-2 text-sm font-medium transition-colors ${
-              activeCategory === "restaurants"
-                ? "text-foreground border-b-2 border-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
+            className={`pb-3 px-2 text-sm font-medium transition-colors ${activeCategory === "restaurants"
+              ? "text-foreground border-b-2 border-foreground"
+              : "text-muted-foreground hover:text-foreground"
+              }`}
           >
             Restaurants
           </button>
           <button
             onClick={() => handleCategoryChange("grocery")}
-            className={`pb-3 px-2 text-sm font-medium transition-colors ${
-              activeCategory === "grocery"
-                ? "text-foreground border-b-2 border-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
+            className={`pb-3 px-2 text-sm font-medium transition-colors ${activeCategory === "grocery"
+              ? "text-foreground border-b-2 border-foreground"
+              : "text-muted-foreground hover:text-foreground"
+              }`}
           >
             Grocery
           </button>
           <button
             onClick={() => handleCategoryChange("alcohol")}
-            className={`pb-3 px-2 text-sm font-medium transition-colors ${
-              activeCategory === "alcohol"
-                ? "text-foreground border-b-2 border-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
+            className={`pb-3 px-2 text-sm font-medium transition-colors ${activeCategory === "alcohol"
+              ? "text-foreground border-b-2 border-foreground"
+              : "text-muted-foreground hover:text-foreground"
+              }`}
           >
             Alcohol
           </button>
@@ -418,16 +385,10 @@ function SearchPageContent() {
                     {/* Restaurant Image */}
                     <div className="relative md:col-span-1">
                       <img
-                        src={items[0]?.vendor.location ? "/bustling-pizza-restaurant.png" : "/placeholder.svg"}
+                        src={vendor.vendor_listing_image_name ? vendor.vendor_listing_image_name : "/placeholder.svg"}
                         alt={vendor.name}
                         className="w-full h-full object-cover min-h-[200px]"
                       />
-                      <div className="absolute top-2 right-2">
-                        <Badge className="bg-background/90 text-foreground">
-                          <Star className="w-3 h-3 fill-yellow-400 text-yellow-400 mr-1" />
-                          {vendor.rating.toFixed(1)}
-                        </Badge>
-                      </div>
                     </div>
 
                     {/* Restaurant Info */}
@@ -446,6 +407,11 @@ function SearchPageContent() {
                             <span>35 min</span>
                           </div>
                         </div>
+
+                        <div className="flex items-center gap-1 ml-4">
+                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                          <span className="font-semibold">{vendor.rating.toFixed(1)}</span>
+                        </div>
                       </div>
 
                       {vendor.promo_text && (
@@ -454,27 +420,26 @@ function SearchPageContent() {
                         </div>
                       )}
 
-                      <Link href={`/restaurant/${vendor.id}`}>
-                        <Button variant="outline" size="sm">
-                          View store
-                        </Button>
-                      </Link>
+                         <Link href={`/khajaride/vendor/${vendor.id}`}>
+                          <Button variant="outline" size="sm">
+                            View store
+                          </Button>
+                        </Link>
 
                       {/* Menu Items Preview */}
-                      <div className="mt-4 grid grid-cols-2 gap-3">
-                        {items.slice(0, 2).map((item) => (
-                          <div key={item.menu_id} className="flex gap-2">
-                            <img
-                              src="/margherita-pizza.png"
-                              alt={item.menu_name}
-                              className="w-16 h-16 object-cover rounded"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-sm truncate">{item.menu_name}</h4>
-                              <p className="text-sm font-semibold">Rs. {item.base_price}</p>
+                      <div className="mt-4">
+                        <div className="flex overflow-x-auto gap-3 pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                          {items.map((item) => (
+                            <div key={item.menu_id} className="flex-shrink-0 w-48">
+                              <div className="border rounded-lg p-3 bg-background hover:bg-muted/50 transition-colors">
+                                <div className="flex flex-col">
+                                  <h4 className="font-medium text-sm mb-1">{item.menu_name}</h4>
+                                  <p className="text-sm font-semibold text-foreground">Rs. {item.base_price}</p>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -488,7 +453,8 @@ function SearchPageContent() {
                     <div className="grid md:grid-cols-4 gap-4">
                       <div className="relative md:col-span-1">
                         <img
-                          src="/margherita-pizza.png"
+                          src={item.vendor.vendor_listing_image_name ? item.vendor.vendor_listing_image_name : "/margherita-pizza.png"}
+
                           alt={item.menu_name}
                           className="w-full h-full object-cover min-h-[150px]"
                         />
@@ -496,7 +462,7 @@ function SearchPageContent() {
                       <div className="md:col-span-3 p-4">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
-                            <Link href={`/restaurant/${item.vendor.id}`} className="hover:underline">
+                            <Link href={`/khajaride/vendor/${item.vendor.id}`} className="hover:underline">
                               <h3 className="text-lg font-bold mb-1">{item.vendor.name}</h3>
                             </Link>
                             <h4 className="font-semibold mb-1">{item.menu_name}</h4>
@@ -525,6 +491,14 @@ function SearchPageContent() {
                 ))}
               </div>
             )}
+
+            <Button
+             onClick={() => setLastSort(ESResponse?.last_sort ?? [])}
+            >
+              Show More
+            </Button>
+
+            
           </div>
         )}
 
