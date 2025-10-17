@@ -31,7 +31,7 @@ func (p *CreateUserPayload) Validate() error {
 
 
 type UpdateUserPayload struct {
-    ID             uuid.UUID  `param:"id" validate:"required,uuid"`
+    ID              string  `param:"id" validate:"required"`
     Email          *string    `json:"email,omitempty" validate:"omitempty,email"`
     Username       *string    `json:"username,omitempty" validate:"omitempty,min=3,max=50"`
     PhoneNumber    *string    `json:"phoneNumber,omitempty" validate:"omitempty"`
@@ -107,7 +107,7 @@ func (p *GetUserByIDPayload) Validate() error {
 // ------------------------------------------------------------
 
 type DeleteUserPayload struct {
-	ID uuid.UUID `param:"id" validate:"required,uuid"`
+	ID uuid.UUID `param:"id" validate:"required"`
 }
 
 func (p *DeleteUserPayload) Validate() error {

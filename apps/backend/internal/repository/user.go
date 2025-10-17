@@ -24,6 +24,11 @@ func NewUserRepository(s *server.Server) *UserRepository {
 	return  &UserRepository{server: s}
 }
 
+//-- ==================================================
+//--  USER
+//-- ==================================================
+
+
 // ------------------- CREATE USER -------------------
 
 func (r *UserRepository) CreateUser(ctx context.Context, payload *user.CreateUserPayload) (*user.User, error) {

@@ -23,6 +23,12 @@ func NewVendorRepository(s *server.Server) *VendorRepository {
 	return  &VendorRepository{server: s}
 }
 
+
+//-- ==================================================
+//-- VENDOR
+//-- ==================================================
+
+
 // ---------------- Create Vendor ----------------
 
 func (r *VendorRepository) CreateVendor(ctx context.Context, payload *vendor.CreateVendorPayload) (*vendor.Vendor, error) {
@@ -513,6 +519,10 @@ func (r *VendorRepository) BulkInsertMenuData(
 }
 
 
+//-- ==================================================
+//-- VENDOR  ADDRESS
+//-- ==================================================
+
 // ---------------- Vendor Address ----------------
 
 func (r *VendorRepository) CreateVendorAddress(ctx context.Context, payload *vendor.CreateVendorAddressPayload) (*vendor.VendorAddress, error) {
@@ -594,7 +604,11 @@ func (r *VendorRepository) DeleteVendorAddress(ctx context.Context, payload *ven
 }
 
 
-// CreateMenuItem
+//-- ==================================================
+//-- MENU ITEM
+//-- ==================================================
+
+
 func (r *VendorRepository) CreateMenuItem(ctx context.Context, payload *vendor.CreateMenuItemPayload) (*vendor.MenuItem, error) {
 	stmt := `
 		INSERT INTO menu_items (
@@ -736,6 +750,11 @@ func (r *VendorRepository) GetMenuItemByID(ctx context.Context, id string) (*ven
 }
 
 
+//-- ==================================================
+//-- FAVORITE
+//-- ==================================================
+
+
 // CreateFavorite
 func (r *VendorRepository) CreateFavorite(ctx context.Context, payload *vendor.CreateFavoritePayload) (*vendor.Favorite, error) {
 	stmt := `
@@ -801,6 +820,12 @@ func (r *VendorRepository ) DeleteFavorite(ctx context.Context, payload *vendor.
 	}
 	return nil
 }
+
+
+
+//-- ==================================================
+//-- MENU  CATEGORY
+//-- ==================================================
 
 
 // CreateMenuCategory creates a new category

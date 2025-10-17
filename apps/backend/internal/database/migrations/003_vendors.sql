@@ -1,5 +1,8 @@
 
--- Vendor table
+-- =========================
+-- VENDORS
+-- =========================
+
 CREATE TABLE vendors (
     id TEXT  PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
     name VARCHAR(150) NOT NULL,
@@ -22,7 +25,7 @@ CREATE TABLE vendors (
     favorite_count INT DEFAULT 0,   
     is_featured BOOLEAN DEFAULT FALSE,      -- for homepage
     cuisine_tags TEXT[],                    -- array of tags, e.g. ["Italian", "Pizza", "Pasta"]
-    promo_text TEXT,                  -- e.g. "Free delivery on orders over $20"
+    promo_text TEXT,                        -- e.g. "Free delivery on orders over $20"
     vendor_notice TEXT,                     -- e.g. "We are short-staffed today..."
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -42,7 +45,10 @@ CREATE TRIGGER set_updated_at_vendors
 
 
 
--- Vendor addresses
+-- =========================
+-- VENDOR ADDRESSES
+-- =========================
+
 CREATE TABLE vendor_addresses (
     id TEXT  PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
     vendor_id TEXT NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
@@ -87,7 +93,14 @@ CREATE TRIGGER set_updated_at_vendor_addresses
 --     FOR EACH ROW
 --     EXECUTE FUNCTION trigger_set_updated_at();
 
+
+
 -- Menu item categories (Appetizers, Momo, Newari, Pizza, Thali, etc.)
+
+-- =========================
+-- MENU CATEGORIES
+-- =========================
+
 CREATE TABLE menu_categories (
     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
     name VARCHAR(150) NOT NULL,         -- Nepali/English name: e.g. "Momo", "Juice & Drinks"
@@ -97,7 +110,12 @@ CREATE TABLE menu_categories (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
 );
--- Menu items
+
+
+-- =========================
+-- MENU ITEMS
+-- =========================
+
 CREATE TABLE menu_items (
 
     id TEXT  PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
@@ -118,7 +136,6 @@ CREATE TABLE menu_items (
     additional_service_charge DECIMAL(5,2) DEFAULT 0.0, -- e.g. for extra cheese
     tags TEXT[],                    -- array of tags, e.g. ["Newari", "Spicy", "Set"]
     portion_size VARCHAR(50),               -- e.g. "Regular", "Large", "Family"
-    -- special_instructions TEXT,            -- e.g. "No onions, extra spicy" during order time
     keywords TEXT,                        -- for full-text search
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -141,6 +158,9 @@ CREATE TRIGGER set_updated_at_menu_items
 
 
 
+-- =========================
+-- VENDOR  MENU CATEGORIES
+-- =========================
 
 CREATE TABLE vendor_menu_categories (
     vendor_id TEXT NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
@@ -163,7 +183,14 @@ CREATE TRIGGER set_updated_at_menu_categories
     EXECUTE FUNCTION trigger_set_updated_at();
 
 
+
 -- Add-on groups (Sauce, Topping, Drink, etc.)
+
+-- =========================
+-- ADDON GROUPS
+
+-- =========================
+
 CREATE TABLE addon_groups (
     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
     name VARCHAR(100) NOT NULL,               -- e.g. "Sauce Addition"
@@ -175,6 +202,11 @@ CREATE INDEX idx_addon_groups_name ON addon_groups(name);
 
 
 -- Add-on options (anchovies, ranch, etc.)
+
+-- =========================
+-- ADDON OPTIONS
+-- =========================
+
 CREATE TABLE addon_options (
      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
     group_id TEXT NOT NULL REFERENCES addon_groups(id) ON DELETE CASCADE,
@@ -184,7 +216,14 @@ CREATE TABLE addon_options (
 
 CREATE INDEX idx_addon_options_group ON addon_options(group_id);
 
+
+
 -- Link menu item to addon groups (pizza has both sauce + topping options)
+
+-- =========================
+-- MENU ITEM ADDONS
+-- =========================
+
 CREATE TABLE menu_item_addons (
     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
     menu_item_id TEXT NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
@@ -201,6 +240,11 @@ CREATE INDEX idx_menu_item_addons_menu_item
 
 
 -- Tracking popularity
+
+-- =========================
+-- MENU ITEMS STATS
+-- =========================
+
 CREATE TABLE menu_item_stats (
      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
     menu_item_id TEXT NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
@@ -233,6 +277,11 @@ CREATE TRIGGER set_updated_at_menu_item_stats
 
 
 -- Favorites (user saves an item/restaurant for later)
+
+-- =========================
+-- FAVORITES
+-- =========================
+
 CREATE TABLE favorites (
      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,

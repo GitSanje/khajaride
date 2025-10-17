@@ -1,3 +1,9 @@
+
+-- =========================
+-- USERS
+-- =========================
+
+
 CREATE TABLE users (
     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
     email VARCHAR(255) NOT NULL UNIQUE,
@@ -14,7 +20,9 @@ CREATE TABLE users (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2FA tokens table
+-- =========================
+-- 2FA TOKENS 
+-- =========================
 CREATE TABLE user_2fa_tokens (
     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -24,6 +32,7 @@ CREATE TABLE user_2fa_tokens (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     used BOOLEAN DEFAULT FALSE
 );
+
 
 
 CREATE INDEX idx_user_2fa_tokens_user_id ON user_2fa_tokens(user_id);
@@ -39,7 +48,12 @@ CREATE TRIGGER set_updated_at_users
     FOR EACH ROW
     EXECUTE FUNCTION trigger_set_updated_at();
 
--- User addresses
+
+
+-- =========================
+-- USER ADDRESSES
+-- =========================
+
 CREATE TABLE user_addresses (
     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -65,7 +79,9 @@ CREATE TRIGGER set_updated_at_user_addresses
 
 
 
-
+-- =========================
+-- LOYALTY POINTS LEDGER
+-- =========================
 
 CREATE TABLE loyalty_points_ledger (
     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
