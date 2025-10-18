@@ -31,6 +31,7 @@ export const ZMenuItem = ZBase.extend({
 });
 
 
+
 // ----------------- VendorAddress schema -----------------
 export const ZVendorAddress = z.object({
   vendorId: z.string(),
@@ -131,3 +132,9 @@ export const ZDeleteVendorPayload = z.object({
 export const ZGetVendorByIDPayload = z.object({
   id: z.string(),
 });
+
+
+export type TMenuItem = z.infer<typeof ZMenuItem>
+export type TVendor = z.infer<typeof ZVendor>
+export type TVendorPopulated = z.infer<typeof ZVendorPopulated>
+export type TCategory = z.infer<typeof ZCategory>

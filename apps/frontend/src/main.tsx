@@ -27,17 +27,18 @@ const clerkPubKey = env.VITE_CLERK_PUBLISHABLE_KEY;
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <RestaurantsDataProvider>
+  
       <ClerkProvider publishableKey={clerkPubKey}>
-
+  
       <QueryClientProvider client={queryClient}>
+        <RestaurantsDataProvider>
         <ThemeProvider>
           <RouterProvider router={router} />
            <Toaster />
           <ReactQueryDevtools initialIsOpen={false} />
         </ThemeProvider>
+        </RestaurantsDataProvider>
       </QueryClientProvider>
     </ClerkProvider>
-    </RestaurantsDataProvider>
   </StrictMode>,
 )

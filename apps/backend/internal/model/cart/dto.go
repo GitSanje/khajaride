@@ -99,6 +99,7 @@ func (p *CreateCartVendorPayload) Validate() error {
 
 // ----------------- Update -----------------
 type UpdateCartVendorPayload struct {
+	ID                 string      `json:"id" validate:"required"`
 	DeliveryCharge      *float64 `json:"deliveryCharge,omitempty" validate:"omitempty,min=0"`
 	VendorServiceCharge *float64 `json:"vendorServiceCharge,omitempty" validate:"omitempty,min=0"`
 	VAT                 *float64 `json:"vat,omitempty" validate:"omitempty,min=0"`
@@ -159,6 +160,27 @@ func (p *DeleteCartVendorPayload) Validate() error {
 
 
 //-- ==================================================
+//-- ADD CART ITEM
+//-- ==================================================
+
+
+type AddCartItemPayload struct {
+	VendorID            string    `json:"VendorId" validate:"required"`
+	MenuItemID          string   `json:"menuItemId" validate:"required"`
+	Quantity            int      `json:"quantity" validate:"required,min=1"`
+	UnitPrice           float64  `json:"unitPrice" validate:"required,min=0"`
+	DiscountAmount      *float64 `json:"discountAmount,omitempty" validate:"omitempty,min=0"`
+	SpecialInstructions *string  `json:"specialInstructions,omitempty"`
+}
+
+func (p *AddCartItemPayload) Validate() error {
+	validate := validator.New()
+	return validate.Struct(p)
+}
+
+
+
+//-- ==================================================
 //-- CART ITEM
 //-- ==================================================
 
@@ -166,8 +188,8 @@ func (p *DeleteCartVendorPayload) Validate() error {
 
 // ----------------- Create -----------------
 type CreateCartItemPayload struct {
-	CartVendorID        string   `json:"cartVendorId" validate:"required,uuid4"`
-	MenuItemID          string   `json:"menuItemId" validate:"required,uuid4"`
+	CartVendorID        string   `json:"cartVendorId" validate:"required"`
+	MenuItemID          string   `json:"menuItemId" validate:"required"`
 	Quantity            int      `json:"quantity" validate:"required,min=1"`
 	UnitPrice           float64  `json:"unitPrice" validate:"required,min=0"`
 	DiscountAmount      *float64 `json:"discountAmount,omitempty" validate:"omitempty,min=0"`
@@ -181,6 +203,7 @@ func (p *CreateCartItemPayload) Validate() error {
 
 // ----------------- Update -----------------
 type UpdateCartItemPayload struct {
+	ID                 string      `json:"id" validate:"required"`
 	Quantity            *int     `json:"quantity,omitempty" validate:"omitempty,min=1"`
 	UnitPrice           *float64 `json:"unitPrice,omitempty" validate:"omitempty,min=0"`
 	DiscountAmount      *float64 `json:"discountAmount,omitempty" validate:"omitempty,min=0"`
@@ -235,4 +258,12 @@ type DeleteCartItemPayload struct {
 func (p *DeleteCartItemPayload) Validate() error {
 	validate := validator.New()
 	return validate.Struct(p)
+}
+
+
+type GetCartItemsByUserId struct {
+}
+
+func (p *GetCartItemsByUserId) Validate() error {
+	return nil
 }

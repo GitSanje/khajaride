@@ -6,6 +6,10 @@ export const QUERY_KEYS = {
   },
   SEARCH:{
     FULL_TEXT_SEARCH:"fullTextSearch"
+  },
+  CART:{
+    ADD_CART_ITEM:"addCartItem",
+    GET_CART_ITEMS:"getCartItems"
   }
 
 } as const satisfies Record<Uppercase<string>, object>;

@@ -283,13 +283,12 @@ CREATE TRIGGER set_updated_at_menu_item_stats
 -- =========================
 
 CREATE TABLE favorites (
-     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     entity_type VARCHAR(50) NOT NULL,   -- 'restaurant' | 'menu_item'
     entity_id TEXT NOT NULL,             -- restaurant.id or menu_items.id
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
     UNIQUE(user_id, entity_type, entity_id)
 );
 

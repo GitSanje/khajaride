@@ -20,6 +20,7 @@ import {
     Info,
     Share2,
     Loader2,
+    Store,
 } from "lucide-react"
 import { Link, useParams } from "react-router-dom"
 
@@ -27,6 +28,9 @@ import { Link, useParams } from "react-router-dom"
 
 
 import { useGetVenoorById } from "@/api/hooks/use-vendor-query"
+import type { TCartItemPopulated, TMenuItem } from "@khajaride/zod"
+import { AddToCartModal } from "../cart/add-to-cart"
+import { useGetCartItems } from "@/api/hooks/use-cart-query"
 
 
 export default function VendorMenuPage() {
@@ -34,10 +38,6 @@ export default function VendorMenuPage() {
     const vendorId = params.vendorId as string
 
 
-    // const [restaurant, setRestaurant] = useState<FoodmanduRestaurant | null>(null)
-    // const [menuCategories, setMenuCategories] = useState<FoodmanduMenuCategory[]>([])
-    // const [menuItems, setMenuItems] = useState<FoodmanduMenuItem[]>([])
-    const [cart, setCart] = useState<Array<{ id: string; name: string; price: number; quantity: number }>>([])
     const [searchQuery, setSearchQuery] = useState("")
     const [activeCategory, setActiveCategory] = useState<string>("")
     const [loyaltyPoints] = useState(1250)
@@ -46,39 +46,21 @@ export default function VendorMenuPage() {
         id: vendorId
     })
 
+   
+    const [selectedItem, setSelectedItem] = useState<TMenuItem | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const {data:cartItems, isLoading:getLoading} = useGetCartItems({
+          enabled:true
+      })
+     
 
-    
-
-    const addToCart = (item: any) => {
-        setCart((prev) => {
-            const existing = prev.find((cartItem) => cartItem.id === item.id)
-            if (existing) {
-                return prev.map((cartItem) =>
-                    cartItem.id === item.id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem,
-                )
-            }
-            return [...prev, { id: item.id, name: item.name, price: item.base_price, quantity: 1 }]
-        })
-    }
-
-    const removeFromCart = (itemId: string) => {
-        setCart((prev) => {
-            const existing = prev.find((cartItem) => cartItem.id === itemId)
-            if (existing && existing.quantity > 1) {
-                return prev.map((cartItem) =>
-                    cartItem.id === itemId ? { ...cartItem, quantity: cartItem.quantity - 1 } : cartItem,
-                )
-            }
-            return prev.filter((cartItem) => cartItem.id !== itemId)
-        })
-    }
+    // Helper functions to calculate totals
 
     const getItemQuantity = (itemId: string) => {
-        return cart.find((item) => item.id === itemId)?.quantity || 0
+        return cartItems?.find((item) => item.id === itemId)?.quantity || 0
     }
 
-    const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
-    const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0)
+  const cartItemCount = cartItems?.reduce((sum, item) => sum + item.cartItems.reduce((itemSum, citem) => itemSum + citem.cartItem.quantity, 0), 0) || 0;
 
     if (isLoading) {
         return (
@@ -339,12 +321,17 @@ export default function VendorMenuPage() {
                             {category.description && (
                               <p className="text-muted-foreground text-sm mb-4">{category.description}</p>
                             )}
-                            <div className="grid md:grid-cols-2 gap-4">
+                            <div className="grid md:grid-cols-1 gap-3">
                               {categoryItems?.map((item) => (
-                                <Card key={item.id} className="hover:shadow-lg transition-shadow">
-                                  <div className="flex">
-                                    <div className="flex-1 p-4">
-                                      <div className="flex items-start justify-between mb-2">
+                                <div key={item.id} 
+                                onClick={() => {
+                                    setSelectedItem(item)
+                                    setIsModalOpen(true)
+                                 }}
+                                 className="group cursor-pointer p-4 rounded-lg border border-border hover:border-primary hover:bg-muted/50 transition-all duration-200">
+                                  <div className="flex items-start justify-between ">
+                                    <div className="flex-1 ">
+                                      <div className="flex items-start justify-between ">
                                         <h3 className="font-semibold">{item.name}</h3>
                                         <div className="flex gap-1">
                                           {item.isPopular && (
@@ -369,7 +356,9 @@ export default function VendorMenuPage() {
                                           ))}
                                         </div>
                                       )}
-                                      <div className="flex items-center justify-between">
+                                     
+                                    </div>
+                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                           <span className="font-bold text-lg">Rs. {item.basePrice}</span>
                                           {item.oldPrice > 0 && (
@@ -378,28 +367,11 @@ export default function VendorMenuPage() {
                                             </span>
                                           )}
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                          <Button size="sm" variant="outline" onClick={() => removeFromCart(item.id)}>
-                                            <Minus className="w-3 h-3" />
-                                          </Button>
-                                          <span className="w-8 text-center">
-                                            {cart.find((cartItem) => cartItem.id === item.id)?.quantity || 0}
-                                          </span>
-                                          <Button size="sm" onClick={() => addToCart(item)}>
-                                            <Plus className="w-3 h-3" />
-                                          </Button>
-                                        </div>
+                                   
                                       </div>
-                                    </div>
-                                    <div className="w-24 h-24 m-4">
-                                      <img
-                                        src={item.image || "/placeholder.svg"}
-                                        alt={item.name}
-                                        className="w-full h-full object-cover rounded-lg"
-                                      />
-                                    </div>
+                                   
                                   </div>
-                                </Card>
+                                </div>
                               ))}
                             </div>
                           </div>
@@ -409,78 +381,167 @@ export default function VendorMenuPage() {
 
                     {/* Cart Sidebar */}
                     <div className="lg:col-span-1">
-                        <div className="sticky top-32">
-                            <Card>
-                                <CardContent className="p-4">
-                                    <div className="flex items-center gap-2 mb-4">
-                                        <ShoppingCart className="w-5 h-5" />
-                                        <h3 className="font-semibold">Your Cart</h3>
-                                    </div>
+  <div className="sticky top-32">
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-2 mb-4">
+          <ShoppingCart className="w-5 h-5" />
+          <h3 className="font-semibold">Your Cart</h3>
+        </div>
 
-                                    {cart.length === 0 ? (
-                                        <div className="text-center py-8">
-                                            <ShoppingCart className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
-                                            <p className="text-muted-foreground text-sm">Your cart is empty</p>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-4">
-                                            {cart.map((item) => (
-                                                <div key={item.id} className="flex justify-between items-center">
-                                                    <div className="flex-1">
-                                                        <h4 className="font-medium text-sm">{item.name}</h4>
-                                                        <p className="text-muted-foreground text-xs">${item.price} each</p>
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <Button size="sm" variant="outline" onClick={() => removeFromCart(item.id)}>
-                                                            <Minus className="w-3 h-3" />
-                                                        </Button>
-                                                        <span className="w-6 text-center text-sm">{item.quantity}</span>
-                                                        <Button size="sm" onClick={() => addToCart({ ...item, id: item.id } as any)}>
-                                                            <Plus className="w-3 h-3" />
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            ))}
+        {cartItems?.length === 0 ? (
+          <div className="text-center py-8">
+            <ShoppingCart className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
+            <p className="text-muted-foreground text-sm">Your cart is empty</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Group cart items by vendor */}
+            {cartItems?.map((cartVendor:TCartItemPopulated) => (
+              <div key={cartVendor.vendor.vendorId} className="border rounded-lg p-3">
+                {/* Vendor Header */}
+                <div className="flex items-center gap-2 mb-3 pb-2 border-b">
+                  <Store className="w-4 h-4 text-primary" />
+                  <div>
+                    <h4 className="font-semibold text-sm">{cartVendor.vendor.name}</h4>
+                    {cartVendor.vendor.about && (
+                      <p className="text-xs text-muted-foreground truncate">
+                        {cartVendor.vendor.about}
+                      </p>
+                    )}
+                  </div>
+                </div>
 
-                                            <div className="border-t pt-4">
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <span>Subtotal</span>
-                                                    <span>${cartTotal.toFixed(2)}</span>
-                                                </div>
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <span>Delivery Fee</span>
-                                                    <span>$0.00</span>
-                                                </div>
-                                                <div className="flex justify-between items-center font-bold text-lg border-t pt-2">
-                                                    <span>Total</span>
-                                                    <span>${cartTotal.toFixed(2)}</span>
-                                                </div>
-                                            </div>
-
-                                            {/* Loyalty Points */}
-                                            <div className="bg-primary/10 rounded-lg p-3">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <Gift className="w-4 h-4 text-primary" />
-                                                    <span className="text-sm font-medium">Loyalty Points</span>
-                                                </div>
-                                                <p className="text-xs text-muted-foreground">
-                                                    You have {loyaltyPoints} points. Earn {Math.floor(cartTotal)} more points with this order!
-                                                </p>
-                                            </div>
-
-                                            <Link to="/app/checkout">
-                                                <Button className="w-full" size="lg">
-                                                    Go to checkout
-                                                </Button>
-                                            </Link>
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        </div>
+                {/* Cart Items for this Vendor */}
+                <div className="space-y-3">
+                  {cartVendor.cartItems.map(({ cartItem, menuItem }) => (
+                    <div key={cartItem.id} className="flex justify-between items-center">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-sm">{menuItem.name}</h4>
+                        <p className="text-muted-foreground text-xs">
+                          ${cartItem.unitPrice.toFixed(2)} each
+                        </p>
+                        {cartItem.specialInstructions && (
+                          <p className="text-xs text-muted-foreground italic">
+                            Note: {cartItem.specialInstructions}
+                          </p>
+                        )}
+                        {cartItem.discountAmount > 0 && (
+                          <p className="text-xs text-green-600">
+                            -${cartItem.discountAmount.toFixed(2)} discount
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => removeFromCart(cartItem.id)}
+                        >
+                          <Minus className="w-3 h-3" />
+                        </Button>
+                        <span className="w-6 text-center text-sm">{cartItem.quantity}</span>
+                        <Button 
+                          size="sm" 
+                          onClick={() => addToCart({
+                            vendorId: cartVendor.vendor.vendorId,
+                            menuItemId: menuItem.id,
+                            quantity: 1,
+                            unitPrice: cartItem.unitPrice,
+                            discountAmount: cartItem.discountAmount,
+                            specialInstructions: cartItem.specialInstructions || undefined
+                          })}
+                        >
+                          <Plus className="w-3 h-3" />
+                        </Button>
+                      </div>
                     </div>
+                  ))}
+                </div>
+
+                {/* Vendor-level Totals */}
+                <div className="mt-3 pt-3 border-t text-xs">
+                  <div className="flex justify-between items-center mb-1">
+                    <span>Subtotal</span>
+                    <span>${(cartVendor.subtotal || 0).toFixed(2)}</span>
+                  </div>
+                  {cartVendor.vendorDiscount > 0 && (
+                    <div className="flex justify-between items-center mb-1 text-green-600">
+                      <span>Vendor Discount</span>
+                      <span>-${cartVendor.vendorDiscount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {cartVendor.vendorServiceCharge > 0 && (
+                    <div className="flex justify-between items-center mb-1">
+                      <span>Service Charge</span>
+                      <span>${cartVendor.vendorServiceCharge.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {cartVendor.vat > 0 && (
+                    <div className="flex justify-between items-center mb-1">
+                      <span>VAT</span>
+                      <span>${cartVendor.vat.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {cartVendor.deliveryCharge && cartVendor.deliveryCharge > 0 && (
+                    <div className="flex justify-between items-center mb-1">
+                      <span>Delivery</span>
+                      <span>${cartVendor.deliveryCharge.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center font-semibold text-sm pt-1 border-t">
+                    <span>Vendor Total</span>
+                    <span>${(cartVendor.total || 0).toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {/* Overall Cart Summary */}
+            <div className="border-t pt-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="font-medium">Subtotal</span>
+                <span>${calculateOverallSubtotal().toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center mb-2">
+                <span>Total Delivery</span>
+                <span>${calculateTotalDelivery().toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center font-bold text-lg border-t pt-2">
+                <span>Grand Total</span>
+                <span>${calculateGrandTotal().toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* Loyalty Points */}
+            <div className="bg-primary/10 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <Gift className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium">Loyalty Points</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                You have {loyaltyPoints} points. Earn {Math.floor(calculateGrandTotal())} more points with this order!
+              </p>
+            </div>
+
+            <Link to="/app/checkout">
+              <Button className="w-full" size="lg">
+                Go to checkout
+              </Button>
+            </Link>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  </div>
+</div>
                 </div>
             </div>
+            <AddToCartModal
+        item={selectedItem}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        />
         </div>
     )
 }

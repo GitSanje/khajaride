@@ -12,7 +12,7 @@ import { Search, Star, ShoppingCart, User, Gift, ChevronDown, SlidersHorizontal,
 import Link from "next/link"
 import type { SearchFilters } from "@/types/elasticsearch-types"
 import type { TVendorMenuSearchRes, TVendorSearchRes } from "@khajaride/zod"
-import { useDebounce } from "@/api/hooks/use-debounce"
+
 import { useGetSearchQuery } from "@/api/hooks/use-search-query"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { VendorMap } from "../vendor/vendor-map"

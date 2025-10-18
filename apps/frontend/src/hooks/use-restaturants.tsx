@@ -1,26 +1,24 @@
+import { useAddCartItem, useGetCartItems, type TAddCartItemResponse } from "@/api/hooks/use-cart-query";
+import type { TAddCartItem } from "@/types/cart-types";
+import type { TAddCartItemPayload, TCartItemPopulated } from "@khajaride/zod";
 import { createContext, useContext, useEffect, useState } from "react";
+import { toast } from "sonner";
 
-import mockRestaurants from "@/data/foodmandu_all_restaurants.json"
-import mockMenuData from "@/data/foodmandu_all_menu_items.json"
-import { convertFoodmanduMenuCategory, convertFoodmanduMenuData, convertFoodmanduRestaurant } from "@/lib/utils"
-import type { MenuCategory, MenuData, MenuItem, Vendor } from "@/types";
 
 
 
 interface RestaurantDataContextValue {
-  restaurants: Vendor[]
-  loading: boolean
-  selectedRestaurant: string | null
-  menuCategories: MenuCategory[]
-  menuItems: MenuItem[]
-  cart: any[]
+  calcs: {
+    cartTotal: number |undefined
+    GrandTotal: number |undefined
+    TotalDelivery: number |undefined
+    OverallSubtotal: number |undefined
+  } 
+  cart: TCartItemPopulated[] |undefined
   loyaltyPoints: number
 
   // actions
-    setRestaurants: React.Dispatch<React.SetStateAction<Vendor[]>>
-  loadRestaurants: () => Promise<void>
-  selectRestaurant: (restaurantId: string) => void
-  addToCart: (item: MenuItem) => void
+  addToCart: (item: TAddCartItem) => Promise<TAddCartItemResponse | null>;
   removeFromCart: (itemId: string) => void
 }
 
@@ -33,96 +31,93 @@ interface RestaurantDataProviderProps {
 
 export const RestaurantsDataProvider = ({ children }: RestaurantDataProviderProps) => {
 
-  const [restaurants, setRestaurants] = useState<Vendor[]>([])
-  const [loading, setLoading] = useState(true)
-  const [selectedRestaurant, setSelectedRestaurant] = useState<string | null>(null)
-  const [menuCategories, setMenuCategories] = useState<MenuCategory[]>([])
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([])
-  const [cart, setCart] = useState<Array<{ id: string; name: string; price: number; quantity: number }>>([])
- 
   const [loyaltyPoints] = useState(1250)
 
-   const getMockFoodmanduData = () => {
-      const restaurant_ids: number[] = []
-      const restaurants: Vendor[] = []
-       const seenIds = new Set<number>() 
-      Object.values(mockRestaurants).forEach((restaurantList) => {
-          restaurantList.forEach((restaurant) => {
-    
-          if (!seenIds.has(restaurant.Id)) {
-            restaurant_ids.push(restaurant.Id)
-            restaurants.push(convertFoodmanduRestaurant(restaurant as any))
-            seenIds.add(restaurant.Id) 
-          }
-          })
-        })
-      const menuData: MenuData[] = []
-        Object.entries(mockMenuData).forEach(([vendor_id, menuList]) => {
-        menuList.forEach((menuItem: any) => {
-          menuData.push(convertFoodmanduMenuData(menuItem, vendor_id))
-        })
-      })
-    
-      return { restaurants, restaurant_ids, menuData }
-    }
 
-   useEffect(() => {
-    loadRestaurants()
-    }, [])
 
-  const loadRestaurants = async () => {
-    setLoading(true)
-    console.log("[v0] Loading restaurants with Foodmandu data structure...")
+  const { data: cart } = useGetCartItems({
+    enabled: true
+  })
 
-    try {
-      const { restaurants: mockRestaurants  } = getMockFoodmanduData()
 
-      console.log("[v0] Loaded restaurants from Foodmandu format:", mockRestaurants.length)
-      setRestaurants(mockRestaurants)
-    } catch (error) {
-      console.error("[v0] Error loading restaurants:", error)
-      setRestaurants([])
-    } finally {
-      setLoading(false)
-    }
-  }
+  console.log(cart,'cart from ');
   
+  const addCartItemMutation = useAddCartItem();
 
- 
+const addToCart = async (item: TAddCartItem): Promise<TAddCartItemResponse | null> => {
+  if (!item) return null;
 
-  const selectRestaurant = (restaurantId: string) => {
-    setSelectedRestaurant(restaurantId)
-    const restaurant = restaurants.find((r) => r.id === restaurantId)
-    if (restaurant) {
-      console.log("[v0] Loading menu for restaurant:", restaurant.name)
-      console.log(restaurantId,'restaurantId');
-      
-      const { menuData } = getMockFoodmanduData()
-      const categories = menuData.map((cat) => cat.vendor_id === restaurantId ? convertFoodmanduMenuCategory(cat, cat.vendor_id) : null).filter(Boolean) as MenuCategory[]
-      const items = menuData.flatMap((cat) =>
-        cat.vendor_id === restaurantId ? cat.items : null,
-      ).filter(Boolean) as MenuItem[]
-      setMenuCategories(categories)
-      setMenuItems(items)
-         console.log(items[0],'menuItems');
-   
-    
-     
-    }
+  try {
+    const payload: TAddCartItemPayload = {
+      vendorId: item.vendorId,
+      menuItemId: item.id,
+      quantity: item.quantity,
+      unitPrice: item.basePrice,
+      specialInstructions: item.specialInstructions || undefined,
+    };
+
+    const createdCartItem = await addCartItemMutation.mutateAsync({ body: payload });
+    toast.success("Added to cart!");
+
+    return createdCartItem;
+  } catch (error) {
+    console.error("❌ Failed to add item to cart:", error);
+    toast.error("Failed to add item to cart.");
+    return null;
   }
+};
 
-  const addToCart = (item: MenuItem) => {
-    setCart((prev) => {
-      const existing = prev.find((cartItem) => cartItem.id === item.id)
-      if (existing) {
-        return prev.map((cartItem) =>
-          cartItem.id === item.id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem,
-        )
-      }
-      return [...prev, { id: item.id, name: item.name, price: item.base_price, quantity: 1 }]
-    })
-  }
 
+
+
+// ------------------------ Calculations ------------------------
+
+const OverallSubtotal = cart?.reduce((acc, vendor) => {
+    const vendorSubtotal = vendor.cartItems.reduce((sum, { cartItem }) => {
+      return sum + cartItem.subtotal;
+    }, 0);
+    return acc + vendorSubtotal;
+  }, 0);
+
+
+const TotalDelivery = cart?.reduce((acc, vendor) => {
+    return acc + (vendor.deliveryCharge ?? 0);
+  }, 0);
+
+const GrandTotal = cart?.reduce((acc, vendor) => {
+    const subtotal = vendor.cartItems.reduce((sum, { cartItem }) => sum + cartItem.subtotal, 0);
+    const delivery = vendor.deliveryCharge ?? 0;
+    const vat = vendor.vat ?? 0;
+    const serviceCharge = vendor.vendorServiceCharge ?? 0;
+    const discount = vendor.vendorDiscount ?? 0;
+
+    const total = subtotal + delivery + vat + serviceCharge - discount;
+    return acc + total;
+  }, 0);
+
+
+
+const cartTotal = cart?.reduce((total, vendor) => {
+  const vendorTotal = vendor.cartItems.reduce((vendorSum, cartMenuItem) => {
+    const item = cartMenuItem.cartItem;
+    const itemTotal = (item.unitPrice * item.quantity) - (item.discountAmount || 0);
+    return vendorSum + itemTotal;
+  }, 0);
+  
+  // Add vendor charges
+  return total + vendorTotal + (vendor.vendorServiceCharge || 0) + (vendor.vat || 0) + (vendor.deliveryCharge || 0) - (vendor.vendorDiscount || 0);
+}, 0);
+
+
+
+const calcs = {
+  cartTotal,
+  GrandTotal,
+  TotalDelivery,
+  OverallSubtotal
+
+
+}
   const removeFromCart = (itemId: string) => {
     setCart((prev) => {
       const existing = prev.find((cartItem) => cartItem.id === itemId)
@@ -136,17 +131,13 @@ export const RestaurantsDataProvider = ({ children }: RestaurantDataProviderProp
   }
 
   const contextValue = {
-    restaurants,
-    loading,
-    selectedRestaurant,
-    menuCategories,
-    menuItems,
+
+
     cart,
     loyaltyPoints,
+    calcs,
     //actions
-    setRestaurants,
-    loadRestaurants,
-    selectRestaurant,
+
     addToCart,
     removeFromCart,
   }
