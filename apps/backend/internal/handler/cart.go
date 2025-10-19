@@ -177,6 +177,18 @@ func (h *CartHandler) CreateCartItem(c echo.Context) error {
 	)(c)
 }
 
+
+func (h *CartHandler) AdjustCartItemQuantity(c echo.Context) error {
+	return Handle(
+		h.Handler,
+		func(c echo.Context, payload *cart.AdjustCartItemQuantityPayload) (*cart.CartItem, error) {
+			return h.CartService.AdjustCartItemQuantity(c, payload)
+		},
+		http.StatusOK,
+		&cart.AdjustCartItemQuantityPayload{},
+	)(c)
+}
+
 func (h *CartHandler) UpdateCartItem(c echo.Context) error {
 	return Handle(
 		h.Handler,

@@ -30,31 +30,24 @@ func NewCartRepository(s *server.Server) *CartRepository {
 // ------------------- UPSERT CART ITEM -------------------
 func (r *CartRepository) UpsertCartItem(ctx context.Context, tx pgx.Tx,cartVendorId string, payload *cart.AddCartItemPayload) (*cart.CartItem, error) {
 
-	var existing cart.CartItem
+	
 	checkStmt := `
 		SELECT * FROM cart_items
 		WHERE cart_vendor_id = @CartVendorID AND menu_item_id = @MenuItemID
 		LIMIT 1
 	`
-	err := tx.QueryRow(ctx, checkStmt, pgx.NamedArgs{
+	row, err := tx.Query(ctx, checkStmt, pgx.NamedArgs{
 		"CartVendorID":   cartVendorId,
 		"MenuItemID": payload.MenuItemID,
-	}).Scan(
-		&existing.ID,
-		&existing.CartVendorID,
-		&existing.MenuItemID,
-		&existing.Quantity,
-		&existing.UnitPrice,
-		&existing.DiscountAmount,
-		&existing.SpecialInstructions,
-		&existing.Subtotal,
-		&existing.CreatedAt,
-		&existing.UpdatedAt,
-	)
+	})
+
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return nil, fmt.Errorf("failed to check existing cart item: %w", err)
 	}
-
+	existing,err :=  pgx.CollectOneRow(row, pgx.RowToStructByName[cart.CartItem])
+    if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+         return nil, fmt.Errorf("failed to collect cart item: %w", err)
+     }  
 	if errors.Is(err, pgx.ErrNoRows) {
 		// 2️⃣ Item does not exist → insert
 		stmt := `
@@ -63,7 +56,7 @@ func (r *CartRepository) UpsertCartItem(ctx context.Context, tx pgx.Tx,cartVendo
 		)
 		VALUES (
 			COALESCE($1, gen_random_uuid()::TEXT),
-			$2, $3, $4, $5, $6, $7
+			$2, $3, $4, $5, COALESCE($6,0), $7
 		)
 		RETURNING *
 		`
@@ -117,6 +110,7 @@ func (r *CartRepository) UpsertCartItem(ctx context.Context, tx pgx.Tx,cartVendo
 
 
 
+// ------------------- GET ACTIVE CARTS  ----------------
 
 func (r *CartRepository) GetActiveCartsByUserID(ctx context.Context, userID string) ([]cart.CartItemPopulated, error) {
 	var cartSessionID string
@@ -147,8 +141,8 @@ func (r *CartRepository) GetActiveCartsByUserID(ctx context.Context, userID stri
 			jsonb_agg(
 				camel(
 					jsonb_build_object(
-						'cart_item', to_jsonb(ci.*),
-						'menu_item', to_jsonb(mi.*)
+						'cart_item', to_jsonb(camel(ci.*)),
+						'menu_item', to_jsonb(camel(mi.*))
 					)
 				)
 			) AS cart_items
@@ -173,6 +167,56 @@ func (r *CartRepository) GetActiveCartsByUserID(ctx context.Context, userID stri
 
 	return cartItems, nil
 }
+
+
+// ------------------- ADJUST CART ITEM QUANTITY  ----------------
+
+func (r *CartRepository) AdjustCartItemQuantity(
+	ctx context.Context,
+	tx pgx.Tx,
+	payload *cart.AdjustCartItemQuantityPayload,
+) (*cart.CartItem, error) {
+
+	stmt := `
+	WITH updated AS (
+		UPDATE cart_items
+		SET quantity = quantity + $1
+		WHERE cart_vendor_id = $2 AND menu_item_id = $3
+		RETURNING *
+	),
+	inserted AS (
+		INSERT INTO cart_items (id, cart_vendor_id, menu_item_id, quantity)
+		SELECT gen_random_uuid()::TEXT, $2, $3, $1
+		WHERE NOT EXISTS (SELECT 1 FROM updated)
+		RETURNING *
+	)
+	SELECT * FROM updated
+	UNION ALL
+	SELECT * FROM inserted
+	LIMIT 1;
+	`
+
+	rows, err := tx.Query(ctx, stmt, payload.Delta, payload.CartVendorId, payload.MenuItemId)
+	if err != nil {
+		return nil, fmt.Errorf("adjust cart item failed: %w", err)
+	}
+
+	item, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[cart.CartItem])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	if item.Quantity <= 0 {
+		_, _ = tx.Exec(ctx, `DELETE FROM cart_items WHERE id = $1`, item.ID)
+		return nil, nil
+	}
+
+	return &item, nil
+}
+
 
 
 //-- ==================================================
@@ -367,24 +411,17 @@ func (r *CartRepository) DeleteCartSession(ctx context.Context, payload *cart.De
 // ------------------- GET CART VENDOR -------------------
 func (r *CartRepository) GetCartVendor(ctx context.Context, tx pgx.Tx, sessionID, vendorID string) (*cart.CartVendor, error) {
 	stmt := `SELECT * FROM cart_vendors WHERE cart_session_id = $1 AND vendor_id = $2 LIMIT 1`
-	row := tx.QueryRow(ctx, stmt, sessionID, vendorID)
+	row,err := tx.Query(ctx, stmt, sessionID, vendorID)
+    if err != nil {
+	return nil, err
+}
 
-	var vendor cart.CartVendor
-	if err := row.Scan(
-		&vendor.ID,
-		&vendor.CartSessionID,
-		&vendor.VendorID,
-		&vendor.Subtotal,
-		&vendor.DeliveryCharge,
-		&vendor.VendorServiceCharge,
-		&vendor.VAT,
-		&vendor.VendorDiscount,
-		&vendor.Total,
-		&vendor.CreatedAt,
-		&vendor.UpdatedAt,
-	); err != nil {
+	vendor, err := pgx.CollectOneRow(row, pgx.RowToStructByName[cart.CartVendor])
+	if err != nil {
 		return nil, err
 	}
+
+
 	return &vendor, nil
 }
 
@@ -420,6 +457,20 @@ func (r *CartRepository) CreateActiveCartVendor(ctx context.Context, tx pgx.Tx, 
 	return &vendor, nil
 }
 
+// ------------------- UPDATE CART VENDOR SUBTOTAL -------------------
+func (r *CartRepository) UpdateCartVendorSubtotal(ctx context.Context, tx pgx.Tx, vendorID string) error {
+	stmt := `
+		UPDATE cart_vendors
+		SET subtotal = (
+			SELECT COALESCE(SUM(subtotal), 0) 
+			FROM cart_items 
+			WHERE cart_vendor_id = @VendorID
+		)
+		WHERE id = @VendorID
+	`
+	_, err := tx.Exec(ctx, stmt, pgx.NamedArgs{"VendorID": vendorID})
+	return err
+}
 // ------------------- CREATE CART VENDOR -------------------
 
 func (r *CartRepository) CreateCartVendor(ctx context.Context, payload *cart.CreateCartVendorPayload) (*cart.CartVendor, error) {
@@ -452,6 +503,8 @@ func (r *CartRepository) CreateCartVendor(ctx context.Context, payload *cart.Cre
 	}
 	return &created, nil
 }
+
+
 
 // ------------------- UPDATE CART VENDOR -------------------
 
@@ -705,8 +758,26 @@ func (r *CartRepository) GetCartItems(ctx context.Context, query *cart.GetCartIt
 }
 
 // ------------------- DELETE CART ITEM -------------------
-func (r *CartRepository) DeleteCartItem(ctx context.Context, payload *cart.DeleteCartItemPayload) error {
-	stmt := `DELETE FROM cart_items WHERE id = @ID`
-	_, err := r.server.DB.Pool.Exec(ctx, stmt, pgx.NamedArgs{"ID": payload.ID})
-	return err
+
+func (r *CartRepository) DeleteCartItem(
+	ctx context.Context,
+	tx pgx.Tx,
+	payload *cart.DeleteCartItemPayload,
+) (*cart.CartItem, error) {
+	stmt := `DELETE FROM cart_items WHERE id = @ID RETURNING *`
+	row, err := tx.Query(ctx, stmt, pgx.NamedArgs{"ID": payload.ID})
+	if err != nil {
+		return nil, fmt.Errorf("delete cart item failed: %w", err)
+	}
+
+	item, err := pgx.CollectOneRow(row, pgx.RowToStructByName[cart.CartItem])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil // no item deleted
+		}
+		return nil, err
+	}
+
+	return &item, nil
 }
+

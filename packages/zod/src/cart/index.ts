@@ -71,6 +71,15 @@ export const ZCartItemPopulated = ZCartVendor.extend({
 });
 
 
+
+// -------------------- Adjust Cart Item Quantity --------------------
+export const ZAdjustCartItemQuantityPayload = z.object({
+  cartVendorId: z.string().min(1, "cartVendorId is required"),
+  menuItemId: z.string().min(1, "menuItemId is required"),
+  delta: z.number().int()
+});
+
+
 // ---------------------- Type Inference ----------------------
 
 
@@ -79,6 +88,7 @@ export type TAddCartItemPayload = z.infer<typeof ZAddCartItemPayload>;
 export type TCartVendor = z.infer<typeof ZCartVendor>;
 export type TCartSession = z.infer<typeof ZCartSession>;
 export type TCartItemPopulated = z.infer<typeof ZCartItemPopulated>;
+export type TAdjustCartItemQuantity= z.infer<typeof ZAdjustCartItemQuantityPayload>;
 
 
 

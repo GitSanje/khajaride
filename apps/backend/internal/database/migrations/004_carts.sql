@@ -34,7 +34,7 @@ CREATE TABLE cart_vendors (
     vendor_service_charge  NUMERIC(10,2) DEFAULT 0,
     vat NUMERIC(10,2) DEFAULT 0,
     vendor_discount NUMERIC(10,2) DEFAULT 0,
-    total NUMERIC(10,2) GENERATED ALWAYS AS ((subtotal + delivery_charge + vat+ vendor_service_charge) - vendor_discount) STORED,
+    total NUMERIC(10,2) GENERATED ALWAYS AS ((subtotal + COALESCE(delivery_charge,0)+ vat+ vendor_service_charge) - vendor_discount) STORED,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(cart_session_id, vendor_id)

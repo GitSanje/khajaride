@@ -13,6 +13,7 @@ interface RestaurantDataContextValue {
     GrandTotal: number |undefined
     TotalDelivery: number |undefined
     OverallSubtotal: number |undefined
+    cartItemCount:number
   } 
   cart: TCartItemPopulated[] |undefined
   loyaltyPoints: number
@@ -109,12 +110,15 @@ const cartTotal = cart?.reduce((total, vendor) => {
 }, 0);
 
 
+ const cartItemCount = cart?.reduce((sum, item) => sum + item.cartItems.reduce((itemSum, citem) => itemSum + citem.cartItem.quantity, 0), 0) || 0;
+
 
 const calcs = {
   cartTotal,
   GrandTotal,
   TotalDelivery,
-  OverallSubtotal
+  OverallSubtotal,
+  cartItemCount
 
 
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import {
@@ -16,21 +16,18 @@ import {
     User,
     Gift,
     Heart,
-    ArrowLeft,
+  
     Info,
     Share2,
     Loader2,
-    Store,
+   
 } from "lucide-react"
 import { Link, useParams } from "react-router-dom"
 
-
-
-
 import { useGetVenoorById } from "@/api/hooks/use-vendor-query"
-import type { TCartItemPopulated, TMenuItem } from "@khajaride/zod"
+import type { TMenuItem } from "@khajaride/zod"
 import { AddToCartModal } from "../cart/add-to-cart"
-import { useGetCartItems } from "@/api/hooks/use-cart-query"
+import Header from "@/components/layouts/header"
 
 
 export default function VendorMenuPage() {
@@ -40,7 +37,6 @@ export default function VendorMenuPage() {
 
     const [searchQuery, setSearchQuery] = useState("")
     const [activeCategory, setActiveCategory] = useState<string>("")
-    const [loyaltyPoints] = useState(1250)
     
     const { data: vendor , isLoading } = useGetVenoorById({
         id: vendorId
@@ -49,18 +45,8 @@ export default function VendorMenuPage() {
    
     const [selectedItem, setSelectedItem] = useState<TMenuItem | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const {data:cartItems, isLoading:getLoading} = useGetCartItems({
-          enabled:true
-      })
-     
 
-    // Helper functions to calculate totals
 
-    const getItemQuantity = (itemId: string) => {
-        return cartItems?.find((item) => item.id === itemId)?.quantity || 0
-    }
-
-  const cartItemCount = cartItems?.reduce((sum, item) => sum + item.cartItems.reduce((itemSum, citem) => itemSum + citem.cartItem.quantity, 0), 0) || 0;
 
     if (isLoading) {
         return (
@@ -89,46 +75,7 @@ export default function VendorMenuPage() {
     return (
         <div className="min-h-screen bg-background">
             {/* Header */}
-            <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-                <div className="container mx-auto px-4 py-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <Link to="/khajaride" className="flex items-center gap-2">
-                                <ArrowLeft className="w-5 h-5" />
-                            </Link>
-                            <Link to="/" className="flex items-center gap-2">
-                                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                                    <span className="text-primary-foreground font-bold text-lg">K</span>
-                                </div>
-                                <span className="text-xl font-bold text-foreground">KhajaRide</span>
-                            </Link>
-                        </div>
-
-                        <div className="flex items-center gap-4">
-                            {/* Loyalty Points */}
-                            <div className="hidden sm:flex items-center gap-2 bg-primary/10 rounded-lg px-3 py-2">
-                                <Gift className="w-4 h-4 text-primary" />
-                                <span className="text-sm font-medium text-primary">{loyaltyPoints} pts</span>
-                            </div>
-
-                            {/* Cart */}
-                            <Button variant="outline" size="sm" className="relative bg-transparent">
-                                <ShoppingCart className="w-4 h-4" />
-                                {cartItemCount > 0 && (
-                                    <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
-                                        {cartItemCount}
-                                    </Badge>
-                                )}
-                            </Button>
-
-                            {/* Profile */}
-                            <Button variant="outline" size="sm">
-                                <User className="w-4 h-4" />
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </header>
+             <Header/>
 
             {/* Restaurant Hero Section */}
             <div className="relative h-64 overflow-hidden">
@@ -379,162 +326,7 @@ export default function VendorMenuPage() {
                       })}
                     </div>
 
-                    {/* Cart Sidebar */}
-                    <div className="lg:col-span-1">
-  <div className="sticky top-32">
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex items-center gap-2 mb-4">
-          <ShoppingCart className="w-5 h-5" />
-          <h3 className="font-semibold">Your Cart</h3>
-        </div>
-
-        {cartItems?.length === 0 ? (
-          <div className="text-center py-8">
-            <ShoppingCart className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
-            <p className="text-muted-foreground text-sm">Your cart is empty</p>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Group cart items by vendor */}
-            {cartItems?.map((cartVendor:TCartItemPopulated) => (
-              <div key={cartVendor.vendor.vendorId} className="border rounded-lg p-3">
-                {/* Vendor Header */}
-                <div className="flex items-center gap-2 mb-3 pb-2 border-b">
-                  <Store className="w-4 h-4 text-primary" />
-                  <div>
-                    <h4 className="font-semibold text-sm">{cartVendor.vendor.name}</h4>
-                    {cartVendor.vendor.about && (
-                      <p className="text-xs text-muted-foreground truncate">
-                        {cartVendor.vendor.about}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Cart Items for this Vendor */}
-                <div className="space-y-3">
-                  {cartVendor.cartItems.map(({ cartItem, menuItem }) => (
-                    <div key={cartItem.id} className="flex justify-between items-center">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-sm">{menuItem.name}</h4>
-                        <p className="text-muted-foreground text-xs">
-                          ${cartItem.unitPrice.toFixed(2)} each
-                        </p>
-                        {cartItem.specialInstructions && (
-                          <p className="text-xs text-muted-foreground italic">
-                            Note: {cartItem.specialInstructions}
-                          </p>
-                        )}
-                        {cartItem.discountAmount > 0 && (
-                          <p className="text-xs text-green-600">
-                            -${cartItem.discountAmount.toFixed(2)} discount
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={() => removeFromCart(cartItem.id)}
-                        >
-                          <Minus className="w-3 h-3" />
-                        </Button>
-                        <span className="w-6 text-center text-sm">{cartItem.quantity}</span>
-                        <Button 
-                          size="sm" 
-                          onClick={() => addToCart({
-                            vendorId: cartVendor.vendor.vendorId,
-                            menuItemId: menuItem.id,
-                            quantity: 1,
-                            unitPrice: cartItem.unitPrice,
-                            discountAmount: cartItem.discountAmount,
-                            specialInstructions: cartItem.specialInstructions || undefined
-                          })}
-                        >
-                          <Plus className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Vendor-level Totals */}
-                <div className="mt-3 pt-3 border-t text-xs">
-                  <div className="flex justify-between items-center mb-1">
-                    <span>Subtotal</span>
-                    <span>${(cartVendor.subtotal || 0).toFixed(2)}</span>
-                  </div>
-                  {cartVendor.vendorDiscount > 0 && (
-                    <div className="flex justify-between items-center mb-1 text-green-600">
-                      <span>Vendor Discount</span>
-                      <span>-${cartVendor.vendorDiscount.toFixed(2)}</span>
-                    </div>
-                  )}
-                  {cartVendor.vendorServiceCharge > 0 && (
-                    <div className="flex justify-between items-center mb-1">
-                      <span>Service Charge</span>
-                      <span>${cartVendor.vendorServiceCharge.toFixed(2)}</span>
-                    </div>
-                  )}
-                  {cartVendor.vat > 0 && (
-                    <div className="flex justify-between items-center mb-1">
-                      <span>VAT</span>
-                      <span>${cartVendor.vat.toFixed(2)}</span>
-                    </div>
-                  )}
-                  {cartVendor.deliveryCharge && cartVendor.deliveryCharge > 0 && (
-                    <div className="flex justify-between items-center mb-1">
-                      <span>Delivery</span>
-                      <span>${cartVendor.deliveryCharge.toFixed(2)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between items-center font-semibold text-sm pt-1 border-t">
-                    <span>Vendor Total</span>
-                    <span>${(cartVendor.total || 0).toFixed(2)}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            {/* Overall Cart Summary */}
-            <div className="border-t pt-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="font-medium">Subtotal</span>
-                <span>${calculateOverallSubtotal().toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between items-center mb-2">
-                <span>Total Delivery</span>
-                <span>${calculateTotalDelivery().toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between items-center font-bold text-lg border-t pt-2">
-                <span>Grand Total</span>
-                <span>${calculateGrandTotal().toFixed(2)}</span>
-              </div>
-            </div>
-
-            {/* Loyalty Points */}
-            <div className="bg-primary/10 rounded-lg p-3">
-              <div className="flex items-center gap-2 mb-1">
-                <Gift className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium">Loyalty Points</span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                You have {loyaltyPoints} points. Earn {Math.floor(calculateGrandTotal())} more points with this order!
-              </p>
-            </div>
-
-            <Link to="/app/checkout">
-              <Button className="w-full" size="lg">
-                Go to checkout
-              </Button>
-            </Link>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  </div>
-</div>
+                
                 </div>
             </div>
             <AddToCartModal

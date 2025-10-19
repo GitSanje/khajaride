@@ -8,8 +8,8 @@ import "github.com/go-playground/validator/v10"
 
 // ----------------- Create -----------------
 type CreateCartSessionPayload struct {
-	UserID           string  `json:"userId" validate:"required"`
-	Currency         *string `json:"currency,omitempty"`
+	UserID            string  `json:"userId" validate:"required"`
+	Currency          *string `json:"currency,omitempty"`
 	AppliedCouponCode *string `json:"appliedCouponCode,omitempty"`
 }
 
@@ -20,9 +20,9 @@ func (p *CreateCartSessionPayload) Validate() error {
 
 // ----------------- Update -----------------
 type UpdateCartSessionPayload struct {
-	ID               string `json:"id" validate:"required"`
-	Status           *string `json:"status,omitempty" validate:"omitempty,oneof=active checked_out abandoned"`
-	Currency         *string `json:"currency,omitempty"`
+	ID                string  `json:"id" validate:"required"`
+	Status            *string `json:"status,omitempty" validate:"omitempty,oneof=active checked_out abandoned"`
+	Currency          *string `json:"currency,omitempty"`
 	AppliedCouponCode *string `json:"appliedCouponCode,omitempty"`
 }
 
@@ -33,12 +33,12 @@ func (p *UpdateCartSessionPayload) Validate() error {
 
 // ----------------- Query -----------------
 type GetCartSessionsQuery struct {
-	Page    *int    `query:"page" validate:"omitempty,min=1"`
-	Limit   *int    `query:"limit" validate:"omitempty,min=1,max=100"`
-	Sort    *string `query:"sort" validate:"omitempty,oneof=created_at updated_at status currency"`
-	Order   *string `query:"order" validate:"omitempty,oneof=asc desc"`
-	UserID  *string `query:"userId" validate:"omitempty"`
-	Status  *string `query:"status" validate:"omitempty,oneof=active checked_out abandoned"`
+	Page   *int    `query:"page" validate:"omitempty,min=1"`
+	Limit  *int    `query:"limit" validate:"omitempty,min=1,max=100"`
+	Sort   *string `query:"sort" validate:"omitempty,oneof=created_at updated_at status currency"`
+	Order  *string `query:"order" validate:"omitempty,oneof=asc desc"`
+	UserID *string `query:"userId" validate:"omitempty"`
+	Status *string `query:"status" validate:"omitempty,oneof=active checked_out abandoned"`
 }
 
 func (q *GetCartSessionsQuery) Validate() error {
@@ -76,11 +76,9 @@ func (p *DeleteCartSessionPayload) Validate() error {
 	return validate.Struct(p)
 }
 
-
 //-- ==================================================
 //-- CART VENDOR
 //-- ==================================================
-
 
 // ----------------- Create -----------------
 type CreateCartVendorPayload struct {
@@ -99,7 +97,7 @@ func (p *CreateCartVendorPayload) Validate() error {
 
 // ----------------- Update -----------------
 type UpdateCartVendorPayload struct {
-	ID                 string      `json:"id" validate:"required"`
+	ID                  string   `json:"id" validate:"required"`
 	DeliveryCharge      *float64 `json:"deliveryCharge,omitempty" validate:"omitempty,min=0"`
 	VendorServiceCharge *float64 `json:"vendorServiceCharge,omitempty" validate:"omitempty,min=0"`
 	VAT                 *float64 `json:"vat,omitempty" validate:"omitempty,min=0"`
@@ -151,21 +149,17 @@ type DeleteCartVendorPayload struct {
 	ID string `param:"id" validate:"required"`
 }
 
-
 func (p *DeleteCartVendorPayload) Validate() error {
 	validate := validator.New()
 	return validate.Struct(p)
 }
 
-
-
 //-- ==================================================
 //-- ADD CART ITEM
 //-- ==================================================
 
-
 type AddCartItemPayload struct {
-	VendorID            string    `json:"VendorId" validate:"required"`
+	VendorID            string   `json:"VendorId" validate:"required"`
 	MenuItemID          string   `json:"menuItemId" validate:"required"`
 	Quantity            int      `json:"quantity" validate:"required,min=1"`
 	UnitPrice           float64  `json:"unitPrice" validate:"required,min=0"`
@@ -178,13 +172,9 @@ func (p *AddCartItemPayload) Validate() error {
 	return validate.Struct(p)
 }
 
-
-
 //-- ==================================================
 //-- CART ITEM
 //-- ==================================================
-
-
 
 // ----------------- Create -----------------
 type CreateCartItemPayload struct {
@@ -203,7 +193,7 @@ func (p *CreateCartItemPayload) Validate() error {
 
 // ----------------- Update -----------------
 type UpdateCartItemPayload struct {
-	ID                 string      `json:"id" validate:"required"`
+	ID                  string   `json:"id" validate:"required"`
 	Quantity            *int     `json:"quantity,omitempty" validate:"omitempty,min=1"`
 	UnitPrice           *float64 `json:"unitPrice,omitempty" validate:"omitempty,min=0"`
 	DiscountAmount      *float64 `json:"discountAmount,omitempty" validate:"omitempty,min=0"`
@@ -252,7 +242,7 @@ func (q *GetCartItemsQuery) Validate() error {
 
 // ----------------- Delete -----------------
 type DeleteCartItemPayload struct {
-	ID string `json:"param" validate:"required"`
+	ID string `param:"id" validate:"required"`
 }
 
 func (p *DeleteCartItemPayload) Validate() error {
@@ -260,10 +250,23 @@ func (p *DeleteCartItemPayload) Validate() error {
 	return validate.Struct(p)
 }
 
-
 type GetCartItemsByUserId struct {
 }
 
 func (p *GetCartItemsByUserId) Validate() error {
 	return nil
+}
+
+
+
+
+type AdjustCartItemQuantityPayload struct {
+	CartVendorId string `json:"cartVendorId" validate:"required"`
+	MenuItemId   string `json:"menuItemId" validate:"required"`
+	Delta        int    `json:"delta" validate:"required"`
+}
+
+func (p *AdjustCartItemQuantityPayload) Validate() error {
+	validate := validator.New()
+	return validate.Struct(p)
 }

@@ -3155,6 +3155,162 @@
           }
         ]
       }
+    },
+    "/v1/carts/items/adjust-quantity": {
+      "post": {
+        "description": "Increments or decrements the quantity of an existing cart item. Inserts if missing and delta > 0.",
+        "summary": "Adjust quantity of an existing cart item",
+        "tags": [
+          "Cart"
+        ],
+        "parameters": [],
+        "operationId": "adjustCartItemQuantity",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cartVendorId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "menuItemId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "delta": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "cartVendorId",
+                  "menuItemId",
+                  "delta"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "cartVendorId": {
+                      "type": "string"
+                    },
+                    "menuItemId": {
+                      "type": "string"
+                    },
+                    "quantity": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "unitPrice": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "discountAmount": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "specialInstructions": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "subtotal": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "createdAt",
+                    "updatedAt",
+                    "cartVendorId",
+                    "menuItemId",
+                    "quantity",
+                    "unitPrice",
+                    "discountAmount",
+                    "subtotal"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/carts/items/{id}": {
+      "delete": {
+        "description": "Deletes a cart item and updates the vendor subtotal if applicable.",
+        "summary": "Delete a cart item by ID",
+        "tags": [
+          "Cart"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "operationId": "deleteCartItem",
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
     }
   },
   "info": {

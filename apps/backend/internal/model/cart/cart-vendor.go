@@ -7,7 +7,7 @@ type CartVendor struct {
 	model.Base
 	CartSessionID       string   `json:"cartSessionId" db:"cart_session_id"`
 	VendorID            string   `json:"vendorId" db:"vendor_id"`
-	Subtotal            *float64  `json:"subtotal" db:"subtotal"`
+	Subtotal            float64  `json:"subtotal" db:"subtotal"`
 	DeliveryCharge      *float64 `json:"deliveryCharge,omitempty" db:"delivery_charge"` // nullable, TBD
 	VendorServiceCharge float64  `json:"vendorServiceCharge" db:"vendor_service_charge"`
 	VAT                 float64  `json:"vat" db:"vat"`

@@ -15,7 +15,8 @@ func registerCartRoutes(r *echo.Group, h *handler.CartHandler, auth *middleware.
     carts.GET("", h.GetActiveCartsByUserID)                // get current user's active cart
 	carts.POST("/items", h.AddCartItem)  
 	// carts.PATCH("/items/:id", h.UpdateItem) 
-	// carts.DELETE("/items/:id", h.RemoveItem)
+	carts.POST("/items/adjust-quantity", h.AdjustCartItemQuantity)
+	carts.DELETE("/items/:id", h.DeleteCartItem)
 
 
 

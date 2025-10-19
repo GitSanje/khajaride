@@ -13,33 +13,31 @@ import (
 )
 
 type CartService struct {
-	server *server.Server
+	server   *server.Server
 	cartRepo *repository.CartRepository
 }
 
 func NewCartService(s *server.Server, cartRepo *repository.CartRepository) *CartService {
 	return &CartService{
-		server:  s,
+		server:   s,
 		cartRepo: cartRepo,
 	}
 }
 
-
-
 // ==================================================
 // ADD CART ITEM
 // ==================================================
-func (s *CartService) AddCartItem(ctx echo.Context,userID string, payload *cart.AddCartItemPayload) (*cart.CartItem, error) {
+func (s *CartService) AddCartItem(ctx echo.Context, userID string, payload *cart.AddCartItemPayload) (*cart.CartItem, error) {
 	logger := middleware.GetLogger(ctx)
-    
+
 	tx, err := s.server.DB.Pool.Begin(ctx.Request().Context())
-    if err != nil {
+	if err != nil {
 		return nil, err
 	}
 	defer tx.Rollback(ctx.Request().Context())
 
 	// 1️⃣ Ensure active cart session exists
-    session, err := s.cartRepo.GetActiveCartSession(ctx.Request().Context(), tx, userID)
+	session, err := s.cartRepo.GetActiveCartSession(ctx.Request().Context(), tx, userID)
 	if errors.Is(err, sql.ErrNoRows) {
 		session, err = s.cartRepo.CreateActiveCartSession(ctx.Request().Context(), tx, userID)
 		if err != nil {
@@ -48,8 +46,8 @@ func (s *CartService) AddCartItem(ctx echo.Context,userID string, payload *cart.
 	}
 
 	// 2️⃣ Ensure cart_vendor exists for that vendor
-	cart_vendor , err := s.cartRepo.GetCartVendor(ctx.Request().Context(), tx, session.ID, payload.VendorID)
-    if errors.Is(err, sql.ErrNoRows) {
+	cart_vendor, err := s.cartRepo.GetCartVendor(ctx.Request().Context(), tx, session.ID, payload.VendorID)
+	if errors.Is(err, sql.ErrNoRows) {
 		cart_vendor, err = s.cartRepo.CreateActiveCartVendor(ctx.Request().Context(), tx, session.ID, payload.VendorID)
 		if err != nil {
 			return nil, err
@@ -60,13 +58,16 @@ func (s *CartService) AddCartItem(ctx echo.Context,userID string, payload *cart.
 	if err != nil {
 		return nil, err
 	}
-   
+
+	// 4️⃣ Recalculate subtotal for that vendor
+	if err := s.cartRepo.UpdateCartVendorSubtotal(ctx.Request().Context(), tx, cart_vendor.ID); err != nil {
+		return nil, err
+	}
+
 	// Commit transaction
 	if err := tx.Commit(ctx.Request().Context()); err != nil {
 		return nil, err
 	}
-
-	
 
 	logger.Info().
 		Str("event", "cart_item_created").
@@ -82,11 +83,10 @@ func (s *CartService) AddCartItem(ctx echo.Context,userID string, payload *cart.
 // GET ACTIVE CARTS BY USER ID
 // ==================================================
 
-func (s *CartService) GetActiveCartsByUserID(ctx echo.Context,userID string) ([]cart.CartItemPopulated, error){
+func (s *CartService) GetActiveCartsByUserID(ctx echo.Context, userID string) ([]cart.CartItemPopulated, error) {
 
 	logger := middleware.GetLogger(ctx)
 
-	
 	cartItems, err := s.cartRepo.GetActiveCartsByUserID(ctx.Request().Context(), userID)
 	if err != nil {
 		logger.Error().
@@ -106,7 +106,6 @@ func (s *CartService) GetActiveCartsByUserID(ctx echo.Context,userID string) ([]
 func (s *CartService) CreateCartSession(ctx echo.Context, payload *cart.CreateCartSessionPayload) (*cart.CartSession, error) {
 	logger := middleware.GetLogger(ctx)
 
-	
 	created, err := s.cartRepo.CreateCartSession(ctx.Request().Context(), payload)
 	if err != nil {
 		logger.Error().
@@ -131,8 +130,6 @@ func (s *CartService) CreateCartSession(ctx echo.Context, payload *cart.CreateCa
 func (s *CartService) UpdateCartSession(ctx echo.Context, payload *cart.UpdateCartSessionPayload) (*cart.CartSession, error) {
 	logger := middleware.GetLogger(ctx)
 
-
-
 	updated, err := s.cartRepo.UpdateCartSession(ctx.Request().Context(), payload)
 	if err != nil {
 		logger.Error().
@@ -155,8 +152,6 @@ func (s *CartService) UpdateCartSession(ctx echo.Context, payload *cart.UpdateCa
 // ==================================================
 func (s *CartService) GetCartSessions(ctx echo.Context, query *cart.GetCartSessionsQuery) (*model.PaginatedResponse[cart.CartSession], error) {
 	logger := middleware.GetLogger(ctx)
-
-	
 
 	result, err := s.cartRepo.GetCartSessions(ctx.Request().Context(), query)
 	if err != nil {
@@ -181,7 +176,6 @@ func (s *CartService) GetCartSessions(ctx echo.Context, query *cart.GetCartSessi
 func (s *CartService) DeleteCartSession(ctx echo.Context, payload *cart.DeleteCartSessionPayload) error {
 	logger := middleware.GetLogger(ctx)
 
-
 	err := s.cartRepo.DeleteCartSession(ctx.Request().Context(), payload)
 	if err != nil {
 		logger.Error().
@@ -198,16 +192,11 @@ func (s *CartService) DeleteCartSession(ctx echo.Context, payload *cart.DeleteCa
 	return nil
 }
 
-
-
-
 // ==================================================
 // CREATE CART VENDOR
 // ==================================================
 func (s *CartService) CreateCartVendor(ctx echo.Context, payload *cart.CreateCartVendorPayload) (*cart.CartVendor, error) {
 	logger := middleware.GetLogger(ctx)
-
-	
 
 	created, err := s.cartRepo.CreateCartVendor(ctx.Request().Context(), payload)
 	if err != nil {
@@ -234,7 +223,6 @@ func (s *CartService) CreateCartVendor(ctx echo.Context, payload *cart.CreateCar
 func (s *CartService) UpdateCartVendor(ctx echo.Context, payload *cart.UpdateCartVendorPayload) (*cart.CartVendor, error) {
 	logger := middleware.GetLogger(ctx)
 
-	
 	updated, err := s.cartRepo.UpdateCartVendor(ctx.Request().Context(), payload)
 	if err != nil {
 		logger.Error().
@@ -300,12 +288,6 @@ func (s *CartService) DeleteCartVendor(ctx echo.Context, payload *cart.DeleteCar
 	return nil
 }
 
-
-
-
-
-
-
 // ==================================================
 // CREATE CART ITEM
 // ==================================================
@@ -339,11 +321,32 @@ func (s *CartService) CreateCartItem(ctx echo.Context, payload *cart.CreateCartI
 }
 
 // ==================================================
-// UPDATE CART ITEM
+// ADJUST CART ITEM QUANTITY
 // ==================================================
+
+func (s *CartService) AdjustCartItemQuantity(ctx echo.Context, payload *cart.AdjustCartItemQuantityPayload) (*cart.CartItem, error) {
+	tx, err := s.server.DB.Pool.Begin(ctx.Request().Context())
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx.Request().Context())
+
+	item, err := s.cartRepo.AdjustCartItemQuantity(ctx.Request().Context(), tx, payload)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.cartRepo.UpdateCartVendorSubtotal(ctx.Request().Context(), tx, item.CartVendorID); err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(ctx.Request().Context()); err != nil {
+		return nil, err
+	}
+	return item,nil
+}
+
 func (s *CartService) UpdateCartItem(ctx echo.Context, payload *cart.UpdateCartItemPayload) (*cart.CartItem, error) {
 	logger := middleware.GetLogger(ctx)
-
 
 	updated, err := s.cartRepo.UpdateCartItem(ctx.Request().Context(), payload)
 	if err != nil {
@@ -367,8 +370,6 @@ func (s *CartService) UpdateCartItem(ctx echo.Context, payload *cart.UpdateCartI
 func (s *CartService) GetCartItems(ctx echo.Context, query *cart.GetCartItemsQuery) (*model.PaginatedResponse[cart.CartItem], error) {
 	logger := middleware.GetLogger(ctx)
 
-
-
 	result, err := s.cartRepo.GetCartItems(ctx.Request().Context(), query)
 	if err != nil {
 		logger.Error().
@@ -390,24 +391,34 @@ func (s *CartService) GetCartItems(ctx echo.Context, query *cart.GetCartItemsQue
 // DELETE CART ITEM
 // ==================================================
 func (s *CartService) DeleteCartItem(ctx echo.Context, payload *cart.DeleteCartItemPayload) error {
-	logger := middleware.GetLogger(ctx)
+	reqCtx := ctx.Request().Context()
 
-	logger.Info().
-		Str("cart_item_id", payload.ID).
-		Msg("Deleting cart item")
-
-	err := s.cartRepo.DeleteCartItem(ctx.Request().Context(), payload)
+	tx, err := s.server.DB.Pool.Begin(reqCtx)
 	if err != nil {
-		logger.Error().
-			Err(err).
-			Str("cart_item_id", payload.ID).
-			Msg("Failed to delete cart item")
+		return err
+	}
+	defer tx.Rollback(reqCtx)
+
+	
+	item, err := s.cartRepo.DeleteCartItem(reqCtx, tx, payload)
+	if err != nil {
 		return err
 	}
 
-	logger.Info().
-		Str("cart_item_id", payload.ID).
-		Msg("Cart item deleted successfully")
+	// Nothing deleted, exit silently
+	if item == nil {
+		return echo.NewHTTPError(404, "Item not found")
+	}
+
+	// Update vendor subtotal
+	if err := s.cartRepo.UpdateCartVendorSubtotal(reqCtx, tx, item.CartVendorID); err != nil {
+		return err
+	}
+
+	
+	if err := tx.Commit(reqCtx); err != nil {
+		return err
+	}
 
 	return nil
 }
