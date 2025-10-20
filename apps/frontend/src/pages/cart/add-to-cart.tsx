@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Heart, Plus, Minus } from "lucide-react"
 import { toast } from "sonner"
 import type { TMenuItem } from "@khajaride/zod"
-import { useRestaurants } from "@/hooks/use-restaturants"
+import { useCart } from "@/hooks/use-cart"
 import type { TAddCartItem } from "@/types/cart-types"
 
 interface AddToCartModalProps {
@@ -21,7 +21,7 @@ export function AddToCartModal({ item, isOpen, onClose }: AddToCartModalProps) {
   const [specialInstructions, setSpecialInstructions] = useState("")
   const [isFavorite, setIsFavorite] = useState(false)
   const [isPending, startTransition] = useTransition()
-  const { addToCart } = useRestaurants()
+  const { addToCart } = useCart()
 
   if (!item) return null
 

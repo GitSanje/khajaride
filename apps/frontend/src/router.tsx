@@ -7,6 +7,7 @@ import { AuthLayout } from "./components/layouts/auth-layout";
 import CustomerApp from "./pages/user/user-landing-page";
 import VendorMenuPage from "./pages/user/vendor-details";
 import SearchPage from "./pages/search/SearchVendor";
+import VendorOnboardingPage from "./pages/vendor-onboarding/vendor-onboarding";
 
 
 
@@ -61,6 +62,15 @@ const routes = createRoutesFromElements(
         <ProtectedRoute>
           <SearchPage />
         </ProtectedRoute>
+      }
+    />
+
+     <Route
+      path="/vendor-onboard"
+      element={
+        <PublicRoute>
+          <VendorOnboardingPage />
+        </PublicRoute>
       }
     />
     

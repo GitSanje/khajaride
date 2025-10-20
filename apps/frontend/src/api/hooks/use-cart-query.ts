@@ -6,6 +6,7 @@ import type { apiContract } from "@khajaride/openapi/contracts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "../query-utils";
 import { showApiErrorToast } from "../utils";
+import { toast } from "sonner";
 
 
 
@@ -163,7 +164,7 @@ export const useDeleteCartItem = () => {
       queryClient.invalidateQueries({
         queryKey: [QUERY_KEYS.CART.GET_CART_ITEMS],
       });
-     
+      toast.success("Item removed from cart!");
     },
     onError: (err) => {
       showApiErrorToast(err, "Failed to delete cart item");

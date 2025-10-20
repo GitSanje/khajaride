@@ -12,7 +12,7 @@ import {
   Gift,
 } from "lucide-react"
 import { Link } from "react-router-dom"
-import { useRestaurants } from "@/hooks/use-restaturants"
+import { useCart } from "@/hooks/use-cart"
 import { CartSidebar } from "@/pages/cart/cart-ui"
 
 
@@ -25,7 +25,7 @@ export default function Header() {
         
         calcs,
         loyaltyPoints,
-       } = useRestaurants();
+       } = useCart();
 
           const { cartItemCount}=  calcs
     return(

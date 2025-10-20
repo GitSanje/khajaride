@@ -1,4 +1,4 @@
-import { useAddCartItem, useGetCartItems, type TAddCartItemResponse } from "@/api/hooks/use-cart-query";
+import { useAddCartItem, useDeleteCartItem, useGetCartItems, type TAddCartItemResponse } from "@/api/hooks/use-cart-query";
 import type { TAddCartItem } from "@/types/cart-types";
 import type { TAddCartItemPayload, TCartItemPopulated } from "@khajaride/zod";
 import { createContext, useContext, useEffect, useState } from "react";
@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 
 
-interface RestaurantDataContextValue {
+interface CartDataContextContextValue {
   calcs: {
     cartTotal: number |undefined
     GrandTotal: number |undefined
@@ -24,13 +24,13 @@ interface RestaurantDataContextValue {
 }
 
 
-const RestaurantDataContext = createContext<RestaurantDataContextValue | null>(null);
-interface RestaurantDataProviderProps {
+const CartDataContext = createContext<CartDataContextContextValue | null>(null);
+interface CartDataProviderProps {
   children: React.ReactNode;
 }
 
 
-export const RestaurantsDataProvider = ({ children }: RestaurantDataProviderProps) => {
+export const RestaurantsDataProvider = ({ children }: CartDataProviderProps) => {
 
   const [loyaltyPoints] = useState(1250)
 
@@ -119,20 +119,21 @@ const calcs = {
   TotalDelivery,
   OverallSubtotal,
   cartItemCount
-
-
 }
-  const removeFromCart = (itemId: string) => {
-    setCart((prev) => {
-      const existing = prev.find((cartItem) => cartItem.id === itemId)
-      if (existing && existing.quantity > 1) {
-        return prev.map((cartItem) =>
-          cartItem.id === itemId ? { ...cartItem, quantity: cartItem.quantity - 1 } : cartItem,
-        )
+    const removeFromCart = async (itemId: string): Promise<void | null> => {
+      if (!itemId) return null;
+
+      try {
+        const deleteCartItemMutation = useDeleteCartItem();
+        await deleteCartItemMutation.mutateAsync({ cartId: itemId });
+        
+      } catch (error) {
+        console.error("❌ Failed to remove item from cart:", error);
+        toast.error("Failed to remove item from cart.");
+        return null;
       }
-      return prev.filter((cartItem) => cartItem.id !== itemId)
-    })
-  }
+    };
+
 
   const contextValue = {
 
@@ -146,14 +147,14 @@ const calcs = {
     removeFromCart,
   }
 
-  return <RestaurantDataContext.Provider value={contextValue}>
-    {children}</RestaurantDataContext.Provider>;
+  return <CartDataContext.Provider value={contextValue}>
+    {children}</CartDataContext.Provider>;
 }
 
 
 
-export const useRestaurants = () => {
-  const ctx = useContext(RestaurantDataContext);
+export const useCart = () => {
+  const ctx = useContext(CartDataContext);
 
   if (!ctx) {
     throw new Error("useRestaurants must be used within a RestaurantsDataProvider");

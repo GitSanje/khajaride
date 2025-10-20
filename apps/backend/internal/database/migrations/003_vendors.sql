@@ -5,6 +5,7 @@
 
 CREATE TABLE vendors (
     id TEXT  PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    vendor_user_id TEXT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
     name VARCHAR(150) NOT NULL,
     about TEXT,                             -- Description/About section
     cuisine VARCHAR(100),                   -- e.g. Italian, Indian, Fusion
@@ -27,6 +28,10 @@ CREATE TABLE vendors (
     cuisine_tags TEXT[],                    -- array of tags, e.g. ["Italian", "Pizza", "Pasta"]
     promo_text TEXT,                        -- e.g. "Free delivery on orders over $20"
     vendor_notice TEXT,                     -- e.g. "We are short-staffed today..."
+
+    status TEXT NOT NULL DEFAULT 'draft' CHECK (
+        status IN ('draft', 'pending_verification', 'verified', 'active', 'suspended', 'rejected')
+    ),
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
@@ -43,6 +48,96 @@ CREATE TRIGGER set_updated_at_vendors
     FOR EACH ROW
     EXECUTE FUNCTION trigger_set_updated_at();
 
+
+
+-- =========================
+-- VENDOR DOCUMENTS
+-- =========================
+
+CREATE TABLE vendor_documents (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    vendor_id TEXT NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
+
+    document_type TEXT NOT NULL CHECK (
+        document_type IN (
+            'business_license',
+            'pan_vat_registration',
+            'bank_account_proof',
+            'hygiene_certificate',
+            'identity_proof',
+            'menu_safety_certificate'
+        )
+    ),
+
+    document_url TEXT NOT NULL,               -- link to uploaded doc/image
+    document_number TEXT,                     -- optional unique number like PAN/VAT number
+    expiry_date DATE,                         -- optional, for expirable documents (e.g. hygiene cert)
+    
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (
+        status IN ('pending', 'approved', 'rejected')
+    ),
+
+    remarks TEXT,                             -- admin remarks if rejected
+    submitted_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    reviewed_at TIMESTAMPTZ,
+
+    reviewed_by TEXT REFERENCES users(id) ON DELETE SET NULL,  -- admin reviewer
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_vendor_documents_vendor_id ON vendor_documents(vendor_id);
+CREATE INDEX idx_vendor_documents_status ON vendor_documents(status);
+CREATE INDEX idx_vendor_documents_type ON vendor_documents(document_type);
+
+
+
+
+-- =========================
+-- VENDOR PAYOUT ACCOUNTS
+-- =========================
+
+CREATE TABLE vendor_payout_accounts (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    vendor_id TEXT NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
+
+    method TEXT NOT NULL CHECK (
+        method IN ('esewa', 'khalti', 'bank_transfer', 'cash')
+    ),
+
+    account_identifier TEXT NOT NULL,   -- e.g. esewa id, khalti id, bank acc no
+    account_name TEXT,                  -- name on the account
+    bank_name TEXT,                     -- for bank transfers
+    branch_name TEXT,                   -- optional for banks
+    is_default BOOLEAN DEFAULT FALSE,
+
+    verified BOOLEAN DEFAULT FALSE,     -- after verification by admin or API callback
+    verification_status TEXT DEFAULT 'pending' CHECK (
+        verification_status IN ('pending', 'verified', 'rejected')
+    ),
+    remarks TEXT,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    verified_at TIMESTAMPTZ
+);
+
+CREATE INDEX idx_vendor_payout_vendor_id ON vendor_payout_accounts(vendor_id);
+CREATE INDEX idx_vendor_payout_method ON vendor_payout_accounts(method);
+CREATE INDEX idx_vendor_payout_verified ON vendor_payout_accounts(verified);
+
+-- =========================
+-- VENDOR PAYOUTS
+-- =========================
+
+CREATE TABLE vendor_payouts (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    vendor_id TEXT NOT NULL REFERENCES vendors(id),
+    order_id TEXT NOT NULL REFERENCES order_vendors(id),
+    payout_account_id TEXT NOT NULL REFERENCES vendor_payout_accounts(id),
+    amount NUMERIC(10,2) NOT NULL,
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'failed')),
+    transaction_ref TEXT,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
 
 
 -- =========================
@@ -63,6 +158,41 @@ CREATE TABLE vendor_addresses (
     
 );
 
+-- =========================
+-- VENDOR VERIFICATION LOGS
+-- =========================
+
+CREATE TABLE vendor_verification_logs (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    vendor_id TEXT NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
+    admin_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+    
+    action TEXT NOT NULL CHECK (
+        action IN ('submitted', 'approved', 'rejected', 'requested_changes')
+    ),
+    remarks TEXT,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+
+-- Each vendor can have multiple addresses (outlets)
+
+-- CREATE TABLE vendor_outlets (
+--     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+--     vendor_id TEXT NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
+--     outlet_name VARCHAR(100),
+--     address TEXT NOT NULL,
+--     city VARCHAR(100),
+--     latitude DECIMAL(9,6),
+--     longitude DECIMAL(9,6),
+--     delivery_radius_km DECIMAL(4,1) DEFAULT 3.0,
+--     is_primary BOOLEAN DEFAULT FALSE,
+--     is_open BOOLEAN DEFAULT FALSE,
+--     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+--     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+-- );
+
+
 -- add for geographic search (delivery radius queries)
 CREATE INDEX idx_vendors_location ON vendor_addresses (latitude, longitude);
 CREATE INDEX idx_vendors_addresses_vendor_id ON vendor_addresses(vendor_id);
@@ -75,23 +205,6 @@ CREATE TRIGGER set_updated_at_vendor_addresses
     FOR EACH ROW
     EXECUTE FUNCTION trigger_set_updated_at();
 
--- -- Restaurant reviews
--- CREATE TABLE restaurant_reviews (
---     id UUID  PRIMARY KEY DEFAULT gen_random_uuid(),
---     restaurant_id UUID NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
---     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
---     rating INT CHECK (rating BETWEEN 1 AND 5),
---     review_text TEXT,
---     created_at TIMESTAMP DEFAULT NOW(),
---     updated_at TIMESTAMP DEFAULT NOW()
--- );
-
--- CREATE INDEX idx_reviews_restaurant_id ON restaurant_reviews(restaurant_id);
-
--- CREATE TRIGGER set_updated_at_restaurant_reviews
---     BEFORE UPDATE ON restaurant_reviews
---     FOR EACH ROW
---     EXECUTE FUNCTION trigger_set_updated_at();
 
 
 
@@ -188,7 +301,6 @@ CREATE TRIGGER set_updated_at_menu_categories
 
 -- =========================
 -- ADDON GROUPS
-
 -- =========================
 
 CREATE TABLE addon_groups (

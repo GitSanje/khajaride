@@ -20,9 +20,9 @@ export function PublicRoute({ children }: PublicRouteProps) {
     );
   }
 
-  if (isSignedIn) {
-    return <Navigate to="/dashboard" replace />;
-  }
+  // if (isSignedIn) {
+  //   return <Navigate to="/dashboard" replace />;
+  // }
 
   return <>{children}</>;
 }

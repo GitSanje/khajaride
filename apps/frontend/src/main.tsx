@@ -9,7 +9,7 @@ import { ClerkProvider } from '@clerk/clerk-react';
 import { RouterProvider } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import router from './router.tsx';
-import { RestaurantsDataProvider } from './hooks/use-restaturants.tsx';
+import { RestaurantsDataProvider } from './hooks/use-cart.tsx';
 
 const queryClient = new QueryClient({
   defaultOptions: {

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ShoppingCart, Store, Plus, Minus, X, Gift, ChevronDown, ChevronUp } from "lucide-react"
 import { Link } from "react-router-dom"
-import { useRestaurants } from "@/hooks/use-restaturants"
+import { useCart } from "@/hooks/use-cart"
 import { useAddJustCartItemQuantity, useDeleteCartItem } from "@/api/hooks/use-cart-query"
 
 
@@ -27,7 +27,7 @@ export function CartSidebar({
         addToCart: onAddItem,
         removeFromCart: onRemoveItem,
         calcs
-    } = useRestaurants();
+    } = useCart();
 
     const {
         cartTotal,
@@ -101,9 +101,10 @@ export function CartSidebar({
                                                 <Store className="w-4 h-4 text-primary flex-shrink-0" />
                                                 <div className="min-w-0">
                                                     <h4 className="font-semibold text-sm truncate">{cartVendor.vendor.name}</h4>
-                                                    {cartVendor.vendor.about && (
-                                                        <p className="text-xs text-muted-foreground truncate">{cartVendor.vendor.about}</p>
-                                                    )}
+                                                    {/* {cartVendor.vendor.streetAddress && (
+                                                        <p className="text-xs text-muted-foreground truncate">{cartVendor.vendor.streetAddress}</p>
+                                                    )} */}
+
                                                 </div>
                                             </div>
                                             {isExpanded ? (
@@ -217,6 +218,12 @@ export function CartSidebar({
                                                         <span>Rs. {cartVendor.total?.toFixed(2)}</span>
                                                     </div>
                                                 </div>
+                                                                    {/* Checkout Button */}
+                                                <Link to="/app/checkout" className="block">
+                                                    <Button className="w-full" size="lg">
+                                                        Go to Checkout
+                                                    </Button>
+                                                </Link>
                                             </>
                                         )}
                                     </div>
@@ -250,12 +257,7 @@ export function CartSidebar({
                                 </p>
                             </div>
 
-                            {/* Checkout Button */}
-                            <Link to="/app/checkout" className="block">
-                                <Button className="w-full" size="lg">
-                                    Go to Checkout
-                                </Button>
-                            </Link>
+                           
                         </div>
                     )}
                 </div>
