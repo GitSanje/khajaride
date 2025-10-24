@@ -4,6 +4,7 @@ import { userContract } from "./user.js";
 import { vendorContract } from "./vendor.js";
 import { searchContract } from "./search.js";
 import { cartContract } from "./cart.js";
+import { orderContract } from "./order.js";
 
 const c = initContract();
 
@@ -12,5 +13,6 @@ export const apiContract = c.router({
   User: userContract,
   Vendor: vendorContract,
   Search: searchContract,
-  Cart: cartContract
+  Cart: cartContract,
+  Order : orderContract
 });

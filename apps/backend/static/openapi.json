@@ -3311,6 +3311,89 @@
           }
         ]
       }
+    },
+    "/v1/orders/create-from-cart": {
+      "post": {
+        "description": "Creates an order group and corresponding vendor orders from the authenticated user's active cart session.",
+        "summary": "Create order from user's active cart",
+        "tags": [
+          "Order"
+        ],
+        "parameters": [],
+        "operationId": "createOrderFromCart",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "201",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "userId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "total": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "currency": {
+                      "default": "NPR",
+                      "type": "string",
+                      "pattern": "^[A-Z]{3}$"
+                    },
+                    "paymentStatus": {
+                      "default": "unpaid",
+                      "type": "string",
+                      "enum": [
+                        "unpaid",
+                        "paid",
+                        "failed"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "createdAt",
+                    "updatedAt",
+                    "userId",
+                    "total"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
     }
   },
   "info": {

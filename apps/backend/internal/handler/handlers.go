@@ -12,6 +12,7 @@ type Handlers struct {
 	Vendor   *VendorHandler
 	Search   *SearchHandler
 	Cart     *CartHandler
+	Order    *OrderHandler
 	Webhooks *WebhookHandler
 }
 
@@ -24,5 +25,6 @@ func NewHandlers(s *server.Server, services *service.Services) *Handlers {
 		Search:   NewSearchHandler(s, services.Search),
 		Cart:     NewCartHandler(s, services.Cart),
 		Webhooks: NewWebhookHandler(s, services.User),
+		Order: NewOrderHandler(s,services.Order),
 	}
 }

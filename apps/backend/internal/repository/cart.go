@@ -119,6 +119,10 @@ func (r *CartRepository) GetActiveCartsByUserID(ctx context.Context, userID stri
 	stmt1 := `SELECT id FROM cart_sessions WHERE user_id = $1 AND status = 'active' LIMIT 1`
 	err := r.server.DB.Pool.QueryRow(ctx, stmt1, userID).Scan(&cartSessionID)
 	if err != nil {
+		
+		if errors.Is(err, pgx.ErrNoRows) {
+			return []cart.CartItemPopulated{}, nil
+		}
 		return nil, fmt.Errorf("failed to get active cart session: %w", err)
 	}
 
@@ -781,3 +785,84 @@ func (r *CartRepository) DeleteCartItem(
 	return &item, nil
 }
 
+
+
+
+
+//-- ==================================================
+//-- LIST CART VENDORS
+//-- ==================================================
+
+
+
+func (r *CartRepository) ListCartVendors(ctx context.Context, tx pgx.Tx, cartSessionID string) ([]cart.CartVendor, error) {
+    query := `
+        SELECT * FROM cart_vendors
+        WHERE cart_session_id = @sessionId
+    `
+
+    rows, err := tx.Query(ctx, query, pgx.NamedArgs{"sessionId": cartSessionID})
+    if err != nil {
+        return nil, fmt.Errorf("failed to list cart vendors: %w", err)
+    }
+
+    vendors, err := pgx.CollectRows(rows, pgx.RowToStructByName[cart.CartVendor])
+    if err != nil {
+        return nil, fmt.Errorf("failed to collect cart vendors: %w", err)
+    }
+
+    return vendors, nil
+}
+
+
+//-- ==================================================
+//-- LIST CART ITEMS
+//-- ==================================================
+
+
+func (r *CartRepository) ListCartItems(ctx context.Context, tx pgx.Tx, cartVendorID string) ([]cart.CartItem, error) {
+    query := `
+        SELECT * FROM cart_items
+        WHERE cart_vendor_id = @vendorId
+    `
+
+    rows, err := tx.Query(ctx, query, pgx.NamedArgs{"vendorId": cartVendorID})
+    if err != nil {
+        return nil, fmt.Errorf("failed to list cart items: %w", err)
+    }
+
+    items, err := pgx.CollectRows(rows, pgx.RowToStructByName[cart.CartItem])
+    if err != nil {
+        return nil, fmt.Errorf("failed to collect cart items: %w", err)
+    }
+
+    return items, nil
+}
+
+
+//-- ==================================================
+//-- MARK CART SESSION CHECKED OUT
+//-- ==================================================
+
+
+
+func (r *CartRepository) MarkCartSessionCheckedOut(
+	ctx context.Context,
+	tx pgx.Tx,
+	sessionID string,
+) error {
+
+	query := `
+		UPDATE cart_sessions
+		SET status = 'checked_out',
+		    updated_at = NOW()
+		WHERE id = @id
+	`
+
+	_, err := tx.Exec(ctx, query, pgx.NamedArgs{"id": sessionID})
+	if err != nil {
+		return fmt.Errorf("failed to mark cart session checked_out: %w", err)
+	}
+
+	return nil
+}

@@ -6,6 +6,7 @@ import "github.com/gitSanje/khajaride/internal/model"
 type Vendor struct {
 	model.Base
 	ID string `json:"id" db:"id"`
+	VendorUserID *string `json:"vendorUserId" db:"vendor_user_id"`
 	Name                  string   `json:"name" db:"name"`
 	About                 string   `json:"about" db:"about"`
 	Cuisine               string   `json:"cuisine" db:"cuisine"`

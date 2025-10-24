@@ -1,5 +1,104 @@
 
 
+-- =========================
+-- HELPER FUNCTION: recalc_order_vendor_totals(order_vendor_id)
+-- =========================
+
+CREATE OR REPLACE FUNCTION recalc_order_vendor_totals(p_order_vendor_id TEXT)
+RETURNS VOID LANGUAGE plpgsql AS $$
+
+DECLARE 
+   v_subtotal NUMERIC(14,2);
+BEGIN
+    -- Compute subtotal (sum of all item subtotals)
+    SELECT COALESCE(SUM(subtotal), 0)
+    INTO v_subtotal
+    FROM order_items
+    WHERE order_vendor_id = p_order_vendor_id;
+
+    -- Update the order_vendors table
+    UPDATE order_vendors
+    SET 
+        subtotal = v_subtotal,
+        updated_at = NOW()
+    WHERE id = p_order_vendor_id;
+END;
+$$;
+   
+
+
+CREATE OR REPLACE FUNCTION trigger_recalc_order_vendor_totals()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+    -- When inserting or updating, NEW exists
+    -- When deleting, use OLD
+    PERFORM recalc_order_vendor_totals(
+        COALESCE(NEW.order_vendor_id, OLD.order_vendor_id)
+    );
+
+    RETURN NEW;
+END;
+$$;
+
+
+-- =========================
+-- HELPER FUNCTION: recalc_order_group_total(order_group_id)
+-- =========================
+
+CREATE OR REPLACE FUNCTION recalc_order_group_total(p_order_group_id TEXT)
+RETURNS VOID LANGUAGE plpgsql AS $$
+DECLARE
+    v_total NUMERIC(14,2);
+    v_all_paid BOOLEAN;
+BEGIN
+    -- Compute total = SUM of all vendor totals in the group
+    SELECT COALESCE(SUM(total), 0)
+    INTO v_total
+    FROM order_vendors
+    WHERE order_group_id = p_order_group_id;
+
+    -- Check if all vendors are paid
+    SELECT BOOL_AND(payment_status = 'paid')
+    INTO v_all_paid
+    FROM order_vendors
+    WHERE order_group_id = p_order_group_id;
+
+    -- Update the order_groups table
+    UPDATE order_groups
+    SET 
+        total = v_total,
+        payment_status = CASE 
+                            WHEN v_all_paid THEN 'paid'
+                            ELSE 'unpaid'
+                         END,
+        created_at = created_at, -- to avoid touching created_at
+        updated_at = NOW(),
+        currency = COALESCE(currency, 'NPR')
+    WHERE id = p_order_group_id;
+END;
+$$;
+
+-- =========================
+-- TRIGGER FUNCTION
+-- =========================
+
+CREATE OR REPLACE FUNCTION trigger_recalc_order_group_total()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+    PERFORM recalc_order_group_total(
+        COALESCE(NEW.order_group_id, OLD.order_group_id)
+    );
+    RETURN NEW;
+END;
+$$;
+
+
+
+
+
+
+
+
 
 -- =========================
 -- ORDER GROUPS
@@ -8,11 +107,18 @@
 CREATE TABLE order_groups (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   user_id TEXT NOT NULL REFERENCES users(id),
-  total NUMERIC(12,2) NOT NULL,
+  total NUMERIC(12,2) NOT NULL DEFAULT 0,
   currency TEXT DEFAULT 'NPR',
   payment_status TEXT DEFAULT 'unpaid' CHECK (payment_status IN ('unpaid','paid','failed')),
-  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TRIGGER set_updated_at_order_groups
+    BEFORE UPDATE ON order_groups
+    FOR EACH ROW
+    EXECUTE FUNCTION trigger_set_updated_at();
+
 
 
 -- =========================
@@ -54,9 +160,10 @@ CREATE TABLE order_vendors (
     
     delivery_address_id TEXT REFERENCES user_addresses(id) ON DELETE SET NULL,
     delivery_instructions TEXT,
+    
     expected_delivery_time TIMESTAMPTZ,
     actual_delivery_time TIMESTAMPTZ,
-    expected_delivery_time TIMESTAMPTZ,
+  
 
     scheduled_for TIMESTAMPTZ, -- scheduled delivery/pickup
     pickup_ready_time TIMESTAMPTZ, -- for pickup
@@ -69,11 +176,11 @@ CREATE TABLE order_vendors (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_orders_user_id ON orders(user_id);
-CREATE INDEX idx_orders_status ON orders(status);
+CREATE INDEX idx_order_vendors_user_id ON order_vendors(user_id);
+CREATE INDEX idx_order_vendors_status ON order_vendors(status);
 
-CREATE TRIGGER set_updated_at_orders
-    BEFORE UPDATE ON orders
+CREATE TRIGGER set_updated_at_order_vendors
+    BEFORE UPDATE ON order_vendors
     FOR EACH ROW
     EXECUTE FUNCTION trigger_set_updated_at();
 
@@ -92,7 +199,7 @@ CREATE TABLE order_items (
     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
     order_vendor_id TEXT NOT NULL REFERENCES order_vendors(id) ON DELETE CASCADE,
     menu_item_id TEXT NOT NULL REFERENCES menu_items(id),
-    name TEXT NOT NULL,
+    cart_item_id TEXT REFERENCES cart_items(id) ON DELETE SET NULL,
     quantity INT NOT NULL CHECK (quantity > 0),
     unit_price NUMERIC(10,2) NOT NULL,
     discount_amount NUMERIC(10,2) DEFAULT 0,
@@ -131,11 +238,16 @@ CREATE TABLE order_payments (
     status TEXT NOT NULL CHECK (status IN ('initiated', 'success', 'failed', 'refunded')),
     method TEXT CHECK (method IN ('esewa', 'khalti', 'card', 'cod')), --COD-> Cash on Delivery
     paid_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_order_payments_order_id ON order_payments(order_id);
 
+CREATE TRIGGER set_updated_at_order_items
+    BEFORE UPDATE ON order_payments
+    FOR EACH ROW
+    EXECUTE FUNCTION trigger_set_updated_at();
 
 -- =========================
 -- OUTBOX: reliable event staging table
@@ -150,12 +262,19 @@ CREATE TABLE outbox (
   published BOOLEAN DEFAULT FALSE,
   published_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
 
 
 CREATE INDEX idx_outbox_published ON outbox(published);
 CREATE INDEX idx_outbox_aggregate ON outbox(aggregate_type, aggregate_id);
 
+
+CREATE TRIGGER set_updated_at_outbox
+    BEFORE UPDATE ON outbox
+    FOR EACH ROW
+    EXECUTE FUNCTION trigger_set_updated_at();
 
 -- =========================
 -- ORDER DRIVERS
@@ -194,11 +313,18 @@ CREATE TABLE order_events (
     order_id TEXT NOT NULL REFERENCES order_vendors(id) ON DELETE CASCADE,
     event_type TEXT NOT NULL,
     payload JSONB,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_order_events_order_id ON order_events(order_id);
 CREATE INDEX idx_order_events_event_type ON order_events(event_type);
+
+
+CREATE TRIGGER set_updated_at_order_events
+    BEFORE UPDATE ON order_events
+    FOR EACH ROW
+    EXECUTE FUNCTION trigger_set_updated_at();
 
 
 -- =========================
@@ -234,7 +360,7 @@ CREATE TABLE order_reviews (
 
 CREATE INDEX idx_reviews_vendor_id ON order_reviews(vendor_id);
 
-CREATE TRIGGER set_updated_at_restaurant_reviews
-    BEFORE UPDATE ON restaurant_reviews
+CREATE TRIGGER set_updated_at_order_reviews
+    BEFORE UPDATE ON order_reviews
     FOR EACH ROW
     EXECUTE FUNCTION trigger_set_updated_at();

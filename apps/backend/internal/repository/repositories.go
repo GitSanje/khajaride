@@ -3,10 +3,11 @@ package repository
 import "github.com/gitSanje/khajaride/internal/server"
 
 type Repositories struct{
-	User *UserRepository
+	User   *UserRepository
 	Vendor *VendorRepository
 	Search *SearchRepository
 	Cart    *CartRepository
+	Order   *OrderRepository
 }
 
 func NewRepositories(s *server.Server) *Repositories {
@@ -15,5 +16,6 @@ func NewRepositories(s *server.Server) *Repositories {
 		Vendor: NewVendorRepository(s),
 		Search: NewSearchRepository(s),
 		Cart: NewCartRepository(s),
+		Order : NewOrderRepository(s),
 	}
 }
