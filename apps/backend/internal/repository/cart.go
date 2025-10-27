@@ -2,12 +2,16 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/gitSanje/khajaride/internal/lib/utils"
 	"github.com/gitSanje/khajaride/internal/model"
 	"github.com/gitSanje/khajaride/internal/model/cart"
+	"github.com/gitSanje/khajaride/internal/model/coupon"
 	"github.com/gitSanje/khajaride/internal/server"
 	"github.com/jackc/pgx/v5"
 )
@@ -125,36 +129,37 @@ func (r *CartRepository) GetActiveCartsByUserID(ctx context.Context, userID stri
 		}
 		return nil, fmt.Errorf("failed to get active cart session: %w", err)
 	}
+	//057b7b6b-3427-4ba1-9ac6-c89b68fff718
 
 	// Query vendors and items for that session
 	stmt2 := `
-	SELECT 
+		SELECT 
 		cv.*,
 		camel(
-			jsonb_build_object(
-				'vendor_id', v.id,
-				'name', v.name,
-				'about', v.about
-			)
+			to_jsonb(v) 
 		) AS vendor,
+		camel(to_jsonb(va)) AS vendor_address,
 		COALESCE(ci.cart_items, '[]'::jsonb) AS cart_items
-	FROM cart_vendors cv
-	JOIN vendors v ON v.id = cv.vendor_id
-	LEFT JOIN LATERAL (
-		SELECT 
-			jsonb_agg(
-				camel(
-					jsonb_build_object(
-						'cart_item', to_jsonb(camel(ci.*)),
-						'menu_item', to_jsonb(camel(mi.*))
+		FROM cart_vendors cv
+		JOIN vendors v ON v.id = cv.vendor_id
+		LEFT JOIN vendor_addresses va ON va.vendor_id = v.id
+		LEFT JOIN LATERAL (
+			SELECT 
+				jsonb_agg(
+					camel(
+						jsonb_build_object(
+							'cart_item', camel(to_jsonb(ci)),
+							'menu_item', camel(to_jsonb(mi))
+						)
 					)
-				)
-			) AS cart_items
-		FROM cart_items ci
-		JOIN menu_items mi ON mi.id = ci.menu_item_id
-		WHERE ci.cart_vendor_id = cv.id
-	) ci ON TRUE
-	WHERE cv.cart_session_id = @cartSessionId;
+				) AS cart_items
+			FROM cart_items ci
+			JOIN menu_items mi ON mi.id = ci.menu_item_id
+			WHERE ci.cart_vendor_id = cv.id
+		) ci ON TRUE
+		WHERE cv.cart_session_id = @cartSessionId 
+		AND cv.status = 'active';
+
 	`
 
 	rows, err := r.server.DB.Pool.Query(ctx, stmt2, pgx.NamedArgs{"cartSessionId": cartSessionID})
@@ -866,3 +871,167 @@ func (r *CartRepository) MarkCartSessionCheckedOut(
 
 	return nil
 }
+
+
+//-- ==================================================
+//-- GET CART TOTALS
+//-- ==================================================
+
+func (r *CartRepository) GetCartTotals(
+	ctx context.Context,
+	tx pgx.Tx,
+	payload *cart.GetCartTotalsQuery,
+) (*cart.GetCartTotalsResponse, error) {
+
+	query := `
+		SELECT 
+		    COALESCE(cv.total, 0) AS total,
+			cv.subtotal,
+			cv.vendor_service_charge,
+			cv.vat,
+			cv.vendor_discount,
+			cv.delivery_charge,
+			va.latitude,
+			va.longitude
+		FROM cart_vendors cv
+		LEFT JOIN vendor_address va ON va.vendor_id = cv.vendor_id
+		WHERE cv.id = @cartVendorId AND cv.vendor_id = @vendorId
+	`
+
+	var total,subtotal, vendorServiceCharge, vat, vendorDiscount, vendorLat, vendorLng float64
+	var deliveryCharge sql.NullFloat64
+
+	err := tx.QueryRow(ctx, query, pgx.NamedArgs{
+		"cartVendorId": payload.CartVendorID,
+		"vendorId":     payload.VendorID,
+	}).Scan(
+		&total,
+		&subtotal,
+		&vendorServiceCharge,
+		&vat,
+		&vendorDiscount,
+		&deliveryCharge,
+		&vendorLat,
+		&vendorLng,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch cart vendor details: %w", err)
+	}
+
+	// Step 1: If delivery charge is missing, compute and persist
+	var fee float64
+	if !deliveryCharge.Valid {
+		fee = utils.ComputeDeliveryFee(payload.DistanceKM)
+
+				updateQuery := `
+			UPDATE cart_vendors
+			SET delivery_charge = @deliveryCharge,
+				updated_at = NOW()
+			WHERE id = @cartVendorId
+			RETURNING total
+		`
+
+		
+		err := tx.QueryRow(ctx, updateQuery, pgx.NamedArgs{
+			"deliveryCharge": fee,
+			"cartVendorId":   payload.CartVendorID,
+		}).Scan(&total)
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to update delivery charge or fetch total: %w", err)
+		}
+
+	} else {
+		fee = deliveryCharge.Float64
+	}
+
+	estimatedTime := utils.EstimateDeliveryTime(payload.DistanceKM)
+
+
+	return &cart.GetCartTotalsResponse{
+		Subtotal:              subtotal,
+		VendorServiceCharge:   vendorServiceCharge,
+		VAT:                   vat,
+		VendorDiscount:        vendorDiscount,
+		DeliveryFee:           fee,
+		EstimatedDeliveryTime: estimatedTime,
+		Total:                 total,
+	}, nil
+}
+
+
+
+func (r *CartRepository) ApplyCoupon(ctx context.Context, payload *coupon.ApplyCouponPayload) (*float64, error) {
+    
+     
+    //  1️⃣ Validate coupon
+    query := `
+        SELECT *
+        FROM coupons 
+        WHERE code = $1 AND is_active = TRUE
+    `
+    row, err := r.server.DB.Pool.Query(ctx, query, payload.CouponCode)
+    if err != nil {
+        return nil, fmt.Errorf("invalid or expired coupon")
+    }
+	c,err := pgx.CollectOneRow(row, pgx.RowToStructByName[coupon.Coupon])
+	if err != nil {
+		return nil, fmt.Errorf("failed to collect rows: %w", err)
+	}
+
+    // 2️⃣ Check vendor match
+    if c.VendorID != nil && *c.VendorID != payload.VendorID {
+        return nil, fmt.Errorf("coupon not valid for this vendor")
+    }
+
+    // 3️⃣ Check validity window
+    now := time.Now()
+    if c.StartDate != nil && now.Before(*c.StartDate) || c.EndDate != nil && now.After(*c.EndDate) {
+        return nil, fmt.Errorf("coupon not valid at this time")
+    }
+
+    // 4️⃣ Check usage limits
+    var userUsageCount int
+    err = r.server.DB.Pool.QueryRow(ctx, `SELECT COUNT(*) FROM coupon_usages WHERE coupon_id = $1 AND user_id = $2`, c.ID, payload.UserID).Scan(&userUsageCount)
+    if err != nil {
+        return nil, err
+    }
+    if userUsageCount >= c.PerUserLimit {
+        return nil, fmt.Errorf("you’ve already used this coupon")
+    }
+
+    // 5️⃣ Check min order amount
+    if payload.Subtotal < c.MinOrderAmount {
+        return nil, fmt.Errorf("order does not meet minimum amount for coupon")
+    }
+
+    // 6️⃣ Compute discount
+    discount := 0.0
+    if c.DiscountType == "percent" {
+        discount = (c.DiscountValue / 100) * payload.Subtotal
+        if c.MaxDiscountAmount != nil && discount > *c.MaxDiscountAmount {
+            discount = *c.MaxDiscountAmount
+        }
+    } else {
+        discount = c.DiscountValue
+    }
+
+    // 8️⃣ Apply and save
+    _, err = r.server.DB.Pool.Exec(ctx, `
+        UPDATE cart_vendors 
+        SET applied_coupon_code = $1, vendor_discount = $2
+        WHERE id = $3
+    `, payload.CouponCode, discount, payload.CartVendorID)
+    if err != nil {
+        return nil, err
+    }
+
+    // 9️⃣ Record usage
+    _, _ = r.server.DB.Pool.Exec(ctx, `INSERT INTO coupon_usages (coupon_id, user_id) VALUES ($1, $2)`, c.ID, payload.UserID)
+
+
+  
+    return &discount, nil
+}
+

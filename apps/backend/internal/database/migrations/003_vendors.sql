@@ -32,9 +32,12 @@ CREATE TABLE vendors (
     status TEXT NOT NULL DEFAULT 'draft' CHECK (
         status IN ('draft', 'pending_verification', 'verified', 'active', 'suspended', 'rejected')
     ),
+    vendor_service_charge  NUMERIC(10,2) DEFAULT 0,
+    vat NUMERIC(10,2) DEFAULT 0,
+    vendor_discount NUMERIC(10,2) DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
+        
 );
 
 CREATE INDEX idx_vendors_name ON vendors(name);           -- good for search
@@ -250,6 +253,7 @@ CREATE TABLE menu_items (
     tags TEXT[],                    -- array of tags, e.g. ["Newari", "Spicy", "Set"]
     portion_size VARCHAR(50),               -- e.g. "Regular", "Large", "Family"
     keywords TEXT,                        -- for full-text search
+    discount_amount NUMERIC(10,2) DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
@@ -358,15 +362,11 @@ CREATE INDEX idx_menu_item_addons_menu_item
 -- =========================
 
 CREATE TABLE menu_item_stats (
-     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
     menu_item_id TEXT NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
-    
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     -- Engagement metrics
     order_count INT DEFAULT 0,
-    unique_customers INT DEFAULT 0,
-    reorder_count INT DEFAULT 0,                  -- how many times a repeat happened
-    reorder_rate DECIMAL(5,2),                    -- (reorder_count / unique_customers) * 100
-
     favorite_count INT DEFAULT 0,               -- how many users favorited this item
     
     last_ordered TIMESTAMP,

@@ -29,6 +29,7 @@ type CartMenuItem struct {
 
 type CartItemPopulated struct {
 	CartVendor
-	Vendor    ShortVendorInfo `json:"vendor"`
-	CartItems []CartMenuItem  `json:"cartItems"`
+	Vendor    vendor.Vendor `json:"vendor"`
+	VendorAddress vendor.VendorAddress `json:"vendorAddress"`
+	CartItems []CartMenuItem `json:"cartItems"`
 }

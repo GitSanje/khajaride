@@ -40,7 +40,7 @@ export function CartSidebar({
 
 
     const [expandedVendors, setExpandedVendors] = useState<Set<string>>(
-        new Set(cartVendors?.map((v) => v.vendor.vendorId)),
+        new Set(cartVendors?.map((v) => v.vendorId)),
     )
 
     const toggleVendor = (vendorId: string) => {
@@ -88,13 +88,13 @@ export function CartSidebar({
                         <div className="space-y-4">
                             {/* Vendor Groups */}
                             {cartVendors?.map((cartVendor) => {
-                                const isExpanded = expandedVendors.has(cartVendor.vendor.vendorId)
+                                const isExpanded = expandedVendors.has(cartVendor.vendorId)
 
                                 return (
-                                    <div key={cartVendor.vendor.vendorId} className="border border-border rounded-lg overflow-hidden">
+                                    <div key={cartVendor.vendorId} className="border border-border rounded-lg overflow-hidden">
                                         {/* Vendor Header - Collapsible */}
                                         <button
-                                            onClick={() => toggleVendor(cartVendor.vendor.vendorId)}
+                                            onClick={() => toggleVendor(cartVendor.vendorId)}
                                             className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
                                         >
                                             <div className="flex items-center gap-2 flex-1 text-left">
@@ -106,6 +106,9 @@ export function CartSidebar({
                                                     )} */}
 
                                                 </div>
+                                                <Badge variant="outline" className="ml-auto flex-shrink-0">
+                                                    {cartVendor.cartItems.length} items
+                                                </Badge>
                                             </div>
                                             {isExpanded ? (
                                                 <ChevronUp className="w-4 h-4 text-muted-foreground flex-shrink-0" />
@@ -192,25 +195,25 @@ export function CartSidebar({
                                                     {cartVendor.vendorDiscount > 0 && (
                                                         <div className="flex justify-between items-center text-green-600">
                                                             <span>Vendor Discount</span>
-                                                            <span>-Rs. {cartVendor.vendorDiscount.toFixed(2)}</span>
+                                                            <span>-Rs. {cartVendor.vendorDiscount}</span>
                                                         </div>
                                                     )}
-                                                    {cartVendor.vendorServiceCharge > 0 && (
+                                                    {cartVendor.vendorServiceCharge  && (
                                                         <div className="flex justify-between items-center">
                                                             <span>Service Charge</span>
-                                                            <span>Rs. {cartVendor.vendorServiceCharge.toFixed(2)}</span>
+                                                            <span>Rs. {cartVendor.vendorServiceCharge}</span>
                                                         </div>
                                                     )}
-                                                    {cartVendor.vat > 0 && (
+                                                    {cartVendor.vat  && (
                                                         <div className="flex justify-between items-center">
                                                             <span>VAT</span>
-                                                            <span>Rs. {cartVendor.vat.toFixed(2)}</span>
+                                                            <span>Rs. {cartVendor.vat}</span>
                                                         </div>
                                                     )}
-                                                    {cartVendor.deliveryCharge && cartVendor.deliveryCharge > 0 && (
+                                                    {cartVendor.deliveryCharge  && cartVendor.deliveryCharge > 0 && (
                                                         <div className="flex justify-between items-center">
                                                             <span>Delivery</span>
-                                                            <span>Rs. {cartVendor.deliveryCharge.toFixed(2)}</span>
+                                                            <span>Rs. {cartVendor.deliveryCharge}</span>
                                                         </div>
                                                     )}
                                                     <div className="flex justify-between items-center font-semibold text-sm pt-1 border-t border-border">
@@ -218,12 +221,13 @@ export function CartSidebar({
                                                         <span>Rs. {cartVendor.total?.toFixed(2)}</span>
                                                     </div>
                                                 </div>
-                                                                    {/* Checkout Button */}
-                                                <Link to="/app/checkout" className="block">
+
+                                                            {/* Checkout Button */}
+                                                <Link to={`/khajaride/checkout/${cartVendor.id}`} className="block">
                                                     <Button className="w-full" size="lg">
                                                         Go to Checkout
                                                     </Button>
-                                                </Link>
+                                                </Link>         
                                             </>
                                         )}
                                     </div>
@@ -256,6 +260,7 @@ export function CartSidebar({
                                     You have {loyaltyPoints} points. Earn {Math.floor(GrandTotal!)} more points with this order!
                                 </p>
                             </div>
+                           
 
                            
                         </div>

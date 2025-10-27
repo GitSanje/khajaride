@@ -157,9 +157,9 @@ CREATE TABLE order_vendors (
     
     fulfillment_type TEXT NOT NULL DEFAULT 'delivery'
         CHECK (fulfillment_type IN ('delivery', 'pickup')),
-    
+    contact_phone VARCHAR(20);
     delivery_address_id TEXT REFERENCES user_addresses(id) ON DELETE SET NULL,
-    delivery_instructions TEXT,
+    delivery_instructions TEXT, -- Leave at door, call on arrival, ring bell etc.
     
     expected_delivery_time TIMESTAMPTZ,
     actual_delivery_time TIMESTAMPTZ,

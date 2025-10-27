@@ -75,6 +75,9 @@ export const ZVendor =  ZBase.extend({
   cuisineTags: z.array(z.string()).optional(),
   promoText: z.string(),
   vendorNotice: z.string(),
+  vendorServiceCharge: z.number(),
+  vat: z.number(),
+  vendorDiscount: z.number(),
 
 });
 

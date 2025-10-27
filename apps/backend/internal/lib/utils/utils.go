@@ -2,11 +2,16 @@ package utils
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/gitSanje/khajaride/internal/model/user"
-	"github.com/gitSanje/khajaride/internal/model/vendor"
+	"math"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/gitSanje/khajaride/internal/model/coupon"
+	"github.com/gitSanje/khajaride/internal/model/user"
+	"github.com/gitSanje/khajaride/internal/model/vendor"
 )
 
 func PrintJSON(v interface{}) {
@@ -427,4 +432,71 @@ func TransformFoodManduMenuItemsForES(flatJSON []byte) ([]map[string]interface{}
 	}
 
 	return menuItems, nil
+}
+
+
+
+//-- ==================================================
+//-- Business calc functions 
+//-- ==================================================
+func round2(v float64) float64 {
+	return math.Round(v*100) / 100
+}
+
+func EstimateDeliveryTime(distanceKm float64) string {
+	base := 15 // minutes
+	perKm := 2 // minutes per km
+	total := int(math.Ceil(float64(base) + distanceKm*float64(perKm)))
+	return fmt.Sprintf("%d min", total)
+}
+
+func ComputeDeliveryFee(distanceKm float64) float64 {
+
+	if distanceKm <= 0 {
+		return 0
+	}
+	baseFee := 50 // Base delivery fee in rupees
+	perKmFee := 10 // Fee per kilometer
+
+	// convert ints to float64 for calculations and for round2
+	if distanceKm <= 1 {
+		return round2(float64(baseFee))
+	}
+	fee := float64(baseFee) + (distanceKm-1.0)*float64(perKmFee)
+	return round2(fee)
+}
+
+// apply coupon to the subtotal (and optionally vendor-specific)
+func ApplyCoupon(c coupon.Coupon, subtotal float64, vendorID string,userUsageCount int) (float64, error) {
+	if c.Code == "" || !c.IsActive {
+		return 0, nil
+	}
+	if c.EndDate != nil && time.Now().After(*c.EndDate) {
+		return 0, errors.New("coupon expired")
+	}
+	if c.VendorID != nil && *c.VendorID != vendorID {
+		return 0, errors.New("coupon not applicable to this vendor")
+	}
+	if c.MinOrderAmount > 0 && subtotal < c.MinOrderAmount {
+		return 0, errors.New("order too small for coupon")
+	}
+	if userUsageCount >= c.PerUserLimit {
+        return 0, fmt.Errorf("you’ve already used this coupon")
+    }
+	switch c.DiscountType {
+	case "flat":
+		amt := c.DiscountValue
+		if amt > subtotal {
+			amt = subtotal
+		}
+		return round2(amt), nil
+	case "percent":
+		amt := subtotal * (c.DiscountValue / 100.0)
+		if ( amt > *c.MaxDiscountAmount){
+			amt = *c.MaxDiscountAmount
+		}
+		return round2(amt), nil
+	default:
+		return 0, errors.New("unknown coupon type")
+	}
 }

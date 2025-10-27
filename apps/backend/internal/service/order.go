@@ -80,12 +80,6 @@ func (s *OrderService) CreateOrderFromCart(ctx echo.Context, userID string) (*or
             }
         }
 
-		//  // Recalculate subtotal (vendor-level)
-        // if err := s.orderRepo.UpdateOrderVendorSubtotal(ctxx, tx, oVendor.ID); err != nil {
-        //     return nil, err
-        // }
-
-
 
 	  }
 

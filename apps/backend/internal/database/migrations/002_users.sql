@@ -61,6 +61,8 @@ CREATE TABLE user_addresses (
     latitude DECIMAL(9,6) NOT NULL,
     longitude DECIMAL(9,6) NOT NULL,
     is_default BOOLEAN DEFAULT FALSE,
+    phone_number VARCHAR(20),
+    detail_address_direction TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(user_id, label)

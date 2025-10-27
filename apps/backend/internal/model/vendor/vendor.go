@@ -29,6 +29,9 @@ type Vendor struct {
 	CuisineTags           []string `json:"cuisineTags" db:"cuisine_tags"`
 	PromoText             string   `json:"promoText" db:"promo_text"`
 	VendorNotice          string   `json:"vendorNotice" db:"vendor_notice"`
+	VendorServiceCharge   float64  `json:"vendorServiceCharge" db:"vendor_service_charge"`
+	VAT                   float64  `json:"vat" db:"vat"`
+	VendorDiscount        float64  `json:"vendorDiscount" db:"vendor_discount"`
 }
 
 

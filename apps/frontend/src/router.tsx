@@ -5,9 +5,10 @@ import { ProtectedRoute } from "./components/protected-route";
 import DashboardPage from "./pages/dashboard/dashboard";
 import { AuthLayout } from "./components/layouts/auth-layout";
 import CustomerApp from "./pages/user/user-landing-page";
-import VendorMenuPage from "./pages/user/vendor-details";
+import VendorMenuPage from "./pages/vendor/vendor-details";
 import SearchPage from "./pages/search/SearchVendor";
 import VendorOnboardingPage from "./pages/vendor-onboarding/vendor-onboarding";
+import CheckoutPage from "./pages/checkout/checkout";
 
 
 
@@ -44,6 +45,14 @@ const routes = createRoutesFromElements(
       element={
         <ProtectedRoute>
           <CustomerApp />
+        </ProtectedRoute>
+      }
+    />
+     <Route
+      path="/khajaride/checkout/:cartVendorId"
+      element={
+        <ProtectedRoute>
+          <CheckoutPage />
         </ProtectedRoute>
       }
     />

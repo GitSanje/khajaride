@@ -270,3 +270,46 @@ func (p *AdjustCartItemQuantityPayload) Validate() error {
 	validate := validator.New()
 	return validate.Struct(p)
 }
+
+
+
+//-- ==================================================
+//-- GET CART TOTALS
+//-- ==================================================
+
+
+type GetCartTotalsQuery struct {
+	UserID       string  `json:"userId"` 
+	CartVendorID  string  `json:"cartVendorId" validate:"required"`
+	VendorID     string  `json:"vendorId" validate:"required"`
+	CouponCode   *string  `json:"couponCode,omitempty"`
+	Location     LatLng  `json:"location" validate:"required"` 
+	DistanceKM   float64 `json:"distanceKM" validate:"required"`
+	Subtotal     float64 `json:"subtotal" validate:"required"`
+}
+
+type LatLng struct {
+	Lat float64 `json:"lat"`
+	Lng float64 `json:"lng"`
+}
+
+func (p *GetCartTotalsQuery) Validate() error {
+	validate := validator.New()
+	return validate.Struct(p)
+}
+
+
+type GetCartTotalsResponse struct {
+	Subtotal               float64 `json:"subtotal"`
+	DeliveryDistanceKm     float64 `json:"deliveryDistanceKm"`
+	DeliveryFee            float64 `json:"deliveryFee"`
+	VendorServiceCharge    float64 `json:"vendorServiceCharge"`
+	VAT                    float64 `json:"vat"`
+	VendorDiscount         float64 `json:"vendorDiscount"`
+	CouponDiscount         float64 `json:"couponDiscount"`
+	Total                  float64 `json:"total"`
+	EstimatedDeliveryTime  string  `json:"estimatedDeliveryTime"`
+	Currency               string  `json:"currency"`
+	AppliedCouponCode      *string  `json:"appliedCouponCode,omitempty"`
+
+}

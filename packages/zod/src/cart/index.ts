@@ -1,4 +1,4 @@
-import { ZBase, ZMenuItem } from "../vendor/index.js";
+import { ZBase, ZMenuItem, ZVendor, ZVendorAddress } from "../vendor/index.js";
 import { z } from "zod";
 
 
@@ -51,13 +51,6 @@ export const ZCartSession = ZBase.extend({
 });
 
 
-// ---------------------- ShortVendorInfo ----------------------
-export const ZShortVendorInfo = z.object({
-  vendorId: z.string(),
-  name: z.string(),
-  about: z.string().nullable().optional(),
-});
-
 // ---------------------- CartMenuItem ----------------------
 export const ZCartMenuItem = z.object({
   cartItem: ZCartItem,
@@ -66,7 +59,8 @@ export const ZCartMenuItem = z.object({
 
 // ---------------------- CartItemPopulated ----------------------
 export const ZCartItemPopulated = ZCartVendor.extend({
-  vendor: ZShortVendorInfo,
+  vendor: ZVendor,
+  vendorAddress: ZVendorAddress,
   cartItems: z.array(ZCartMenuItem),
 });
 
