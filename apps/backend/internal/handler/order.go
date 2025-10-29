@@ -1,6 +1,7 @@
 package handler
 
 import (
+
 	"net/http"
 
 	"github.com/gitSanje/khajaride/internal/middleware"
@@ -31,27 +32,28 @@ func NewOrderHandler(s *server.Server, os *service.OrderService) *OrderHandler {
 // =========================================================
 
 
-type CreateOrderFromCartPayload struct{
-	UserID  *string `json:"userId"`
-}
 
-func (p *CreateOrderFromCartPayload) Validate() error {
-	return nil
-}
 
 func (h *OrderHandler) CreateOrderFromCart(c echo.Context) error {
 	return Handle(
 		h.Handler,
-		func(c echo.Context, payload *CreateOrderFromCartPayload) (*order.OrderGroup, error) {
+		func(c echo.Context, payload *order.CreateOrderPayload) (interface{}, error) {
 			var userID string
 			if uId := payload.UserID; uId != nil {
 				userID = *uId
 			} else {
 				userID = middleware.GetUserID(c)
 			}
-			return h.OrderService.CreateOrderFromCart(c, userID)
+			orderID, err := h.OrderService.CreateOrder(c, userID, payload)
+			if err != nil {
+				return nil, err
+			}
+			return map[string]string{
+				"message": "Order created Successfully",
+				"orderId": orderID,
+			}, nil
 		},
 		http.StatusCreated,
-		&CreateOrderFromCartPayload{},
+		&order.CreateOrderPayload{},
 	)(c)
 }

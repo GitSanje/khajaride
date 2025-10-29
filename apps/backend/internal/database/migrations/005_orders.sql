@@ -128,7 +128,6 @@ CREATE TRIGGER set_updated_at_order_groups
 CREATE TABLE order_vendors (
     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    order_group_id TEXT NOT NULL REFERENCES order_groups(id) ON DELETE CASCADE,
     vendor_cart_id TEXT REFERENCES cart_vendors(id) ON DELETE SET NULL,
     vendor_id TEXT NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
     status TEXT NOT NULL DEFAULT 'pending' CHECK (
@@ -161,8 +160,8 @@ CREATE TABLE order_vendors (
     delivery_address_id TEXT REFERENCES user_addresses(id) ON DELETE SET NULL,
     delivery_instructions TEXT, -- Leave at door, call on arrival, ring bell etc.
     
-    expected_delivery_time TIMESTAMPTZ,
-    actual_delivery_time TIMESTAMPTZ,
+    expected_delivery_time INTERVAL, -- e.g., "30 minutes"
+    actual_delivery_time INTERVAL,
   
 
     scheduled_for TIMESTAMPTZ, -- scheduled delivery/pickup
@@ -309,7 +308,7 @@ CREATE TRIGGER set_updated_at_outbox
 
 
 CREATE TABLE order_events (
-    id BIGSERIAL PRIMARY KEY,
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
     order_id TEXT NOT NULL REFERENCES order_vendors(id) ON DELETE CASCADE,
     event_type TEXT NOT NULL,
     payload JSONB,

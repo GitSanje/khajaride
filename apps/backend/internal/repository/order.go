@@ -3,8 +3,10 @@ package repository
 import (
 	"context"
 	"fmt"
+
 	"github.com/gitSanje/khajaride/internal/model/cart"
 	"github.com/gitSanje/khajaride/internal/model/order"
+	"github.com/gitSanje/khajaride/internal/model/payout"
 	"github.com/gitSanje/khajaride/internal/server"
 	"github.com/jackc/pgx/v5"
 )
@@ -51,14 +53,13 @@ func (r *OrderRepository) CreateOrderVendor(
 	ctx context.Context,
 	tx pgx.Tx,
 	userID string,
-	orderGroupID string,
 	vCart cart.CartVendor,
+	payload *order.CreateOrderPayload,
 ) (*order.OrderVendor, error) {
 
 	query := `
 		INSERT INTO order_vendors (
 			user_id,
-			order_group_id,
 			vendor_cart_id,
 			vendor_id,
 			subtotal,
@@ -66,12 +67,15 @@ func (r *OrderRepository) CreateOrderVendor(
 			vendor_service_charge,
 			vat,
 			vendor_discount,
+			expected_delivery_time,
+			delivery_instructions,
+			delivery_address_id,
 			payment_status,
 			status
+		
 		)
 		VALUES (
 			@user_id,
-			@order_group_id,
 			@vendor_cart_id,
 			@vendor_id,
 			@subtotal,
@@ -79,7 +83,10 @@ func (r *OrderRepository) CreateOrderVendor(
 			@vendor_service_charge,
 			@vat,
 			@vendor_discount,
-			'unpaid',
+			@expected_delivery_time,
+			@delivery_instructions,
+			@delivery_address_id,
+			'paid',
 			'pending'
 		)
 		RETURNING *
@@ -87,7 +94,6 @@ func (r *OrderRepository) CreateOrderVendor(
 
 	row, err := tx.Query(ctx, query, pgx.NamedArgs{
 		"user_id":               userID,
-		"order_group_id":        orderGroupID,
 		"vendor_cart_id":        vCart.ID,
 		"vendor_id":             vCart.VendorID,
 		"subtotal":              vCart.Subtotal,
@@ -95,6 +101,9 @@ func (r *OrderRepository) CreateOrderVendor(
 		"vendor_service_charge": vCart.VendorServiceCharge,
 		"vat":                   vCart.VAT,
 		"vendor_discount":       vCart.VendorDiscount,
+		"expected_delivery_time": payload.ExpectedDeliveryTime,
+		"delivery_instructions": payload.DeliveryInstructions,
+		"delivery_address_id":    payload.DeliveryAddressId,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create order_vendor: %w", err)
@@ -210,4 +219,64 @@ func (r *OrderRepository) GetUserOrdersWithDetails(ctx context.Context, userId s
 	}
 
 	return &og, nil
+}
+
+
+
+
+
+
+
+func (r *OrderRepository) CreatePayout(ctx context.Context, tx pgx.Tx, p *payout.Payout) error {
+	query := `
+		INSERT INTO payouts (
+			id,
+			vendor_id,
+			order_id,
+			account_id,
+			account_type,
+			payout_type,
+			method,
+			amount,
+			status,
+			transaction_ref,
+			remarks
+		) VALUES (
+			$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11
+		)
+	`
+
+	_, err := tx.Exec(ctx, query,
+		p.ID,
+		p.VendorID,
+		p.OrderID,
+		p.AccountID,
+		p.AccountType,
+		p.PayoutType,
+		p.Method,
+		p.Amount,
+		p.Status,
+		p.TransactionRef,
+		p.Remarks,
+	)
+	if err != nil {
+		return fmt.Errorf("insert payout: %w", err)
+	}
+
+	return nil
+}
+
+
+
+func (pr *OrderRepository) MarkOrderPaid(ctx context.Context,   orderID string) error {
+	query := `
+		UPDATE order_vendors
+		SET payment_status = $1
+		WHERE id = $2
+	`
+     _, err := pr.server.DB.Pool.Exec(ctx, query, "paid", orderID)
+	if err != nil {
+		return err
+	}
+	return nil
 }

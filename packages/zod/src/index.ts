@@ -10,3 +10,4 @@ export * from "./vendor/index.js";
 export * from "./search/index.js";
 export * from "./cart/index.js";
 export * from "./order/index.js";
+export * from "./payment/index.js";

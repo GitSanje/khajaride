@@ -5,6 +5,7 @@ import { vendorContract } from "./vendor.js";
 import { searchContract } from "./search.js";
 import { cartContract } from "./cart.js";
 import { orderContract } from "./order.js";
+import { paymentContract } from "./payment.js";
 
 const c = initContract();
 
@@ -14,5 +15,6 @@ export const apiContract = c.router({
   Vendor: vendorContract,
   Search: searchContract,
   Cart: cartContract,
-  Order : orderContract
+  Order : orderContract,
+  Payment: paymentContract
 });

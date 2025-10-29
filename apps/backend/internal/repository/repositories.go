@@ -8,6 +8,7 @@ type Repositories struct{
 	Search *SearchRepository
 	Cart    *CartRepository
 	Order   *OrderRepository
+	Payment *PaymentRepository
 }
 
 func NewRepositories(s *server.Server) *Repositories {
@@ -15,7 +16,8 @@ func NewRepositories(s *server.Server) *Repositories {
 		User: NewUserRepository(s),
 		Vendor: NewVendorRepository(s),
 		Search: NewSearchRepository(s),
-		Cart: NewCartRepository(s),
-		Order : NewOrderRepository(s),
+		Cart:   NewCartRepository(s),
+		Order:  NewOrderRepository(s),
+		Payment: NewPaymentRepository(s),
 	}
 }

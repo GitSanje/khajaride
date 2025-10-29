@@ -21,7 +21,17 @@ type Config struct {
 	Observability *ObservabilityConfig `koanf:"observability"`
 	Webhooks      *WebhookConfig       `koanf:"webhooks"`
 	Elasticsearch  *ElasticsearchConfig `koanf:"elasticsearch"`
+	Khalti        *KhaltiConfig        `koanf:"khalti"`
 
+}
+
+type KhaltiConfig struct {
+	PublicKey  string `koanf:"public_key" validate:"required"`
+	SecretKey  string `koanf:"secret_key" validate:"required"`
+	ReturnURL  string `koanf:"return_url" validate:"required"`
+	WebsiteURL string `koanf:"website_url" validate:"required"`
+	InitiateURL string `koanf:"initiate_url" validate:"required"`
+	VerifyURL   string `koanf:"verify_url" validate:"required"`
 }
 
 type ElasticsearchConfig struct {

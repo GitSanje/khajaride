@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { initContract } from "@ts-rest/core";
 import { getSecurityMetadata } from "../utils.js";
-import { ZOrderGroup} from "@khajaride/zod"; 
+import { ZCreateOrderPayload, ZOrderGroup} from "@khajaride/zod"; 
 
 const c = initContract();
 const metadata = getSecurityMetadata();
@@ -12,16 +12,15 @@ const metadata = getSecurityMetadata();
 export const orderContract = c.router(
   {
     // -------------------- Create Order from Cart --------------------
-    createOrderFromCart: {
-      path: "/orders/create-from-cart",
+    createOrder: {
+      path: "/orders/create-order",
       method: "POST",
-      body: z
-        .object({
-          userId: z.string().optional()
-        })
-        .optional(),
+      body:ZCreateOrderPayload ,
       responses: {
-        201: ZOrderGroup, 
+        201: z.object({
+          message: z.string(),
+          orderId : z.string()
+        }), 
       },
       summary: "Create order from user's active cart",
       description:

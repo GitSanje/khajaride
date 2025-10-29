@@ -10,6 +10,12 @@ export const QUERY_KEYS = {
   CART:{
     ADD_CART_ITEM:"addCartItem",
     GET_CART_ITEMS:"getCartItems"
+  },
+  ORDER:{
+    CREATE_ORDER:"createOrder"
+  },
+  PAYMENT:{
+    INITIATE_PAYMENT:"initiatePayment"
   }
 
 } as const satisfies Record<Uppercase<string>, object>;

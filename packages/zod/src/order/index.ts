@@ -15,3 +15,25 @@ export const ZOrderGroup = ZBase.extend({
     .default("NPR"),
   paymentStatus: z.enum(["unpaid", "paid", "failed"]).default("unpaid"),
 });
+
+
+
+export const ZPaymentDetails = z.object({
+  paymentMethod: z.string().min(1, "Payment method is required"),
+  amount: z.number().min(0, "Amount must be greater than or equal to 0"),
+  transactionID: z.string().optional(),
+  method: z.string().min(1, "Method is required"),
+  paymentGateway: z.string().optional(),
+});
+
+
+export const ZCreateOrderPayload = z.object({
+  userID: z.string().nullable().optional(),
+  cartVendorId: z.string().min(1, "Cart vendor ID is required"),
+  DeliveryAddressId: z.string().min(1, "Delivery address is required"),
+  deliveryInstructions: z.string().optional(),
+  expectedDeliveryTime: z.number().optional(), // duration in min or hr
+});
+
+export type CreateOrderPayload = z.infer<typeof ZCreateOrderPayload>;
+export type PaymentDetails = z.infer<typeof ZPaymentDetails>;

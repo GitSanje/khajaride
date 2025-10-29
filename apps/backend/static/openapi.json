@@ -1557,6 +1557,15 @@
                     },
                     "vendorNotice": {
                       "type": "string"
+                    },
+                    "vendorServiceCharge": {
+                      "type": "number"
+                    },
+                    "vat": {
+                      "type": "number"
+                    },
+                    "vendorDiscount": {
+                      "type": "number"
                     }
                   },
                   "required": [
@@ -1578,7 +1587,10 @@
                     "favoriteCount",
                     "isFeatured",
                     "promoText",
-                    "vendorNotice"
+                    "vendorNotice",
+                    "vendorServiceCharge",
+                    "vat",
+                    "vendorDiscount"
                   ]
                 }
               }
@@ -1773,6 +1785,15 @@
                           },
                           "vendorNotice": {
                             "type": "string"
+                          },
+                          "vendorServiceCharge": {
+                            "type": "number"
+                          },
+                          "vat": {
+                            "type": "number"
+                          },
+                          "vendorDiscount": {
+                            "type": "number"
                           }
                         },
                         "required": [
@@ -1794,7 +1815,10 @@
                           "favoriteCount",
                           "isFeatured",
                           "promoText",
-                          "vendorNotice"
+                          "vendorNotice",
+                          "vendorServiceCharge",
+                          "vat",
+                          "vendorDiscount"
                         ]
                       }
                     },
@@ -2029,6 +2053,15 @@
                     },
                     "vendorNotice": {
                       "type": "string"
+                    },
+                    "vendorServiceCharge": {
+                      "type": "number"
+                    },
+                    "vat": {
+                      "type": "number"
+                    },
+                    "vendorDiscount": {
+                      "type": "number"
                     }
                   },
                   "required": [
@@ -2050,7 +2083,10 @@
                     "favoriteCount",
                     "isFeatured",
                     "promoText",
-                    "vendorNotice"
+                    "vendorNotice",
+                    "vendorServiceCharge",
+                    "vat",
+                    "vendorDiscount"
                   ]
                 }
               }
@@ -2219,6 +2255,15 @@
                     },
                     "vendorNotice": {
                       "type": "string"
+                    },
+                    "vendorServiceCharge": {
+                      "type": "number"
+                    },
+                    "vat": {
+                      "type": "number"
+                    },
+                    "vendorDiscount": {
+                      "type": "number"
                     },
                     "address": {
                       "type": "object",
@@ -2398,7 +2443,10 @@
                     "favoriteCount",
                     "isFeatured",
                     "promoText",
-                    "vendorNotice"
+                    "vendorNotice",
+                    "vendorServiceCharge",
+                    "vat",
+                    "vendorDiscount"
                   ]
                 }
               }
@@ -2833,20 +2881,157 @@
                       "vendor": {
                         "type": "object",
                         "properties": {
-                          "vendorId": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "updatedAt": {
                             "type": "string"
                           },
                           "name": {
                             "type": "string"
                           },
                           "about": {
+                            "type": "string"
+                          },
+                          "cuisine": {
+                            "type": "string"
+                          },
+                          "phone": {
                             "type": "string",
                             "nullable": true
+                          },
+                          "rating": {
+                            "type": "number"
+                          },
+                          "reviewCount": {
+                            "type": "number"
+                          },
+                          "deliveryAvailable": {
+                            "type": "boolean"
+                          },
+                          "pickupAvailable": {
+                            "type": "boolean"
+                          },
+                          "groupOrderAvailable": {
+                            "type": "boolean"
+                          },
+                          "deliveryFee": {
+                            "type": "number"
+                          },
+                          "minOrderAmount": {
+                            "type": "number"
+                          },
+                          "deliveryTimeEstimate": {
+                            "type": "string"
+                          },
+                          "isOpen": {
+                            "type": "boolean"
+                          },
+                          "openingHours": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "vendorListingImage": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "vendorLogoImage": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "vendorType": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "favoriteCount": {
+                            "type": "number"
+                          },
+                          "isFeatured": {
+                            "type": "boolean"
+                          },
+                          "cuisineTags": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "promoText": {
+                            "type": "string"
+                          },
+                          "vendorNotice": {
+                            "type": "string"
+                          },
+                          "vendorServiceCharge": {
+                            "type": "number"
+                          },
+                          "vat": {
+                            "type": "number"
+                          },
+                          "vendorDiscount": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "createdAt",
+                          "updatedAt",
+                          "name",
+                          "about",
+                          "cuisine",
+                          "rating",
+                          "reviewCount",
+                          "deliveryAvailable",
+                          "pickupAvailable",
+                          "groupOrderAvailable",
+                          "deliveryFee",
+                          "minOrderAmount",
+                          "deliveryTimeEstimate",
+                          "isOpen",
+                          "favoriteCount",
+                          "isFeatured",
+                          "promoText",
+                          "vendorNotice",
+                          "vendorServiceCharge",
+                          "vat",
+                          "vendorDiscount"
+                        ]
+                      },
+                      "vendorAddress": {
+                        "type": "object",
+                        "properties": {
+                          "vendorId": {
+                            "type": "string"
+                          },
+                          "streetAddress": {
+                            "type": "string"
+                          },
+                          "city": {
+                            "type": "string"
+                          },
+                          "state": {
+                            "type": "string"
+                          },
+                          "zipcode": {
+                            "type": "string"
+                          },
+                          "latitude": {
+                            "type": "number"
+                          },
+                          "longitude": {
+                            "type": "number"
                           }
                         },
                         "required": [
                           "vendorId",
-                          "name"
+                          "streetAddress",
+                          "city",
+                          "state",
+                          "zipcode",
+                          "latitude",
+                          "longitude"
                         ]
                       },
                       "cartItems": {
@@ -3022,6 +3207,7 @@
                       "vat",
                       "vendorDiscount",
                       "vendor",
+                      "vendorAddress",
                       "cartItems"
                     ]
                   }
@@ -3312,7 +3498,7 @@
         ]
       }
     },
-    "/v1/orders/create-from-cart": {
+    "/v1/orders/create-order": {
       "post": {
         "description": "Creates an order group and corresponding vendor orders from the authenticated user's active cart session.",
         "summary": "Create order from user's active cart",
@@ -3320,7 +3506,7 @@
           "Order"
         ],
         "parameters": [],
-        "operationId": "createOrderFromCart",
+        "operationId": "createOrder",
         "requestBody": {
           "description": "Body",
           "content": {
@@ -3328,10 +3514,29 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "userId": {
+                  "userID": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "cartVendorId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "DeliveryAddressId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "deliveryInstructions": {
                     "type": "string"
+                  },
+                  "expectedDeliveryTime": {
+                    "type": "number"
                   }
-                }
+                },
+                "required": [
+                  "cartVendorId",
+                  "DeliveryAddressId"
+                ]
               }
             }
           }
@@ -3344,44 +3549,185 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": {
+                    "message": {
                       "type": "string"
                     },
-                    "createdAt": {
+                    "orderId": {
                       "type": "string"
-                    },
-                    "updatedAt": {
-                      "type": "string"
-                    },
-                    "userId": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "total": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "currency": {
-                      "default": "NPR",
-                      "type": "string",
-                      "pattern": "^[A-Z]{3}$"
-                    },
-                    "paymentStatus": {
-                      "default": "unpaid",
-                      "type": "string",
-                      "enum": [
-                        "unpaid",
-                        "paid",
-                        "failed"
-                      ]
                     }
                   },
                   "required": [
-                    "id",
-                    "createdAt",
-                    "updatedAt",
-                    "userId",
-                    "total"
+                    "message",
+                    "orderId"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/payments/khalti/initiate": {
+      "post": {
+        "description": "Creates a new Khalti payment session and returns a payment URL for the user to complete payment.",
+        "summary": "Initiate Khalti payment session",
+        "tags": [
+          "Payment"
+        ],
+        "parameters": [],
+        "operationId": "initiateKhaltiPayment",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "return_url": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "website_url": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "amount": {
+                    "type": "number",
+                    "minimum": 0,
+                    "exclusiveMinimum": 0
+                  },
+                  "purchase_order_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "purchase_order_name": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "return_url",
+                  "website_url",
+                  "amount",
+                  "purchase_order_id",
+                  "purchase_order_name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "201",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pidx": {
+                      "type": "string"
+                    },
+                    "payment_url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "expires_at": {
+                      "type": "string"
+                    },
+                    "expires_in": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "pidx",
+                    "payment_url",
+                    "expires_at",
+                    "expires_in"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/payments/khalti/verify": {
+      "post": {
+        "description": "Verifies the payment with Khalti using the PIDX and confirms whether it succeeded or failed.",
+        "summary": "Verify Khalti payment status",
+        "tags": [
+          "Payment"
+        ],
+        "parameters": [],
+        "operationId": "verifyKhaltiPayment",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "pidx": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "pidx"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pidx": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "total_amount": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "status": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "transaction_id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "fee": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "refunded": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "pidx",
+                    "total_amount",
+                    "status",
+                    "transaction_id",
+                    "fee",
+                    "refunded"
                   ]
                 }
               }

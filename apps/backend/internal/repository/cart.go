@@ -435,6 +435,24 @@ func (r *CartRepository) GetCartVendor(ctx context.Context, tx pgx.Tx, sessionID
 }
 
 
+// ------------------- GET CART VENDOR -------------------
+func (r *CartRepository) GetCartVendorByID(ctx context.Context, tx pgx.Tx, id string) (*cart.CartVendor, error) {
+	stmt := `SELECT * FROM cart_vendors WHERE id = $1 LIMIT 1`
+	row, err := tx.Query(ctx, stmt, id)
+	if err != nil {
+		return nil, err
+	}
+
+	vendor, err := pgx.CollectOneRow(row, pgx.RowToStructByName[cart.CartVendor])
+	if err != nil {
+		return nil, err
+	}
+
+
+	return &vendor, nil
+}
+
+
 
 // ------------------- CREATE ACTIVE CART VENDOR -------------------
 func (r *CartRepository) CreateActiveCartVendor(ctx context.Context, tx pgx.Tx, sessionID, vendorID string) (*cart.CartVendor, error) {

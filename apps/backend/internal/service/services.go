@@ -14,6 +14,7 @@ type Services struct {
 	Search *SearchService
 	Cart   *CartService
 	Order  *OrderService
+	Payment *PaymentService
 }
 
 func NewServices(s *server.Server, repos *repository.Repositories) (*Services, error) {
@@ -26,6 +27,7 @@ func NewServices(s *server.Server, repos *repository.Repositories) (*Services, e
 		Vendor: NewVendorService(s, repos.Vendor),
 		Search: NewSearchService(s, repos.Search),
 		Cart:   NewCartService(s, repos.Cart),
-		Order: NewOrderService(s,repos.Order,repos.Cart),
+		Order:  NewOrderService(s, repos.Order, repos.Cart),
+		Payment: NewPaymentService(s, repos.Payment,repos.Order),
 	}, nil
 }
