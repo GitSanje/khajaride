@@ -57,7 +57,77 @@ func (r *OrderRepository) CreateOrderVendor(
 	payload *order.CreateOrderPayload,
 ) (*order.OrderVendor, error) {
 
-	query := `
+	// --- 1. Check if order already exists for this CartVendor
+	checkQuery := `
+		SELECT * FROM order_vendors 
+		WHERE vendor_cart_id = @vendor_cart_id
+		LIMIT 1
+	`
+	row, err := tx.Query(ctx, checkQuery, pgx.NamedArgs{
+		"vendor_cart_id": vCart.ID,
+	})
+	if err != nil && err != pgx.ErrNoRows {
+		return nil, fmt.Errorf("failed to check existing order_vendor: %w", err)
+	}
+
+	existingOrder, err := pgx.CollectOneRow(row, pgx.RowToStructByName[order.OrderVendor])
+	if err == nil && existingOrder != (order.OrderVendor{}) {
+		// --- 2. Check if fields have changed
+		needsUpdate := false
+		updateArgs := pgx.NamedArgs{
+			"id": existingOrder.ID,
+		}
+
+		if *existingOrder.DeliveryAddressID != payload.DeliveryAddressId {
+			updateArgs["delivery_address_id"] = payload.DeliveryAddressId
+			needsUpdate = true
+		}
+		if existingOrder.VendorDiscount != vCart.VendorDiscount {
+			updateArgs["vendor_discount"] = vCart.VendorDiscount
+			needsUpdate = true
+		}
+		if existingOrder.Subtotal != vCart.Subtotal {
+			updateArgs["subtotal"] = vCart.Subtotal
+			needsUpdate = true
+		}
+		if *existingOrder.DeliveryInstructions != payload.DeliveryInstructions {
+			updateArgs["delivery_instructions"] = payload.DeliveryInstructions
+			needsUpdate = true
+		}
+		if vCart.DeliveryCharge != nil && existingOrder.DeliveryCharge != *vCart.DeliveryCharge {
+			updateArgs["delivery_charge"] = vCart.DeliveryCharge
+			needsUpdate = true
+		}
+
+		if needsUpdate {
+			updateQuery := `
+				UPDATE order_vendors
+				SET 
+					delivery_address_id = COALESCE(@delivery_address_id, delivery_address_id),
+					delivery_instructions = COALESCE(@delivery_instructions, delivery_instructions),
+					subtotal = COALESCE(@subtotal, subtotal),
+					vendor_discount = COALESCE(@vendor_discount, vendor_discount),
+					delivery_charge = COALESCE(@delivery_charge, delivery_charge)
+				WHERE id = @id
+				RETURNING *
+			`
+			row, err := tx.Query(ctx, updateQuery, updateArgs)
+			if err != nil {
+				return nil, fmt.Errorf("failed to update existing order_vendor: %w", err)
+			}
+			updatedOrder, err := pgx.CollectOneRow(row, pgx.RowToStructByName[order.OrderVendor])
+			if err != nil {
+				return nil, fmt.Errorf("failed to collect updated order_vendor: %w", err)
+			}
+			return &updatedOrder, nil
+		}
+
+		// If no changes, return existing
+		return &existingOrder, nil
+	}
+
+	// --- 3. Create new order if not exists
+	createQuery := `
 		INSERT INTO order_vendors (
 			user_id,
 			vendor_cart_id,
@@ -72,7 +142,6 @@ func (r *OrderRepository) CreateOrderVendor(
 			delivery_address_id,
 			payment_status,
 			status
-		
 		)
 		VALUES (
 			@user_id,
@@ -92,7 +161,7 @@ func (r *OrderRepository) CreateOrderVendor(
 		RETURNING *
 	`
 
-	row, err := tx.Query(ctx, query, pgx.NamedArgs{
+	row, err = tx.Query(ctx, createQuery, pgx.NamedArgs{
 		"user_id":               userID,
 		"vendor_cart_id":        vCart.ID,
 		"vendor_id":             vCart.VendorID,
@@ -111,11 +180,12 @@ func (r *OrderRepository) CreateOrderVendor(
 
 	oVendor, err := pgx.CollectOneRow(row, pgx.RowToStructByName[order.OrderVendor])
 	if err != nil {
-		return nil, fmt.Errorf("failed to scan order_vendor: %w", err)
+		return nil, fmt.Errorf("failed to collect new order_vendor: %w", err)
 	}
 
 	return &oVendor, nil
 }
+
 
 //-- ==================================================
 //-- CREATE ORDER ITEM
@@ -199,7 +269,6 @@ func (r *OrderRepository) GetUserOrdersWithDetails(ctx context.Context, userId s
         ))
     ) AS vendors
 	FROM order_groups og
-	JOIN order_vendors ov ON ov.order_group_id = og.id
 	JOIN vendors v ON v.id = ov.vendor_id
 	WHERE og.user_id = $1
 	GROUP BY og.id

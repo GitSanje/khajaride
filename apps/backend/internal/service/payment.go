@@ -29,23 +29,23 @@ func NewPaymentService(s *server.Server, paymentRepo *repository.PaymentReposito
 }
 
 
-func (ps *PaymentService) ProcessKhaltiPayment(c echo.Context, payload *payment.KhaltiPaymentPayload) error {
+func (ps *PaymentService) ProcessKhaltiPayment(c echo.Context, payload *payment.KhaltiPaymentPayload) ( *payment.KhaltiPaymentResponse,error) {
 
 	ctx := c.Request().Context()
 
 	// 1️⃣ Idempotency check — has payment already been initiated for this order?
 	existing, err := ps.paymentRepo.GetPaymentByOrderID(ctx, payload.PurchaseOrderID)
 	if err != nil && err != pgx.ErrNoRows {
-		return fmt.Errorf("check existing payment: %w", err)
+		return nil, fmt.Errorf("check existing payment: %w", err)
 	}
     if existing != nil && existing.Status == "success" {
-		return echo.NewHTTPError(http.StatusConflict, "Payment already completed for this order")
+		return nil, echo.NewHTTPError(http.StatusConflict, "Payment already completed for this order")
 	}
     
 	// 2️⃣ Prepare Khalti request
 	body := map[string]interface{}{
-		"return_url": payload.ReturnURL,
-		"website_url": payload.ReturnURL,
+		"return_url": ps.server.Config.Khalti.ReturnURL,
+		"website_url": ps.server.Config.Khalti.WebsiteURL,
 		"amount": int(payload.Amount * 100), // Khalti uses paisa
 		"purchase_order_id": payload.PurchaseOrderID,
 		"purchase_order_name": payload.PurchaseOrderName,
@@ -59,14 +59,14 @@ func (ps *PaymentService) ProcessKhaltiPayment(c echo.Context, payload *payment.
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("khalti initiate error: %w", err)
+		return nil, fmt.Errorf("khalti initiate error: %w", err)
 	}
 	defer resp.Body.Close()
 
 	var khaltiResp payment.KhaltiPaymentResponse
 
 	if err := json.NewDecoder(resp.Body).Decode(&khaltiResp); err != nil {
-		return fmt.Errorf("decode khalti response: %w", err)
+		return nil,fmt.Errorf("decode khalti response: %w", err)
 	}
 
 	// 4️⃣ Store payment info
@@ -79,17 +79,11 @@ func (ps *PaymentService) ProcessKhaltiPayment(c echo.Context, payload *payment.
 		Method:         "khalti",
 	}
 	if err := ps.paymentRepo.CreateOrderPayment(ctx, p); err != nil {
-		return fmt.Errorf("store payment info: %w", err)
+		return nil,fmt.Errorf("store payment info: %w", err)
 	}
 
 
-
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"pidx":         khaltiResp.Pidx,
-		"payment_url":  khaltiResp.PaymentURL,
-		"expires_at":   khaltiResp.ExpiresAt,
-		"order_vendor": payload.PurchaseOrderID,
-	})
+	return &khaltiResp, nil
 }
 
 func (ps *PaymentService) VerifyKhaltiPayment(c echo.Context, payload *payment.KhaltiVerifyPaymentPayload) error {

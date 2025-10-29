@@ -3,8 +3,6 @@ package payment
 import "github.com/go-playground/validator/v10"
 
 type KhaltiPaymentPayload struct {
-	ReturnURL       string       `json:"return_url" validate:"required"`
-	WebsiteURL      string       `json:"website_url" validate:"required"`
 	Amount          float64      `json:"amount" validate:"required"` 
 	PurchaseOrderID string       `json:"purchase_order_id" validate:"required"`
 	PurchaseOrderName string     `json:"purchase_order_name" validate:"required"`

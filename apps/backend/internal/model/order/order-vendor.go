@@ -10,7 +10,6 @@ type OrderVendor struct {
 	model.Base
 
 	UserID               string   `json:"userId" db:"user_id"`
-	OrderGroupID         string   `json:"orderGroupId" db:"order_group_id"`
 	VendorCartID         *string  `json:"vendorCartId,omitempty" db:"vendor_cart_id"`
 	VendorID             string   `json:"vendorId" db:"vendor_id"`
 	Status               string   `json:"status" db:"status"`
@@ -26,8 +25,8 @@ type OrderVendor struct {
 	DeliveryAddressID    *string  `json:"deliveryAddressId,omitempty" db:"delivery_address_id"`
 	DeliveryInstructions *string  `json:"deliveryInstructions,omitempty" db:"delivery_instructions"`
 
-	ExpectedDeliveryTime *time.Time `json:"expectedDeliveryTime,omitempty" db:"expected_delivery_time"`
-	ActualDeliveryTime   *time.Time `json:"actualDeliveryTime,omitempty" db:"actual_delivery_time"`
+	ExpectedDeliveryTime *time.Duration `json:"expectedDeliveryTime,omitempty" db:"expected_delivery_time"`
+	ActualDeliveryTime   *time.Duration`json:"actualDeliveryTime,omitempty" db:"actual_delivery_time"`
 	ScheduledFor         *time.Time `json:"scheduledFor,omitempty" db:"scheduled_for"`
 	PickupReadyTime      *time.Time `json:"pickupReadyTime,omitempty" db:"pickup_ready_time"`
 

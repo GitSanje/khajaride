@@ -26,9 +26,9 @@ func NewPaymentHandler(s *server.Server, ps *service.PaymentService) *PaymentHan
 func (h *PaymentHandler) KhaltiPayment(c echo.Context) error {
 	return Handle(
 		h.Handler,
-		func(c echo.Context, payload *payment.KhaltiPaymentPayload) (interface{}, error) {
+		func(c echo.Context, payload *payment.KhaltiPaymentPayload) (*payment.KhaltiPaymentResponse, error) {
 		
-			return nil, h.PaymentService.ProcessKhaltiPayment(c, payload)
+			return  h.PaymentService.ProcessKhaltiPayment(c, payload)
 		},
 		http.StatusCreated,
 		&payment.KhaltiPaymentPayload{},

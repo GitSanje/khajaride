@@ -32,7 +32,7 @@ export const ZCreateOrderPayload = z.object({
   cartVendorId: z.string().min(1, "Cart vendor ID is required"),
   DeliveryAddressId: z.string().min(1, "Delivery address is required"),
   deliveryInstructions: z.string().optional(),
-  expectedDeliveryTime: z.number().optional(), // duration in min or hr
+  expectedDeliveryTime: z.string().optional(), // duration in min or hr
 });
 
 export type CreateOrderPayload = z.infer<typeof ZCreateOrderPayload>;

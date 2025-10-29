@@ -14,6 +14,6 @@ func registerPaymentRoutes(r *echo.Group, h *handler.PaymentHandler, auth *middl
 	// ------------------- Payment -------------------
 	payment := r.Group("/payments")
 	payment.Use(auth.RequireAuth)
-	payment.POST("/khalti", h.KhaltiPayment)
+	payment.POST("/khalti/initiate", h.KhaltiPayment)
 	payment.POST("/khalti/verify", h.VerifyKhaltiPayment)
 }

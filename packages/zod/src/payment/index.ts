@@ -3,8 +3,6 @@ import z from "zod";
 
 
 export const ZKhaltiPaymentPayload= z.object({
-  return_url: z.string().url("Invalid return URL"),
-  website_url: z.string().url("Invalid website URL"),
   amount: z.number().positive("Amount must be greater than 0"),
   purchase_order_id: z.string().min(1, "Purchase order ID is required"),
   purchase_order_name: z.string().min(1, "Purchase order name is required"),

@@ -40,57 +40,56 @@ BEGIN
 END;
 $$;
 
-
 -- =========================
 -- HELPER FUNCTION: recalc_order_group_total(order_group_id)
 -- =========================
 
-CREATE OR REPLACE FUNCTION recalc_order_group_total(p_order_group_id TEXT)
-RETURNS VOID LANGUAGE plpgsql AS $$
-DECLARE
-    v_total NUMERIC(14,2);
-    v_all_paid BOOLEAN;
-BEGIN
-    -- Compute total = SUM of all vendor totals in the group
-    SELECT COALESCE(SUM(total), 0)
-    INTO v_total
-    FROM order_vendors
-    WHERE order_group_id = p_order_group_id;
+-- CREATE OR REPLACE FUNCTION recalc_order_group_total(p_order_group_id TEXT)
+-- RETURNS VOID LANGUAGE plpgsql AS $$
+-- DECLARE
+--     v_total NUMERIC(14,2);
+--     v_all_paid BOOLEAN;
+-- BEGIN
+--     -- Compute total = SUM of all vendor totals in the group
+--     SELECT COALESCE(SUM(total), 0)
+--     INTO v_total
+--     FROM order_vendors
+--     WHERE order_group_id = p_order_group_id;
 
-    -- Check if all vendors are paid
-    SELECT BOOL_AND(payment_status = 'paid')
-    INTO v_all_paid
-    FROM order_vendors
-    WHERE order_group_id = p_order_group_id;
+--     -- Check if all vendors are paid
+--     SELECT BOOL_AND(payment_status = 'paid')
+--     INTO v_all_paid
+--     FROM order_vendors
+--     WHERE order_group_id = p_order_group_id;
 
-    -- Update the order_groups table
-    UPDATE order_groups
-    SET 
-        total = v_total,
-        payment_status = CASE 
-                            WHEN v_all_paid THEN 'paid'
-                            ELSE 'unpaid'
-                         END,
-        created_at = created_at, -- to avoid touching created_at
-        updated_at = NOW(),
-        currency = COALESCE(currency, 'NPR')
-    WHERE id = p_order_group_id;
-END;
-$$;
+--     -- Update the order_groups table
+--     UPDATE order_groups
+--     SET 
+--         total = v_total,
+--         payment_status = CASE 
+--                             WHEN v_all_paid THEN 'paid'
+--                             ELSE 'unpaid'
+--                          END,
+--         created_at = created_at, -- to avoid touching created_at
+--         updated_at = NOW(),
+--         currency = COALESCE(currency, 'NPR')
+--     WHERE id = p_order_group_id;
+-- END;
+-- $$;
 
 -- =========================
 -- TRIGGER FUNCTION
 -- =========================
 
-CREATE OR REPLACE FUNCTION trigger_recalc_order_group_total()
-RETURNS TRIGGER LANGUAGE plpgsql AS $$
-BEGIN
-    PERFORM recalc_order_group_total(
-        COALESCE(NEW.order_group_id, OLD.order_group_id)
-    );
-    RETURN NEW;
-END;
-$$;
+-- CREATE OR REPLACE FUNCTION trigger_recalc_order_group_total()
+-- RETURNS TRIGGER LANGUAGE plpgsql AS $$
+-- BEGIN
+--     PERFORM recalc_order_group_total(
+--         COALESCE(NEW.order_group_id, OLD.order_group_id)
+--     );
+--     RETURN NEW;
+-- END;
+-- $$;
 
 
 
@@ -184,11 +183,11 @@ CREATE TRIGGER set_updated_at_order_vendors
     EXECUTE FUNCTION trigger_set_updated_at();
 
 
-CREATE TRIGGER trg_recalc_order_group_total
-    AFTER INSERT OR UPDATE OR DELETE
-    ON order_vendors
-    FOR EACH ROW
-    EXECUTE FUNCTION trigger_recalc_order_group_total();
+-- CREATE TRIGGER trg_recalc_order_group_total
+--     AFTER INSERT OR UPDATE OR DELETE
+--     ON order_vendors
+--     FOR EACH ROW
+--     EXECUTE FUNCTION trigger_recalc_order_group_total();
 
 -- =========================
 -- ORDER ITEMS

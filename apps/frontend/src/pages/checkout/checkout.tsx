@@ -25,16 +25,21 @@ import {
   Phone,
   Navigation,
   Currency,
+  PiggyBank,
+  Banknote,
 } from "lucide-react"
 import Link from "next/link"
 
 import type { DeliveryAddressFormData } from "@/schemas/delivery-address-validation"
-import { calculateDeliveryFee, calculateDistance, getEstimatedDeliveryTime } from "@/lib/delivery-fee-calculator"
+import { calculateDistance } from "@/lib/delivery-fee-calculator"
 import { useCart } from "@/hooks/use-cart"
 import { DeliveryAddressModal } from "./delivery-address-model"
 import { useParams } from "react-router-dom"
 import { useGetAddresses } from "@/api/hooks/use-user-query"
 import { useGetCartTotals } from "@/api/hooks/use-cart-query"
+import { useCreateOrder } from "@/api/hooks/use-order-query"
+import { useInitiateKhaltiPayment } from "@/api/hooks/use-payment-query"
+import { se } from "date-fns/locale"
 
 type CheckoutStep = "address" | "payment" | "confirm"
 
@@ -44,12 +49,13 @@ export default function CheckoutPage() {
   const { cart: cartVendors } = useCart()
   const { data: addresses, isPending } = useGetAddresses({ enabled: true })
   const [currentStep, setCurrentStep] = useState<CheckoutStep>("address")
-  const [paymentMethod, setPaymentMethod] = useState("card")
+  const [paymentMethod, setPaymentMethod] = useState("cash")
   const [loyaltyPoints] = useState(1250)
   const [usePoints, setUsePoints] = useState(false)
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
-
+  const [orderId, setOrderId] = useState<string | null>(null)
   const [deliveryAddress, setDeliveryAddress] = useState<DeliveryAddressFormData | null>(null)
+
 
   useEffect(() => {
   if (!isPending && addresses && addresses.length > 0) {
@@ -100,11 +106,10 @@ export default function CheckoutPage() {
   }, [deliveryAddress, cartVendor])
 
   const subtotal = cartVendor.reduce((sum, vendor) => sum + (vendor.subtotal || 0), 0)
-  const totalDeliveryDistance = Object.values(deliveryDistanceByVendor).reduce((sum, distance) => sum + distance, 0)
   const tax = cartVendor.reduce((sum, vendor) => sum + (vendor.vat || 0), 0)
   const pointsDiscount = usePoints ? Math.min(loyaltyPoints * 0.01, subtotal * 0.2) : 0
   const vendorTotal = cartVendor.reduce((sum, vendor) => sum + (vendor.total || 0), 0)
-  const total = vendorTotal + calculateDeliveryFee(totalDeliveryDistance) - pointsDiscount
+  const total = vendorTotal  - pointsDiscount
 
   const cartVendorData = cartVendors?.find(vendor => vendor.id === cartVendorId)
 
@@ -132,17 +137,49 @@ export default function CheckoutPage() {
     setDeliveryAddress(data)
   }
 
-  const handlePaymentContinue = () => {
-    setCurrentStep("confirm")
+
+    const createOrder = useCreateOrder()
+
+  const handleReviewContinue = async() => {
+
+        const res = await createOrder.mutateAsync({
+      body:{
+        cartVendorId,
+        DeliveryAddressId: deliveryAddress?.id!,
+        expectedDeliveryTime: cartTotals?.estimatedDeliveryTime || '',
+        deliveryInstructions: '',
+       
+      }
+    })
+
+    if(res){
+      setOrderId(res.orderId)
+      setCurrentStep("confirm")
+      
+      console.log("order created",res);
+      
+    }
+    
   }
 
-  const handlePlaceOrder = () => {
-    console.log("Order placed:", {
-      address: deliveryAddress,
-      payment: paymentMethod,
-      usePoints,
-      total,
+
+   const initiatePayment = useInitiateKhaltiPayment()
+
+  const handleInitiatePayment = async() => {
+
+    if (!deliveryAddress) return
+    const res = await initiatePayment.mutateAsync({
+      body:{
+        amount: total,
+        purchase_order_id: orderId!,
+        purchase_order_name: `Order_${orderId}`,
+      }
     })
+    if(res){
+      window.location.href = res.payment_url
+      console.log("Khalti payment initiated",res);
+    }
+
   }
 
   const steps: { id: CheckoutStep; label: string; icon: React.ReactNode }[] = [
@@ -310,6 +347,13 @@ export default function CheckoutPage() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-4">
+                       <div className="flex items-center space-x-3 p-4 border-2 rounded-lg hover:border-primary transition-colors cursor-pointer">
+                        <RadioGroupItem value="cash" id="cash" />
+                        <Label htmlFor="cash" className="flex items-center gap-3 cursor-pointer flex-1 text-base">
+                          <Banknote className="w-5 h-5" />
+                          Cash on Delivery
+                        </Label>
+                      </div>
                       <div className="flex items-center space-x-3 p-4 border-2 rounded-lg hover:border-primary transition-colors cursor-pointer">
                         <RadioGroupItem value="card" id="card" />
                         <Label htmlFor="card" className="flex items-center gap-3 cursor-pointer flex-1 text-base">
@@ -317,20 +361,38 @@ export default function CheckoutPage() {
                           Credit/Debit Card
                         </Label>
                       </div>
-                       <div className="flex items-center space-x-3 p-4 border-2 rounded-lg hover:border-primary transition-colors cursor-pointer">
-                        <RadioGroupItem value="cod" id="cod" />
-                        <Label htmlFor="cod" className="flex items-center gap-3 cursor-pointer flex-1 text-base">
-                          <Currency className="w-5 h-5" />
-                          Cash on Delivery
-                        </Label>
-                      </div>
                       
-                      <div className="flex items-center space-x-3 p-4 border-2 rounded-lg hover:border-primary transition-colors cursor-pointer">
-                        <RadioGroupItem value="wallet" id="wallet" />
-                        <Label htmlFor="wallet" className="flex items-center gap-3 cursor-pointer flex-1 text-base">
-                          <Wallet className="w-5 h-5" />
-                          Digital Wallet
-                        </Label>
+
+                      <div className="space-y-4 mt-6 pt-6 border-t">
+                        <div className="grid grid-cols-2 gap-4">
+                         
+                          <Button
+                            variant="outline"
+                            onClick={() =>setPaymentMethod("khalti")}
+                            className={`h-20 border-2 hover:border-primary hover:bg-blue-50 dark:hover:bg-blue-950/20 ${paymentMethod === "khalti" ? " border-primary bg-blue-100 bg-blue-50 dark:bg-blue-950/20" : ""}`}
+                          > 
+                            <div className="flex flex-col items-center gap-2">
+                              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                                <span className="text-white font-bold text-xs">K</span>
+                              </div>
+                              <span className="font-semibold">Khalti</span>
+                            </div>
+                          </Button>
+
+                          <Button
+                            onClick={() => setPaymentMethod("esewa")}
+                            variant="outline"
+                            className={`h-20 border-2 hover:border-primary hover:bg-green-50 dark:hover:bg-green-950/20 ${paymentMethod === "esewa" ? " border-primary bg-green-100 bg-green-50 dark:bg-green-950/20" : ""}`}
+                          >
+                           
+                            <div className="flex flex-col items-center gap-2">
+                              <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                                <span className="text-white font-bold text-xs">E</span>
+                              </div>
+                              <span className="font-semibold">eSewa</span>
+                            </div>
+                          </Button>
+                        </div>
                       </div>
                     </RadioGroup>
 
@@ -359,36 +421,9 @@ export default function CheckoutPage() {
                       </div>
                     )}
 
-                    {paymentMethod === "wallet" && (
-                      <div className="space-y-4 mt-6 pt-6 border-t">
-                        <div className="grid grid-cols-2 gap-4">
-                          <Button
-                            variant="outline"
-                            onClick={() => setPaymentMethod("khalti")}
-                            className="h-20 border-2 hover:border-primary hover:bg-blue-50 dark:hover:bg-blue-950/20"
-                          >
-                            <div className="flex flex-col items-center gap-2">
-                              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                                <span className="text-white font-bold text-xs">K</span>
-                              </div>
-                              <span className="font-semibold">Khalti</span>
-                            </div>
-                          </Button>
-                          <Button
-                            variant="outline"
-                            onClick={() => setPaymentMethod("esewa")}
-                            className="h-20 border-2 hover:border-primary hover:bg-green-50 dark:hover:bg-green-950/20"
-                          >
-                            <div className="flex flex-col items-center gap-2">
-                              <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
-                                <span className="text-white font-bold text-xs">E</span>
-                              </div>
-                              <span className="font-semibold">eSewa</span>
-                            </div>
-                          </Button>
-                        </div>
-                      </div>
-                    )}
+                   
+                      
+                    
                   </CardContent>
                 </Card>
               )}
@@ -448,7 +483,7 @@ export default function CheckoutPage() {
                            paymentMethod === "wallet" ? "Digital Wallet" : paymentMethod}
                         </p>
                         <p className="text-sm text-muted-foreground mt-1">
-                          {paymentMethod === "wallet" ? "You'll be redirected to your wallet app" : "Card payment secured with encryption"}
+                          {paymentMethod === "khalti" ? "You'll be redirected to your wallet app" : "Card payment secured with encryption"}
                         </p>
                       </div>
                     </div>
@@ -475,13 +510,13 @@ export default function CheckoutPage() {
                     onClick={() => setCurrentStep("payment")}
                     className="flex-1 bg-primary hover:bg-primary/90 text-base py-6 font-semibold"
                   >
-                    Proceed to Payment
+                    Continue
                     <ChevronRight className="w-5 h-5 ml-2" />
                   </Button>
                 )}
                 {currentStep === "payment" && (
                   <Button
-                    onClick={handlePaymentContinue}
+                    onClick={handleReviewContinue}
                     className="flex-1 bg-primary hover:bg-primary/90 text-base py-6 font-semibold"
                   >
                     Review Order
@@ -490,10 +525,10 @@ export default function CheckoutPage() {
                 )}
                 {currentStep === "confirm" && (
                   <Button
-                    onClick={handlePlaceOrder}
+                    onClick={handleInitiatePayment}
                     className="flex-1 bg-green-500 hover:bg-green-600 text-base py-6 font-semibold"
                   >
-                    Place Order
+                    {paymentMethod === "khalti" ? "Proceed to Khalti" : paymentMethod === "esewa" ? "Proceed to eSewa" : paymentMethod === "card" ? "Proceed to Card" : "Place Order"}
                     <CheckCircle className="w-5 h-5 ml-2" />
                   </Button>
                 )}

@@ -1,7 +1,7 @@
 package order
 
 import (
-	"time"
+	
 
 	"github.com/go-playground/validator/v10"
 )
@@ -18,7 +18,7 @@ type CreateOrderPayload struct {
 	CartVendorId         string         `json:"cartVendorId" validate:"required"`
 	DeliveryAddressId    string         `json:"deliveryAddressId" validate:"required"`
 	DeliveryInstructions string         `json:"deliveryInstructions"`
-	ExpectedDeliveryTime time.Duration  `json:"expectedDeliveryTime"`
+	ExpectedDeliveryTime string  `json:"expectedDeliveryTime"`
 }
 
 func (p *CreateOrderPayload) Validate() error {
