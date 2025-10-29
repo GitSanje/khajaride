@@ -666,10 +666,21 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "label": {
+                  "id": {
                     "type": "string",
-                    "minLength": 2,
-                    "maxLength": 20
+                    "format": "uuid"
+                  },
+                  "createdAt": {
+                    "type": "string"
+                  },
+                  "updatedAt": {
+                    "type": "string"
+                  },
+                  "userId": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
                   },
                   "latitude": {
                     "type": "number"
@@ -677,14 +688,27 @@
                   "longitude": {
                     "type": "number"
                   },
+                  "phoneNumber": {
+                    "type": "string"
+                  },
+                  "detailAddressDirection": {
+                    "type": "string"
+                  },
                   "isDefault": {
                     "type": "boolean"
                   }
                 },
                 "required": [
+                  "id",
+                  "createdAt",
+                  "updatedAt",
+                  "userId",
                   "label",
                   "latitude",
-                  "longitude"
+                  "longitude",
+                  "phoneNumber",
+                  "detailAddressDirection",
+                  "isDefault"
                 ]
               }
             }
@@ -720,6 +744,12 @@
                     "longitude": {
                       "type": "number"
                     },
+                    "phoneNumber": {
+                      "type": "string"
+                    },
+                    "detailAddressDirection": {
+                      "type": "string"
+                    },
                     "isDefault": {
                       "type": "boolean"
                     }
@@ -732,6 +762,8 @@
                     "label",
                     "latitude",
                     "longitude",
+                    "phoneNumber",
+                    "detailAddressDirection",
                     "isDefault"
                   ]
                 }
@@ -784,6 +816,12 @@
                       "longitude": {
                         "type": "number"
                       },
+                      "phoneNumber": {
+                        "type": "string"
+                      },
+                      "detailAddressDirection": {
+                        "type": "string"
+                      },
                       "isDefault": {
                         "type": "boolean"
                       }
@@ -796,6 +834,8 @@
                       "label",
                       "latitude",
                       "longitude",
+                      "phoneNumber",
+                      "detailAddressDirection",
                       "isDefault"
                     ]
                   }
@@ -884,6 +924,12 @@
                     "longitude": {
                       "type": "number"
                     },
+                    "phoneNumber": {
+                      "type": "string"
+                    },
+                    "detailAddressDirection": {
+                      "type": "string"
+                    },
                     "isDefault": {
                       "type": "boolean"
                     }
@@ -896,6 +942,8 @@
                     "label",
                     "latitude",
                     "longitude",
+                    "phoneNumber",
+                    "detailAddressDirection",
                     "isDefault"
                   ]
                 }
@@ -1002,6 +1050,12 @@
                     "longitude": {
                       "type": "number"
                     },
+                    "phoneNumber": {
+                      "type": "string"
+                    },
+                    "detailAddressDirection": {
+                      "type": "string"
+                    },
                     "isDefault": {
                       "type": "boolean"
                     }
@@ -1014,6 +1068,8 @@
                     "label",
                     "latitude",
                     "longitude",
+                    "phoneNumber",
+                    "detailAddressDirection",
                     "isDefault"
                   ]
                 }
@@ -3496,6 +3552,214 @@
             "bearerAuth": []
           }
         ]
+      }
+    },
+    "/v1/carts/totals": {
+      "get": {
+        "description": "Computes delivery fee, VAT, discounts, and total for the user's cart",
+        "summary": "Get calculated cart totals for vendor",
+        "tags": [
+          "Cart"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cartVendorId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "vendorId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "couponCode",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "location",
+            "in": "query",
+            "required": true,
+            "style": "deepObject",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "lat": {
+                  "type": "number"
+                },
+                "lng": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "lat",
+                "lng"
+              ]
+            }
+          },
+          {
+            "name": "distanceKM",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "subtotal",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        ],
+        "operationId": "getCartTotals",
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "subtotal": {
+                      "type": "number"
+                    },
+                    "deliveryDistanceKm": {
+                      "type": "number"
+                    },
+                    "deliveryFee": {
+                      "type": "number"
+                    },
+                    "vendorServiceCharge": {
+                      "type": "number"
+                    },
+                    "vat": {
+                      "type": "number"
+                    },
+                    "vendorDiscount": {
+                      "type": "number"
+                    },
+                    "couponDiscount": {
+                      "type": "number"
+                    },
+                    "total": {
+                      "type": "number"
+                    },
+                    "estimatedDeliveryTime": {
+                      "type": "string"
+                    },
+                    "currency": {
+                      "type": "string"
+                    },
+                    "appliedCouponCode": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "subtotal",
+                    "deliveryDistanceKm",
+                    "deliveryFee",
+                    "vendorServiceCharge",
+                    "vat",
+                    "vendorDiscount",
+                    "couponDiscount",
+                    "total",
+                    "estimatedDeliveryTime",
+                    "currency"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/carts/apply-coupon": {
+      "post": {
+        "summary": "Apply a coupon to the cart",
+        "tags": [
+          "Cart"
+        ],
+        "parameters": [],
+        "operationId": "applyCoupon",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "type": "string"
+                  },
+                  "cartVendorId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "vendorId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "couponCode": {
+                    "type": "string"
+                  },
+                  "subtotal": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "cartVendorId",
+                  "vendorId",
+                  "subtotal"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "201",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "discountAmount": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "discountAmount"
+                  ]
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/v1/orders/create-order": {

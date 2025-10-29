@@ -5,7 +5,8 @@ import {
   ZUserAddress,
   ZLoyaltyPointsLedger,
   schemaWithPagination,
-  ZGetUsersQuery
+  ZGetUsersQuery,
+  ZUserAddressPayload
 } from "@khajaride/zod";
 import { getSecurityMetadata } from "../utils.js";
 
@@ -96,12 +97,7 @@ export const userContract = c.router(
       summary: "Add address",
       path: "/users/me/addresses",
       method: "POST",
-      body: z.object({
-        label: z.string().min(2).max(20),
-        latitude: z.number(),
-        longitude: z.number(),
-        isDefault: z.boolean().optional(),
-      }),
+      body: ZUserAddressPayload,
       responses: {
         201: ZUserAddress,
       },

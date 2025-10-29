@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -33,6 +33,8 @@ import { calculateDeliveryFee, calculateDistance, getEstimatedDeliveryTime } fro
 import { useCart } from "@/hooks/use-cart"
 import { DeliveryAddressModal } from "./delivery-address-model"
 import { useParams } from "react-router-dom"
+import { useGetAddresses } from "@/api/hooks/use-user-query"
+import { useGetCartTotals } from "@/api/hooks/use-cart-query"
 
 type CheckoutStep = "address" | "payment" | "confirm"
 
@@ -40,13 +42,39 @@ export default function CheckoutPage() {
   const params = useParams<{ cartVendorId: string }>()
   const cartVendorId = params.cartVendorId as string
   const { cart: cartVendors } = useCart()
-
+  const { data: addresses, isPending } = useGetAddresses({ enabled: true })
   const [currentStep, setCurrentStep] = useState<CheckoutStep>("address")
   const [paymentMethod, setPaymentMethod] = useState("card")
   const [loyaltyPoints] = useState(1250)
   const [usePoints, setUsePoints] = useState(false)
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
+
   const [deliveryAddress, setDeliveryAddress] = useState<DeliveryAddressFormData | null>(null)
+
+  useEffect(() => {
+  if (!isPending && addresses && addresses.length > 0) {
+    const found = addresses.find(address => address.isDefault);
+    if (found) {
+      setDeliveryAddress({
+        id: found.id,
+        label: found.label,
+        firstName: found.firstName,
+        lastName: found.lastName,
+        phoneNumber: found.phoneNumber,
+        latitude: found.latitude,
+        longitude: found.longitude,
+        isDefault: !!found.isDefault,
+        detailAddressDirection: found.detailAddressDirection ?? undefined,
+      });
+    }
+  }
+ 
+}, [addresses, isPending]);
+
+  
+
+
+ 
 
   const cartVendor = cartVendors?.filter(vendor => vendor.id === cartVendorId) || []
   
@@ -78,6 +106,28 @@ export default function CheckoutPage() {
   const vendorTotal = cartVendor.reduce((sum, vendor) => sum + (vendor.total || 0), 0)
   const total = vendorTotal + calculateDeliveryFee(totalDeliveryDistance) - pointsDiscount
 
+  const cartVendorData = cartVendors?.find(vendor => vendor.id === cartVendorId)
+
+  const getCartTotalQuery =  {
+    vendorId: cartVendorData?.vendor.id ?? '', // fallback empty string
+    cartVendorId: cartVendorId ?? '',
+    lat: Number(deliveryAddress?.latitude) || 0,
+    lng: Number(deliveryAddress?.longitude) || 0,
+    distanceKM: deliveryDistanceByVendor[cartVendorData?.vendor.id ?? ''] ?? 0,
+    subtotal: subtotal ?? 0,
+    userId: '', 
+    couponCode: undefined,
+  }
+
+
+  const {data: cartTotals} = useGetCartTotals({
+    query:getCartTotalQuery
+    ,
+    enabled: !!cartVendorData && !!deliveryAddress
+  })
+
+  console.log(cartTotals,'cartTotals');
+  
   const handleAddressSubmit = (data: DeliveryAddressFormData) => {
     setDeliveryAddress(data)
   }
@@ -183,7 +233,7 @@ export default function CheckoutPage() {
                       <div className="space-y-3">
                         <div className="flex items-center gap-2">
                           <Building className="w-4 h-4 text-green-600" />
-                          <span className="font-semibold">{deliveryAddress.addressTitle}</span>
+                          <span className="font-semibold">{deliveryAddress.label}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <User className="w-4 h-4 text-green-600" />
@@ -193,18 +243,16 @@ export default function CheckoutPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <Phone className="w-4 h-4 text-green-600" />
-                          <span>{deliveryAddress.mobileNumber}</span>
+                          <span>{deliveryAddress.phoneNumber}</span>
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <p className="text-sm">
-                          {deliveryAddress.streetAddress}, {deliveryAddress.city} {deliveryAddress.zipCode}
-                        </p>
-                        {deliveryAddress.detailedDirection && (
+                       
+                        {deliveryAddress.detailAddressDirection && (
                           <div className="flex items-start gap-2 mt-2">
                             <Navigation className="w-4 h-4 text-green-600 mt-0.5" />
                             <p className="text-sm text-muted-foreground italic">
-                              {deliveryAddress.detailedDirection}
+                              {deliveryAddress.detailAddressDirection}
                             </p>
                           </div>
                         )}
@@ -382,14 +430,12 @@ export default function CheckoutPage() {
                     <div className="space-y-4">
                       <h3 className="text-lg font-semibold">Delivery Address</h3>
                       <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                        <p className="font-semibold">{deliveryAddress?.addressTitle}</p>
+                        <p className="font-semibold">{deliveryAddress?.label}</p>
                         <p className="text-sm text-muted-foreground mt-1">
                           {deliveryAddress?.firstName} {deliveryAddress?.lastName}
                         </p>
-                        <p className="text-sm text-muted-foreground">
-                          {deliveryAddress?.streetAddress}, {deliveryAddress?.city} {deliveryAddress?.zipCode}
-                        </p>
-                        <p className="text-sm text-muted-foreground">{deliveryAddress?.mobileNumber}</p>
+
+                        <p className="text-sm text-muted-foreground">{deliveryAddress?.phoneNumber}</p>
                       </div>
                     </div>
 
@@ -499,7 +545,7 @@ export default function CheckoutPage() {
                         <div className="flex justify-between text-green-600">
                           <span>Delivery Fee</span>
                           <span>
-                            Rs. {deliveryAddress?.latitude ? calculateDeliveryFee(totalDeliveryDistance).toFixed(2) : "0.00"}
+                            Rs. {deliveryAddress?.latitude ? cartTotals?.deliveryFee: "TBD"}
                           </span>
                         </div>
                         <div className="flex justify-between">
@@ -524,8 +570,8 @@ export default function CheckoutPage() {
                       {/* Estimated Delivery */}
                       <div className="flex items-center gap-3 p-3 bg-muted rounded-lg border">
                         <Clock className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                        <span className="text-sm">
-                          Estimated delivery: {deliveryAddress?.latitude ? getEstimatedDeliveryTime(totalDeliveryDistance) : "Add address"}
+                        <span className="text-lg">
+                          Estimated delivery: {deliveryAddress?.latitude ? cartTotals?.estimatedDeliveryTime : "Add address"}
                         </span>
                       </div>
 

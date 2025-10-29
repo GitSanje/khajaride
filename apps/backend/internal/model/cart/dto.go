@@ -279,18 +279,14 @@ func (p *AdjustCartItemQuantityPayload) Validate() error {
 
 
 type GetCartTotalsQuery struct {
-	UserID       string  `json:"userId"` 
-	CartVendorID  string  `json:"cartVendorId" validate:"required"`
-	VendorID     string  `json:"vendorId" validate:"required"`
-	CouponCode   *string  `json:"couponCode,omitempty"`
-	Location     LatLng  `json:"location" validate:"required"` 
-	DistanceKM   float64 `json:"distanceKM" validate:"required"`
-	Subtotal     float64 `json:"subtotal" validate:"required"`
-}
-
-type LatLng struct {
-	Lat float64 `json:"lat"`
-	Lng float64 `json:"lng"`
+	UserID       string  `query:"userId"`
+	CartVendorID string  `query:"cartVendorId" validate:"required"`
+	VendorID     string  `query:"vendorId" validate:"required"`
+	CouponCode   *string `query:"couponCode"`
+	Lat          float64 `query:"lat" validate:"required"`
+	Lng          float64 `query:"lng" validate:"required"`
+	DistanceKM   float64 `query:"distanceKM" validate:"required"`
+	Subtotal     float64 `query:"subtotal" validate:"required"`
 }
 
 func (p *GetCartTotalsQuery) Validate() error {

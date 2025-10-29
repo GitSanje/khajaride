@@ -1,12 +1,14 @@
 package handler
 
 import (
+
 	"log"
 	"net/http"
 
 	"github.com/gitSanje/khajaride/internal/middleware"
 	"github.com/gitSanje/khajaride/internal/model"
 	"github.com/gitSanje/khajaride/internal/model/cart"
+	"github.com/gitSanje/khajaride/internal/model/coupon"
 	"github.com/gitSanje/khajaride/internal/server"
 	"github.com/gitSanje/khajaride/internal/service"
 	"github.com/labstack/echo/v4"
@@ -219,5 +221,49 @@ func (h *CartHandler) DeleteCartItem(c echo.Context) error {
 		},
 		http.StatusNoContent,
 		&cart.DeleteCartItemPayload{},
+	)(c)
+}
+
+
+
+// ==================================================
+// GET CART TOTALS
+// ==================================================
+
+func (h *CartHandler) GetCartTotals(c echo.Context) error {
+	return Handle(
+		h.Handler,
+		func(c echo.Context, query *cart.GetCartTotalsQuery) (*cart.GetCartTotalsResponse, error) {
+			userID := middleware.GetUserID(c)
+			query.UserID = userID
+
+			
+
+			return h.CartService.GetCartTotals(c, query)
+		},
+		http.StatusOK,
+		&cart.GetCartTotalsQuery{},
+	)(c)
+}
+	
+
+// ==================================================
+// APPLY COUPON
+// ==================================================
+
+func (h *CartHandler) ApplyCoupon(c echo.Context) error {
+	return Handle(
+		h.Handler,
+		func(c echo.Context, payload *coupon.ApplyCouponPayload) (interface{}, error) {
+			userID := middleware.GetUserID(c)
+			payload.UserID = userID
+			discout,err := h.CartService.ApplyCoupon(c, payload)
+			if( err != nil){
+				return  nil, err
+			}
+			return map[string]interface{}{ "discoutAmount":discout}, nil
+		},
+		http.StatusCreated,
+		&coupon.ApplyCouponPayload{},
 	)(c)
 }

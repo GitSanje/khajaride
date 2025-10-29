@@ -8,31 +8,22 @@ import { showApiErrorToast } from "../utils";
 import { toast } from "sonner";
 
 
-export type TInitiateKhaltiPaymentPayload = TRequests['Payment']['initiateKhaltiPayment']['body']
+export type TCreateOrderPayload = TRequests['Order']['createOrder']['body']
 
 
-export type InitiateKhaltiPaymentResponse = ServerInferResponseBody<
-  typeof apiContract.Payment.initiateKhaltiPayment,
+export type TCreateOrderResponse = ServerInferResponseBody<
+  typeof apiContract.Order.createOrder,
   201
 >;
 
-export type TVerifyKhaltiPaymentPayload = TRequests['Payment']['verifyKhaltiPayment']['body']
-
-
-export type VerifyKhaltiPaymentResponse = ServerInferResponseBody<
-  typeof apiContract.Payment.verifyKhaltiPayment,
-  200
->;
-
-
-const InitiateKhaltiPayment = async ({
+const CreateOrder = async ({
   api,
   data,
 }: {
   api: TApiClient;
-  data: TInitiateKhaltiPaymentPayload;
-}): Promise<InitiateKhaltiPaymentResponse> => {
-  const res = await api.Payment.initiateKhaltiPayment({ body: data });
+  data: TCreateOrderPayload;
+}): Promise<TCreateOrderResponse> => {
+  const res = await api.Order.createOrder({ body: data });
 
   if (res.status === 201) {
     return res.body;
@@ -42,51 +33,12 @@ const InitiateKhaltiPayment = async ({
 };
 
 
-const VerifyKhaltiPayment = async ({
-  api,
-  data,
-}: {
-  api: TApiClient;
-  data: TVerifyKhaltiPaymentPayload;
-}): Promise<VerifyKhaltiPaymentResponse> => {
-  const res = await api.Payment.verifyKhaltiPayment({ body: data });
-
-  if (res.status === 200) {
-    return res.body;
-  } else {
-    throw res.body;
-  }
-};
-
-
-
-export const useInitiateKhaltiPayment = () => {
+export const useCreateOrder = () => {
   const api = useApiClient();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ body }: { body: TInitiateKhaltiPaymentPayload }) => InitiateKhaltiPayment({ api, data: body }),
-    onSuccess: () => {
-    //   queryClient.invalidateQueries({
-    //     queryKey: [QUERY_KEYS.ORDER.GET_CART_ITEMS],
-    //   });
-    
-     
-    },
-    onError: (err) => {
-      showApiErrorToast(err, "Failed to create order");
-    },
-  });
-};
-
-
-
-export const useVerifyKhaltiPayment = () => {
-  const api = useApiClient();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ body }: { body: TVerifyKhaltiPaymentPayload }) => VerifyKhaltiPayment({ api, data: body }),
+    mutationFn: ({ body }: { body: TCreateOrderPayload }) => CreateOrder({ api, data: body }),
     onSuccess: () => {
     //   queryClient.invalidateQueries({
     //     queryKey: [QUERY_KEYS.ORDER.GET_CART_ITEMS],

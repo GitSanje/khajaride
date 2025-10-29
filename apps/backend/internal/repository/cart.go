@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
+	"math"
 	"strings"
 	"time"
 
@@ -912,12 +914,15 @@ func (r *CartRepository) GetCartTotals(
 			va.latitude,
 			va.longitude
 		FROM cart_vendors cv
-		LEFT JOIN vendor_address va ON va.vendor_id = cv.vendor_id
+		LEFT JOIN vendor_addresses va ON va.vendor_id = cv.vendor_id
 		WHERE cv.id = @cartVendorId AND cv.vendor_id = @vendorId
 	`
 
-	var total,subtotal, vendorServiceCharge, vat, vendorDiscount, vendorLat, vendorLng float64
-	var deliveryCharge sql.NullFloat64
+	var (
+		total, subtotal, vendorServiceCharge, vat, vendorDiscount float64
+		vendorLat, vendorLng                                      float64
+		deliveryCharge                                            sql.NullFloat64
+	)
 
 	err := tx.QueryRow(ctx, query, pgx.NamedArgs{
 		"cartVendorId": payload.CartVendorID,
@@ -932,27 +937,35 @@ func (r *CartRepository) GetCartTotals(
 		&vendorLat,
 		&vendorLng,
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch cart vendor details: %w", err)
 	}
 
-	// Step 1: If delivery charge is missing, compute and persist
-	var fee float64
-	if !deliveryCharge.Valid {
-		fee = utils.ComputeDeliveryFee(payload.DistanceKM)
+	// Step 1: Compute delivery fee from payload distance
+	calculatedFee := utils.ComputeDeliveryFee(payload.DistanceKM)
 
-				updateQuery := `
+	// Step 2: Determine if we should update delivery charge
+	shouldUpdate := false
+
+	if !deliveryCharge.Valid {
+		// Not set yet
+		shouldUpdate = true
+	} else if math.Abs(deliveryCharge.Float64-calculatedFee) > 0.01 {
+		// Fee changed because user changed delivery distance
+		shouldUpdate = true
+	}
+
+
+	// Step 3: Update DB if required
+	if shouldUpdate {
+		updateQuery := `
 			UPDATE cart_vendors
-			SET delivery_charge = @deliveryCharge,
-				updated_at = NOW()
+			SET delivery_charge = @deliveryCharge
 			WHERE id = @cartVendorId
 			RETURNING total
 		`
-
-		
 		err := tx.QueryRow(ctx, updateQuery, pgx.NamedArgs{
-			"deliveryCharge": fee,
+			"deliveryCharge": calculatedFee,
 			"cartVendorId":   payload.CartVendorID,
 		}).Scan(&total)
 
@@ -960,21 +973,22 @@ func (r *CartRepository) GetCartTotals(
 			return nil, fmt.Errorf("failed to update delivery charge or fetch total: %w", err)
 		}
 
+		log.Printf("✅ Delivery charge updated (new fee: %.2f)", calculatedFee)
 	} else {
-		fee = deliveryCharge.Float64
+		log.Printf("ℹ️ Delivery charge not updated (still valid: %.2f)", deliveryCharge.Float64)
 	}
 
 	estimatedTime := utils.EstimateDeliveryTime(payload.DistanceKM)
-
 
 	return &cart.GetCartTotalsResponse{
 		Subtotal:              subtotal,
 		VendorServiceCharge:   vendorServiceCharge,
 		VAT:                   vat,
 		VendorDiscount:        vendorDiscount,
-		DeliveryFee:           fee,
+		DeliveryFee:           calculatedFee,
 		EstimatedDeliveryTime: estimatedTime,
 		Total:                 total,
+		DeliveryDistanceKm:    payload.DistanceKM,
 	}, nil
 }
 

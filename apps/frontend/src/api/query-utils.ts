@@ -7,9 +7,16 @@ export const QUERY_KEYS = {
   SEARCH:{
     FULL_TEXT_SEARCH:"fullTextSearch"
   },
+  USER: {
+    GET_ADDRESSES: "getAddresses",
+    CREATE_ADDRESS: "createAddress"
+  },
   CART:{
     ADD_CART_ITEM:"addCartItem",
-    GET_CART_ITEMS:"getCartItems"
+    GET_CART_ITEMS:"getCartItems",
+    DELETE_CART_ITEM:"deleteCartItem",
+    ADJUST_CART_ITEM_QUANTITY:"adjustCartItemQuantity",
+    GET_CART_TOTALS:"getCartTotals"
   },
   ORDER:{
     CREATE_ORDER:"createOrder"

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	
 	"time"
 
 	"github.com/gitSanje/khajaride/internal/middleware"
@@ -135,7 +136,8 @@ func handleRequest[Req validation.Validatable](
 	// user.id is already set by tracing middleware
 
 	logger.Info().Msg("handling request")
-
+    // Convert query struct to JSON for debugging
+			
 	// Validation with observability
 	validationStart := time.Now()
 	if err := validation.BindAndValidate(c, req); err != nil {

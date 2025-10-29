@@ -4,7 +4,12 @@ import {
   ZAddCartItemPayload, 
   ZCartItem ,
   ZCartItemPopulated,
-  ZAdjustCartItemQuantityPayload
+  ZAdjustCartItemQuantityPayload,
+  ZGetCartTotalsQuery,
+  ZGetCartTotalsResponse,
+  ZApplyCouponPayload
+
+
 } from "@khajaride/zod";
 import { getSecurityMetadata } from "../utils.js";
 
@@ -72,6 +77,30 @@ export const cartContract = c.router(
         "Deletes a cart item and updates the vendor subtotal if applicable.",
       metadata,
     },
+    // -------------------- Get Cart Totals --------------------
+     getCartTotals: {
+      path: "/carts/totals",
+      method: "GET",
+      query: ZGetCartTotalsQuery,
+      responses: {
+        200: ZGetCartTotalsResponse,
+      },
+      summary: "Get calculated cart totals for vendor",
+      description: "Computes delivery fee, VAT, discounts, and total for the user's cart",
+    },
+
+    applyCoupon: {
+      path: "/carts/apply-coupon",
+      method: "POST",
+      body: ZApplyCouponPayload,
+      responses: {
+        201: z.object({
+          discountAmount: z.number(),
+        }),
+      },
+      summary: "Apply a coupon to the cart",
+    },
+
   },
   {
     pathPrefix: "/v1",

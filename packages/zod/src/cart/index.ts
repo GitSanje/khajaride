@@ -74,9 +74,49 @@ export const ZAdjustCartItemQuantityPayload = z.object({
 });
 
 
+
+
+export const ZGetCartTotalsQuery = z.object({
+  userId: z.string().optional(), 
+  cartVendorId: z.string().min(1, "Cart vendor ID is required"),
+  vendorId: z.string().min(1, "Vendor ID is required"),
+  couponCode: z.string().optional(),
+  lat: z.number({ required_error: "Latitude is required" }),
+  lng: z.number({ required_error: "Longitude is required" }),
+  distanceKM: z.number().nonnegative("Distance must be non-negative"),
+  subtotal: z.number().nonnegative("Subtotal must be non-negative"),
+});
+
+export const ZGetCartTotalsResponse = z.object({
+  subtotal: z.number(),
+  deliveryDistanceKm: z.number(),
+  deliveryFee: z.number(),
+  vendorServiceCharge: z.number(),
+  vat: z.number(),
+  vendorDiscount: z.number(),
+  couponDiscount: z.number(),
+  total: z.number(),
+  estimatedDeliveryTime: z.string(),
+  currency: z.string(),
+  appliedCouponCode: z.string().nullable().optional(),
+});
+
+export const ZApplyCouponPayload = z.object({
+  userId: z.string().optional(), 
+  cartVendorId: z.string().min(1, "Cart vendor ID is required"),
+  vendorId: z.string().min(1, "Vendor ID is required"),
+  couponCode: z.string().optional(),
+  subtotal: z.number().nonnegative("Subtotal must be non-negative"),
+});
+
+
+
+
 // ---------------------- Type Inference ----------------------
 
-
+export type GetCartTotalsQuery = z.infer<typeof ZGetCartTotalsQuery>;
+export type GetCartTotalsResponse = z.infer<typeof ZGetCartTotalsResponse>;
+export type ApplyCouponPayload = z.infer<typeof ZApplyCouponPayload>;
 export type TCartItem = z.infer<typeof ZCartItem>;
 export type TAddCartItemPayload = z.infer<typeof ZAddCartItemPayload>;
 export type TCartVendor = z.infer<typeof ZCartVendor>;

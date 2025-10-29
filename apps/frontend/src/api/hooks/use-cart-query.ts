@@ -20,6 +20,8 @@ export type TGetCartItemsRespone =  ServerInferResponseBody<
   typeof apiContract.Cart.getCart,
   200
 >;
+
+
 export type TDeleteCartItemsParam = TRequests['Cart']['deleteCartItem']['params'];
 
 export type TAddJustQuantityPayload = TRequests['Cart']['adjustCartItemQuantity']['body'];
@@ -27,6 +29,61 @@ export type TAddJustQuantityRespone =  ServerInferResponseBody<
   typeof apiContract.Cart.adjustCartItemQuantity,
   200
 >;
+
+
+
+export type TGetCartTotalsQuery = TRequests['Cart']['getCartTotals']['query'];
+
+export type TGetCartTotalsResponse =  ServerInferResponseBody<
+  typeof apiContract.Cart.getCartTotals,
+  200
+>;
+
+
+export type TApplyCouponPayload = TRequests['Cart']['applyCoupon']['body'];
+
+export type TApplyCouponResponse =  ServerInferResponseBody<
+  typeof apiContract.Cart.applyCoupon,
+  201
+>;
+
+
+
+const ApplyCoupon= async ({
+  api,
+  data
+
+}: {
+  api: TApiClient;
+  data: TApplyCouponPayload;
+}): Promise<TApplyCouponResponse> => {
+  const res = await api.Cart.applyCoupon({ body: data });
+
+  if (res.status === 201) {
+    return res.body;
+  } else {
+    throw res.body;
+  }
+};
+
+
+const GetCartTotals= async ({
+  api,
+  query
+
+}: {
+  api: TApiClient;
+  query: TGetCartTotalsQuery;
+}): Promise<TGetCartTotalsResponse> => {
+  const res = await api.Cart.getCartTotals({ query });
+
+  if (res.status === 200) {
+    return res.body;
+  } else {
+    throw res.body;
+  }
+};
+
 
 
 const GetCartItems = async ({
@@ -136,6 +193,23 @@ export const useAddCartItem = () => {
   });
 };
 
+export const useApplyCoupon = () => {
+  const api = useApiClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ body }: { body: TApplyCouponPayload }) => ApplyCoupon({ api, data: body }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [QUERY_KEYS.CART.GET_CART_TOTALS],
+      });
+    },
+    onError: (err) => {
+      showApiErrorToast(err, "Failed to update quantity");
+    },
+  });
+};
+
 
 export const useGetCartItems= ({
   
@@ -152,6 +226,24 @@ export const useGetCartItems= ({
     enabled: enabled,
   });
 };
+
+
+export const useGetCartTotals = ({
+  query,
+  enabled = true,
+}: {
+  query: TGetCartTotalsQuery;
+  enabled?: boolean;
+}) => {
+  const api = useApiClient();
+
+  return useQuery({
+    queryKey: [QUERY_KEYS.CART.GET_CART_TOTALS],
+    queryFn: () => GetCartTotals({ query, api }),
+    enabled: enabled,
+  });
+};
+
 
 
 export const useDeleteCartItem = () => {

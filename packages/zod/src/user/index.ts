@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // ------------------- USER ADDRESS -------------------
 export const ZUserAddress = z.object({
-  id: z.string().uuid(),
+  id: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),
 
@@ -10,6 +10,23 @@ export const ZUserAddress = z.object({
   label: z.string(),
   latitude: z.number(),
   longitude: z.number(),
+  phoneNumber:z.string(),
+  firstName:z.string(),
+  lastName:z.string(),
+  detailAddressDirection:z.string(),
+  isDefault: z.boolean(),
+});
+
+// ------------------- CREATE USER ADDRESS PAYLOAD -------------------
+export const ZUserAddressPayload = z.object({
+  userId: z.string().optional(),
+  label: z.string(),
+  latitude: z.number(),
+  longitude: z.number(),
+  phoneNumber:z.string(),
+  firstName:z.string(),
+  lastName:z.string(),
+  detailAddressDirection:z.string(),
   isDefault: z.boolean(),
 });
 

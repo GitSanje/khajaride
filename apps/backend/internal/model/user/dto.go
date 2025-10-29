@@ -120,7 +120,12 @@ func (p *DeleteUserPayload) Validate() error {
 
 
 type CreateAddressPayload struct {
+	UserId    string  `json:"userId"`
 	Label     string  `json:"label" validate:"required,min=2,max=20"`
+	FirstName string `json:"firstName" validate:"required"`
+	LastName  string `json:"lastName" validate:"required"`
+	PhoneNumber string `json:"phoneNumber"`
+	DetailAddressDirection string `json:"detailAddressDirection" validate:"required"`
 	Latitude  float64  `json:"latitude" validate:"required"`
 	Longitude float64  `json:"longitude" validate:"required"`
 	IsDefault *bool    `json:"isDefault,omitempty"`

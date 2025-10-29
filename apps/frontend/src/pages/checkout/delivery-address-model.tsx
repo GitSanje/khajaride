@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useTransition } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { MapPin, Search, X } from "lucide-react"
@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { deliveryAddressSchema, type DeliveryAddressFormData } from "@/schemas/delivery-address-validation"
 import dynamic from "next/dynamic"
+import { useCreateAddress, type TCreateAddressPayload } from "@/api/hooks/use-user-query"
 
 const MapComponent = dynamic(() => import("./map-component"), { ssr: false })
 
@@ -26,7 +27,7 @@ export function DeliveryAddressModal({ isOpen, onClose, onSubmit, initialData }:
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(
     initialData ? { lat: initialData.latitude || 0, lng: initialData.longitude || 0 } : null,
   )
-
+  const [isPending, startTransition] = useTransition();
   const [searchQuery, setSearchQuery] = useState("")
   const [submittedQuery, setSubmittedQuery] = useState<string | null>(null)
 
@@ -65,14 +66,28 @@ export function DeliveryAddressModal({ isOpen, onClose, onSubmit, initialData }:
   const handleFormError = (errors: any) => {
   console.error("❌ Validation errors:", errors)
 }
-
+      const createAddress = useCreateAddress();
 
   const handleFormSubmit = (data: DeliveryAddressFormData) => {
-    console.log("data",data);
-    
-    onSubmit(data)
-    onClose()
-  }
+    startTransition(async () => {
+      try {
+      
+        
+  
+        const res = await createAddress.mutateAsync({
+          body: data as Omit<DeliveryAddressFormData, "id">,
+        });
+        if (res) {
+             onSubmit(data); 
+             onClose();
+        }
+
+     
+      } catch (err) {
+        console.error("Failed to create address:", err);
+      }
+    });
+  };
 
   if (!isOpen) return null
 
@@ -143,10 +158,10 @@ export function DeliveryAddressModal({ isOpen, onClose, onSubmit, initialData }:
                 <Input
                   id="addressTitle"
                   placeholder="e.g. Home, Office"
-                  {...register("addressTitle")}
-                  className={errors.addressTitle ? "border-destructive" : ""}
+                  {...register("label")}
+                  className={errors.label ? "border-destructive" : ""}
                 />
-                {errors.addressTitle && <p className="text-xs text-destructive mt-1">{errors.addressTitle.message}</p>}
+                {errors.label && <p className="text-xs text-destructive mt-1">{errors.label.message}</p>}
               </div>
 
               {/* Name Fields */}
@@ -174,43 +189,7 @@ export function DeliveryAddressModal({ isOpen, onClose, onSubmit, initialData }:
               </div>
 
             
-              {/* Street Address */}
-              <div>
-                <Label htmlFor="streetAddress">Street Address *</Label>
-                <Input
-                  id="streetAddress"
-                  placeholder="Enter street address"
-                  {...register("streetAddress")}
-                  className={errors.streetAddress ? "border-destructive" : ""}
-                />
-                {errors.streetAddress && (
-                  <p className="text-xs text-destructive mt-1">{errors.streetAddress.message}</p>
-                )}
-              </div>
-
-              {/* City and ZIP */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="city">City *</Label>
-                  <Input
-                    id="city"
-                    placeholder="Kathmandu"
-                    {...register("city")}
-                    className={errors.city ? "border-destructive" : ""}
-                  />
-                  {errors.city && <p className="text-xs text-destructive mt-1">{errors.city.message}</p>}
-                </div>
-                <div>
-                  <Label htmlFor="zipCode">ZIP Code *</Label>
-                  <Input
-                    id="zipCode"
-                    placeholder="44600"
-                    {...register("zipCode")}
-                    className={errors.zipCode ? "border-destructive" : ""}
-                  />
-                  {errors.zipCode && <p className="text-xs text-destructive mt-1">{errors.zipCode.message}</p>}
-                </div>
-              </div>
+             
 
               {/* Phone Numbers */}
               <div className="grid grid-cols-2 gap-4">
@@ -221,45 +200,49 @@ export function DeliveryAddressModal({ isOpen, onClose, onSubmit, initialData }:
                       +977
                     </span>
                     <Input
-                      id="mobileNumber"
+                      id="phoneNumber"
                       placeholder="9800000000"
-                      {...register("mobileNumber")}
-                      className={`rounded-l-none ${errors.mobileNumber ? "border-destructive" : ""}`}
+                      {...register("phoneNumber")}
+                      className={`rounded-l-none ${errors.phoneNumber ? "border-destructive" : ""}`}
                     />
                   </div>
-                  {errors.mobileNumber && (
-                    <p className="text-xs text-destructive mt-1">{errors.mobileNumber.message}</p>
+                  {errors.phoneNumber && (
+                    <p className="text-xs text-destructive mt-1">{errors.phoneNumber.message}</p>
                   )}
                 </div>
-                <div>
-                  <Label htmlFor="alternatePhone">Alternate Phone Number</Label>
-                  <Input id="alternatePhone" placeholder="9800000001" {...register("alternatePhone")} />
-                </div>
+                
               </div>
 
               {/* Detailed Direction */}
+              <div className="grid grid-cols-2 gap-4">
+
+             
               <div>
-                <Label htmlFor="detailedDirection">Detail Address Direction</Label>
+                <Label htmlFor="detailedDirection">Detail Address Direction *</Label>
                 <Textarea
-                  id="detailedDirection"
+                  id="detailAddressDirection"
                   placeholder="Enter Detail Address Direction"
-                  {...register("detailedDirection")}
+                  {...register("detailAddressDirection")}
                   rows={3}
                 />
               </div>
+               {errors.detailAddressDirection && (
+                    <p className="text-xs text-destructive mt-1">{errors.detailAddressDirection.message}</p>
+                  )}
+               </div>
 
               {/* Set as Default */}
               <Controller
-              name="setAsDefault"
+              name="isDefault"
               control={control}
               render={({ field }) => (
                 <div className="flex items-center gap-2">
                   <Checkbox
-                    id="setAsDefault"
+                    id="isDefault"
                     checked={!!field.value}
                     onCheckedChange={(checked) => field.onChange(!!checked)}
                   />
-                  <Label htmlFor="setAsDefault" className="cursor-pointer">
+                  <Label htmlFor="isDefault" className="cursor-pointer">
                     Set As Default Address
                   </Label>
                 </div>
@@ -273,7 +256,7 @@ export function DeliveryAddressModal({ isOpen, onClose, onSubmit, initialData }:
                   Change Location
                 </Button>
                 <Button type="submit" className="flex-1 bg-green-400 hover:bg-green-500 text-black font-semibold">
-                  Save Address
+                  {isPending ? "Saving..." : "Save Address"}
                 </Button>
               </div>
             </form>

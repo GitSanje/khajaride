@@ -18,6 +18,9 @@ func registerCartRoutes(r *echo.Group, h *handler.CartHandler, auth *middleware.
 	carts.POST("/items/adjust-quantity", h.AdjustCartItemQuantity)
 	carts.DELETE("/items/:id", h.DeleteCartItem)
 
+	carts.GET("/totals",h.GetCartTotals)
+	carts.POST("/apply-coupon",h.ApplyCoupon)
+
 
 
 

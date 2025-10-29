@@ -14,5 +14,6 @@ type CartVendor struct {
 	VAT                 float64  `json:"vat" db:"vat"`
 	VendorDiscount      float64  `json:"vendorDiscount" db:"vendor_discount"`
 	Total               *float64  `json:"total" db:"total"`
+	AppliedCouponCode *string `json:"appliedCouponCode,omitempty" db:"applied_coupon_code"`
 	
 }

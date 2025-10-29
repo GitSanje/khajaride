@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -28,14 +29,25 @@ func (c CustomValidationErrors) Error() string {
 
 func BindAndValidate(c echo.Context, payload Validatable) error {
 	if err := c.Bind(payload); err != nil {
+
+		if payloadJSON, jsonErr := json.MarshalIndent(payload, "", "  "); jsonErr == nil {
+			fmt.Println("🧩 Bind failed — partial payload:", string(payloadJSON))
+		} else {
+			fmt.Println("⚠️ Bind failed — unable to marshal payload:", jsonErr)
+		}
+		
 		message := strings.Split(strings.Split(err.Error(), ",")[1], "message=")[1]
 		return errs.NewBadRequestError(message, false, nil, nil, nil)
 	}
-
-	if msg, fieldErrors := validateStruct(payload); fieldErrors != nil {
-		return errs.NewBadRequestError(msg, true, nil, fieldErrors, nil)
+ 
+	if payloadJSON, jsonErr := json.MarshalIndent(payload, "", "  "); jsonErr == nil {
+		fmt.Println("✅ Bound payload:\n", string(payloadJSON))
 	}
 
+	if msg, fieldErrors := validateStruct(payload); fieldErrors != nil {
+		fmt.Println("❌ Validation failed for payload:", msg)
+		return errs.NewBadRequestError(msg, true, nil, fieldErrors, nil)
+	}
 	return nil
 }
 

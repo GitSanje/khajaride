@@ -3,10 +3,12 @@ package service
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/gitSanje/khajaride/internal/middleware"
 	"github.com/gitSanje/khajaride/internal/model"
 	"github.com/gitSanje/khajaride/internal/model/cart"
+	"github.com/gitSanje/khajaride/internal/model/coupon"
 	"github.com/gitSanje/khajaride/internal/repository"
 	"github.com/gitSanje/khajaride/internal/server"
 	"github.com/labstack/echo/v4"
@@ -79,6 +81,64 @@ func (s *CartService) AddCartItem(ctx echo.Context, userID string, payload *cart
 	return item, nil
 }
 
+
+// ==================================================
+// GET ACTIVE CARTS BY USER ID
+// ==================================================
+
+func (s *CartService) GetCartTotals(ctx echo.Context, payload *cart.GetCartTotalsQuery) (*cart.GetCartTotalsResponse, error) {
+
+	logger := middleware.GetLogger(ctx)
+
+	tx, err := s.server.DB.Pool.Begin(ctx.Request().Context())
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx.Request().Context())
+
+
+	cartItems, err := s.cartRepo.GetCartTotals(ctx.Request().Context(), tx, payload)
+
+	if commitErr := tx.Commit(ctx.Request().Context()); commitErr != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", commitErr)
+	}
+
+	if err != nil {
+		logger.Error().
+			Err(err).
+			Str("user_id", payload.UserID).
+			Msg("Failed to get cart totals")
+		return nil, err
+	}
+
+	return cartItems, nil
+
+}
+
+
+// ==================================================
+// APPLY COUPON
+// ==================================================
+
+func (s *CartService) ApplyCoupon(ctx echo.Context,  payload *coupon.ApplyCouponPayload) (*float64, error) {
+
+	logger := middleware.GetLogger(ctx)
+
+
+	discount, err := s.cartRepo.ApplyCoupon(ctx.Request().Context(),  payload)
+	if err != nil {
+		logger.Error().
+			Err(err).
+			Str("user_id", payload.UserID).
+			Msg("Failed to apply coupon")
+		return nil, err
+	}
+
+	return discount, nil
+
+}
+
+
 // ==================================================
 // GET ACTIVE CARTS BY USER ID
 // ==================================================
@@ -99,6 +159,8 @@ func (s *CartService) GetActiveCartsByUserID(ctx echo.Context, userID string) ([
 	return cartItems, nil
 
 }
+
+
 
 // ==================================================
 // CREATE CART SESSION

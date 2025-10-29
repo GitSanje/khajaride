@@ -277,6 +277,10 @@ func (r *UserRepository) CreateAddress(ctx context.Context, userID string, paylo
         INSERT INTO user_addresses (
             user_id,
             label,
+            phone_number,
+            first_name,
+            last_name,
+            detail_address_direction,
             latitude,
             longitude,
             is_default
@@ -284,6 +288,10 @@ func (r *UserRepository) CreateAddress(ctx context.Context, userID string, paylo
         VALUES (
             @UserID,
             @Label,
+            @PhoneNumber,
+            @FirstName,
+            @LastName,
+            @DetailAddressDirection,
             @Latitude,
             @Longitude,
             COALESCE(@IsDefault, false)
@@ -294,8 +302,12 @@ func (r *UserRepository) CreateAddress(ctx context.Context, userID string, paylo
     rows, err := r.server.DB.Pool.Query(ctx, stmt, pgx.NamedArgs{
         "UserID":    userID,
         "Label":     payload.Label,
+        "PhoneNumber": payload.PhoneNumber,
         "Latitude":  payload.Latitude,
         "Longitude": payload.Longitude,
+        "FirstName": payload.FirstName,
+        "LastName":  payload.LastName,
+        "DetailAddressDirection":payload.DetailAddressDirection,
         "IsDefault": payload.IsDefault,
     })
     if err != nil {
