@@ -67,7 +67,7 @@ func (h *OrderHandler) CreateOrderFromCart(c echo.Context) error {
 
 
 type GetOrdersByUserIDPayload struct{
-	UserID    *string `param:"userId"`
+	
 }
 
 func (p *GetOrdersByUserIDPayload) Validate() error {
@@ -77,13 +77,9 @@ func (p *GetOrdersByUserIDPayload) Validate() error {
 func (h *OrderHandler) GetOrdersByUserId(c echo.Context) error {
 	return Handle(
 		h.Handler,
-		func(c echo.Context, payload *GetOrdersByUserIDPayload) (*[]order.PopulatedUserOrder, error) {
-			var userID string
-			if uId := payload.UserID; uId != nil {
-				userID = *uId
-			} else {
-				userID = middleware.GetUserID(c)
-			}
+		func(c echo.Context, _ *GetOrdersByUserIDPayload) (*[]order.PopulatedUserOrder, error) {
+			
+			userID := middleware.GetUserID(c)
 			return h.OrderService.GetOrdersByUserId(c, userID)
 		},
 		http.StatusOK,

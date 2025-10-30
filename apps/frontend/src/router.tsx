@@ -9,6 +9,8 @@ import VendorMenuPage from "./pages/vendor/vendor-details";
 import SearchPage from "./pages/search/SearchVendor";
 import VendorOnboardingPage from "./pages/vendor-onboarding/vendor-onboarding";
 import CheckoutPage from "./pages/checkout/checkout";
+import PaymentSuccess from "./pages/payment/payment-success-khalti";
+import UserOrders from "./pages/order/user-orders";
 
 
 
@@ -80,6 +82,23 @@ const routes = createRoutesFromElements(
         <PublicRoute>
           <VendorOnboardingPage />
         </PublicRoute>
+      }
+    />
+
+    <Route
+      path="/payment/status"
+      element={
+        <ProtectedRoute>
+          <PaymentSuccess />
+        </ProtectedRoute>
+      }
+    />
+     <Route
+      path="/orders"
+      element={
+        <ProtectedRoute>
+          <UserOrders />
+        </ProtectedRoute>
       }
     />
     

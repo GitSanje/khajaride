@@ -15,6 +15,6 @@ func registerOrderRoutes(r *echo.Group, h *handler.OrderHandler, auth *middlewar
 	//user_339ifDlrV566pSOsjbtBsQtAAar
 	order.Use(auth.RequireAuth)
 	order.POST("/create-order", h.CreateOrderFromCart)
-	order.GET("/me/get-order/:userId",h.GetOrdersByUserId )
+	order.GET("/me/get-order",h.GetOrdersByUserId )
 	order.GET("/get-order/:id",h.GetOrderById )
 }

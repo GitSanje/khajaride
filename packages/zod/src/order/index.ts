@@ -1,7 +1,7 @@
 import z from "zod";
 import { ZBase, ZMenuItem } from "../vendor/index.js";
-import { ZCartItem } from "@/cart/index.js";
-import { ZUserAddress } from "@/user/index.js";
+
+import { ZUserAddress } from "../user/index.js";
 
 
 // ---------------------- ORDER GROUP----------------------
@@ -49,8 +49,8 @@ export const ZCreateOrderPayload = z.object({
 // Base schema (assuming your model.Base has ID and timestamps)
 const BaseSchema = z.object({
   id: z.string().uuid(),
-  created_at: z.string().datetime(),
-  updated_at: z.string().datetime(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
 });
 
 // Duration schema for time.Duration fields

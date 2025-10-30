@@ -119,7 +119,7 @@ const UserOrders: React.FC = () => {
                 onClick={() => setSelectedStatus(status)}
                 className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-colors ${
                   selectedStatus === status
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-green-600 text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
                 }`}
               >
@@ -167,7 +167,7 @@ const UserOrders: React.FC = () => {
                         </span>
                       </div>
                       <p className="text-sm text-gray-600">
-                        Order #{order.id} • {formatDate(order.created_at)}
+                        Order #{order.id} • {formatDate(order.createdAt)}
                       </p>
                     </div>
                     
@@ -181,7 +181,7 @@ const UserOrders: React.FC = () => {
                       </span>
                       <Link
                         to={`/orders/${order.id}`}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
                       >
                         <Eye className="w-4 h-4" />
                         View Details
@@ -210,7 +210,7 @@ const UserOrders: React.FC = () => {
                                   {item.menuItem.name}
                                 </p>
                                 <p className="text-sm text-gray-600">
-                                  Qty: {item.orderItem.quantity} × NPR {item.orderItem.quantity}
+                                  Qty: {item.orderItem.quantity} × NPR {item.orderItem.unitPrice}
                                 </p>
                               </div>
                             </div>

@@ -28,10 +28,8 @@ export const orderContract = c.router(
       metadata,
     },
      getOrdersByUserId: {
-      path: "/orders/me/get-order/:userId",
-      pathParams: z.object({
-            userId: z.string().optional(),
-        }),
+      path: "/orders/me/get-order",
+    
       method: "GET",
       responses: {
         200: z.array(ZPopulatedUserOrder), 

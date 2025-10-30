@@ -51,7 +51,7 @@ type VendorInfo struct {
 
 type PopulatedUserOrder struct {
 	OrderVendor
-	OrderItems     OrderItems   `json:"orderItems"`
+	OrderItems      []OrderItems   `json:"orderItems"`
 	DeliveryAddress user.UserAddress `json:"deliveryAddress"`
 	Vendor         VendorInfo     `json:"vendor"`
 }

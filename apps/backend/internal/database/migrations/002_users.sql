@@ -66,7 +66,7 @@ CREATE TABLE user_addresses (
     phone_number VARCHAR(20),
     detail_address_direction TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     UNIQUE(user_id, label)
 );
 
