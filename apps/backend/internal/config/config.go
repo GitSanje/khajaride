@@ -32,6 +32,7 @@ type KhaltiConfig struct {
 	WebsiteURL string `koanf:"website_url" validate:"required"`
 	InitiateURL string `koanf:"initiate_url" validate:"required"`
 	VerifyURL   string `koanf:"verify_url" validate:"required"`
+	FrontEndURL string  `koanf:"frontend_url" validate:"required"`
 }
 
 type ElasticsearchConfig struct {

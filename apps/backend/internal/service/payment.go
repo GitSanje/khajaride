@@ -2,6 +2,7 @@ package service
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -86,7 +87,7 @@ func (ps *PaymentService) ProcessKhaltiPayment(c echo.Context, payload *payment.
 	return &khaltiResp, nil
 }
 
-func (ps *PaymentService) VerifyKhaltiPayment(c echo.Context, payload *payment.KhaltiVerifyPaymentPayload) error {
+func (ps *PaymentService) VerifyKhaltiPayment(c echo.Context, payload *payment.KhaltiVerifyPaymentPayload) (*payment.KhaltiVerifyPaymentResponse,error) {
 	ctx := c.Request().Context()
 	pidx := payload.Pidx
 
@@ -97,13 +98,13 @@ func (ps *PaymentService) VerifyKhaltiPayment(c echo.Context, payload *payment.K
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("khalti verify error: %w", err)
+		return nil,fmt.Errorf("khalti verify error: %w", err)
 	}
 	defer resp.Body.Close()
 
 	var verifyResp payment.KhaltiVerifyPaymentResponse
 	if err := json.NewDecoder(resp.Body).Decode(&verifyResp); err != nil {
-		return fmt.Errorf("decode khalti verify: %w", err)
+		return nil,fmt.Errorf("decode khalti verify: %w", err)
 	}
 
 	status := verifyResp.Status
@@ -112,15 +113,53 @@ func (ps *PaymentService) VerifyKhaltiPayment(c echo.Context, payload *payment.K
 	if status == "Completed" {
 		if orderID, err := ps.paymentRepo.UpdatePaymentStatus(ctx, pidx, "success"); err == nil {
 			if err := ps.orderRepo.MarkOrderPaid(ctx, orderID); err != nil {
-				return fmt.Errorf("update order: %w", err)
+				return nil, fmt.Errorf("update order: %w", err)
 			}
 		}
-		if (err != nil){
-			return fmt.Errorf("update payment: %w", err)
-		}
+		
 	} else {
 		_ ,_= ps.paymentRepo.UpdatePaymentStatus(ctx, pidx, status)
 	}
 
-	return c.JSON(http.StatusOK, verifyResp)
+	return &verifyResp,nil
+}
+
+
+
+func (ps *PaymentService) VerifyAndUpdateKhaltiPayment(ctx context.Context, payload *payment.KhaltiCallbackPayload) (string, string, error) {
+	pidx := payload.Pidx
+
+	// 1️⃣ Verify with Khalti
+	req, _ := http.NewRequest("POST", ps.server.Config.Khalti.VerifyURL, bytes.NewBuffer([]byte(fmt.Sprintf(`{"pidx":"%s"}`, pidx))))
+	req.Header.Set("Authorization", "Key "+ps.server.Config.Khalti.SecretKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", "", fmt.Errorf("khalti verify error: %w", err)
+	}
+	defer resp.Body.Close()
+
+	var verifyResp payment.KhaltiVerifyPaymentResponse
+	if err := json.NewDecoder(resp.Body).Decode(&verifyResp); err != nil {
+		return "", "", fmt.Errorf("decode khalti verify: %w", err)
+	}
+
+	status := verifyResp.Status
+	var orderID string
+
+	// 2️⃣ Update payment + order
+	if status == "Completed" {
+		if oid, err := ps.paymentRepo.UpdatePaymentStatus(ctx, pidx, "success"); err == nil {
+			orderID = oid
+			if err := ps.orderRepo.MarkOrderPaid(ctx, orderID); err != nil {
+				return "", "", fmt.Errorf("update order: %w", err)
+			}
+		}
+	} else {
+		oid, _ := ps.paymentRepo.UpdatePaymentStatus(ctx, pidx, status)
+		orderID = oid
+	}
+
+	return orderID, status, nil
 }

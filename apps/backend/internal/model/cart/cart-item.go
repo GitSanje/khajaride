@@ -7,6 +7,7 @@ import (
 
 type CartItem struct {
 	model.Base
+	ID string `json:"id" db:"id"`
 	CartVendorID        string   `json:"cartVendorId" db:"cart_vendor_id"`
 	MenuItemID          string   `json:"menuItemId" db:"menu_item_id"`
 	Quantity            int      `json:"quantity" db:"quantity"`

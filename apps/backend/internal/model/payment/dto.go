@@ -36,9 +36,31 @@ type KhaltiVerifyPaymentResponse struct {
 }
 
 
+type KhaltiCallbackPayload struct {
+	Pidx              string  `query:"pidx"`
+	TxnID             string  `query:"txnId"`
+	Amount            float64 `query:"amount"`
+	TotalAmount       float64 `query:"total_amount"`
+	Status            string  `query:"status"`
+	Mobile            string  `query:"mobile"`
+	Tidx              string  `query:"tidx"`
+	PurchaseOrderID   string  `query:"purchase_order_id"`
+	PurchaseOrderName string  `query:"purchase_order_name"`
+	TransactionID     string  `query:"transaction_id"`
+}
+
+func (p *KhaltiCallbackPayload) Validate() error {
+	validate := validator.New()
+	return validate.Struct(p)
+}
+
+
+
 type KhaltiPaymentResponse struct {
 	Pidx       string `json:"pidx"`
 	PaymentURL string `json:"payment_url"`
 	ExpiresAt  string `json:"expires_at"`
 	ExpiresIn  int    `json:"expires_in"`
 }
+
+

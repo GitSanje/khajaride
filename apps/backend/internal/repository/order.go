@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/gitSanje/khajaride/internal/model/cart"
@@ -48,7 +49,6 @@ func (r *OrderRepository) CreateOrderGroup(ctx context.Context, tx pgx.Tx, userI
 //-- ==================================================
 //-- CREATE ORDER VENDOR
 //-- ==================================================
-
 func (r *OrderRepository) CreateOrderVendor(
 	ctx context.Context,
 	tx pgx.Tx,
@@ -57,77 +57,7 @@ func (r *OrderRepository) CreateOrderVendor(
 	payload *order.CreateOrderPayload,
 ) (*order.OrderVendor, error) {
 
-	// --- 1. Check if order already exists for this CartVendor
-	checkQuery := `
-		SELECT * FROM order_vendors 
-		WHERE vendor_cart_id = @vendor_cart_id
-		LIMIT 1
-	`
-	row, err := tx.Query(ctx, checkQuery, pgx.NamedArgs{
-		"vendor_cart_id": vCart.ID,
-	})
-	if err != nil && err != pgx.ErrNoRows {
-		return nil, fmt.Errorf("failed to check existing order_vendor: %w", err)
-	}
-
-	existingOrder, err := pgx.CollectOneRow(row, pgx.RowToStructByName[order.OrderVendor])
-	if err == nil && existingOrder != (order.OrderVendor{}) {
-		// --- 2. Check if fields have changed
-		needsUpdate := false
-		updateArgs := pgx.NamedArgs{
-			"id": existingOrder.ID,
-		}
-
-		if *existingOrder.DeliveryAddressID != payload.DeliveryAddressId {
-			updateArgs["delivery_address_id"] = payload.DeliveryAddressId
-			needsUpdate = true
-		}
-		if existingOrder.VendorDiscount != vCart.VendorDiscount {
-			updateArgs["vendor_discount"] = vCart.VendorDiscount
-			needsUpdate = true
-		}
-		if existingOrder.Subtotal != vCart.Subtotal {
-			updateArgs["subtotal"] = vCart.Subtotal
-			needsUpdate = true
-		}
-		if *existingOrder.DeliveryInstructions != payload.DeliveryInstructions {
-			updateArgs["delivery_instructions"] = payload.DeliveryInstructions
-			needsUpdate = true
-		}
-		if vCart.DeliveryCharge != nil && existingOrder.DeliveryCharge != *vCart.DeliveryCharge {
-			updateArgs["delivery_charge"] = vCart.DeliveryCharge
-			needsUpdate = true
-		}
-
-		if needsUpdate {
-			updateQuery := `
-				UPDATE order_vendors
-				SET 
-					delivery_address_id = COALESCE(@delivery_address_id, delivery_address_id),
-					delivery_instructions = COALESCE(@delivery_instructions, delivery_instructions),
-					subtotal = COALESCE(@subtotal, subtotal),
-					vendor_discount = COALESCE(@vendor_discount, vendor_discount),
-					delivery_charge = COALESCE(@delivery_charge, delivery_charge)
-				WHERE id = @id
-				RETURNING *
-			`
-			row, err := tx.Query(ctx, updateQuery, updateArgs)
-			if err != nil {
-				return nil, fmt.Errorf("failed to update existing order_vendor: %w", err)
-			}
-			updatedOrder, err := pgx.CollectOneRow(row, pgx.RowToStructByName[order.OrderVendor])
-			if err != nil {
-				return nil, fmt.Errorf("failed to collect updated order_vendor: %w", err)
-			}
-			return &updatedOrder, nil
-		}
-
-		// If no changes, return existing
-		return &existingOrder, nil
-	}
-
-	// --- 3. Create new order if not exists
-	createQuery := `
+	query := `
 		INSERT INTO order_vendors (
 			user_id,
 			vendor_cart_id,
@@ -155,13 +85,13 @@ func (r *OrderRepository) CreateOrderVendor(
 			@expected_delivery_time,
 			@delivery_instructions,
 			@delivery_address_id,
-			'paid',
+			'unpaid',
 			'pending'
 		)
 		RETURNING *
 	`
 
-	row, err = tx.Query(ctx, createQuery, pgx.NamedArgs{
+	row, err := tx.Query(ctx, query, pgx.NamedArgs{
 		"user_id":               userID,
 		"vendor_cart_id":        vCart.ID,
 		"vendor_id":             vCart.VendorID,
@@ -185,6 +115,64 @@ func (r *OrderRepository) CreateOrderVendor(
 
 	return &oVendor, nil
 }
+
+
+
+//-- ==================================================
+//-- Update Order Vendor
+//-- ==================================================
+
+
+func (r *OrderRepository) UpdateOrderVendor(
+	ctx context.Context,
+	tx pgx.Tx,
+	updates pgx.NamedArgs,
+) (*order.OrderVendor, error) {
+
+	query := `
+		UPDATE order_vendors
+		SET 
+			delivery_address_id = COALESCE(@delivery_address_id, delivery_address_id),
+			delivery_instructions = COALESCE(@delivery_instructions, delivery_instructions),
+			subtotal = COALESCE(@subtotal, subtotal),
+			vendor_discount = COALESCE(@vendor_discount, vendor_discount),
+			delivery_charge = COALESCE(@delivery_charge, delivery_charge)
+		WHERE id = @id
+		RETURNING *
+	`
+
+	row, err := tx.Query(ctx, query, updates)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update order_vendor: %w", err)
+	}
+
+	oVendor, err := pgx.CollectOneRow(row, pgx.RowToStructByName[order.OrderVendor])
+	if err != nil {
+		return nil, fmt.Errorf("failed to collect updated order_vendor: %w", err)
+	}
+	return &oVendor, nil
+}
+
+
+
+//-- ==================================================
+//-- GET ORDER VENDOR BY CART ID
+//-- ==================================================
+
+
+func (r *OrderRepository) GetOrderVendorByCartID(ctx context.Context, tx pgx.Tx, cartVendorID string) (*order.OrderVendor, error) {
+	query := `SELECT * FROM order_vendors WHERE vendor_cart_id = @vendor_cart_id LIMIT 1`
+	row, err := tx.Query(ctx, query, pgx.NamedArgs{"vendor_cart_id": cartVendorID})
+	if err != nil {
+		return nil, err
+	}
+	orderVendor, err := pgx.CollectOneRow(row, pgx.RowToStructByName[order.OrderVendor])
+	if err != nil {
+		return nil, err
+	}
+	return &orderVendor, nil
+}
+
 
 
 //-- ==================================================
@@ -232,6 +220,66 @@ func (r *OrderRepository) CreateOrderItem(
 
 	return nil
 }
+//-- ==================================================
+//-- UPDATE ORDER ITEM BY order_vendor_id and menu_item_id
+//-- ==================================================
+
+func (r *OrderRepository) UpdateOrderItem(
+	ctx context.Context,
+	tx pgx.Tx,
+	orderVendorID string,
+	ci cart.CartItem,
+) error {
+	// 1️⃣ First, fetch the matching order item ID
+	var orderItemID string
+	fetchQuery := `
+		SELECT id 
+		FROM order_items
+		WHERE order_vendor_id = @order_vendor_id
+		  AND menu_item_id = @menu_item_id
+		LIMIT 1
+	`
+
+	err := tx.QueryRow(ctx, fetchQuery, pgx.NamedArgs{
+		"order_vendor_id": orderVendorID,
+		"menu_item_id":    ci.MenuItemID,
+	}).Scan(&orderItemID)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			// No existing record — you can choose to return nil or insert instead
+			return fmt.Errorf("no order_item found for order_vendor_id=%s and menu_item_id=%s", orderVendorID, ci.MenuItemID)
+		}
+		return fmt.Errorf("failed to fetch order_item id: %w", err)
+	}
+
+	// 2️⃣ Then, perform the update
+	updateQuery := `
+		UPDATE order_items
+		SET 
+			menu_item_id = COALESCE(@menu_item_id, menu_item_id),
+			quantity = COALESCE(@quantity, quantity),
+			unit_price = COALESCE(@unit_price, unit_price),
+			discount_amount = COALESCE(@discount_amount, discount_amount),
+			special_instructions = COALESCE(@special_instructions, special_instructions)
+		WHERE id = @id
+	`
+
+	_, err = tx.Exec(ctx, updateQuery, pgx.NamedArgs{
+		"id":                    orderItemID,
+		"menu_item_id":          ci.MenuItemID,
+		"quantity":              ci.Quantity,
+		"unit_price":            ci.UnitPrice,
+		"discount_amount":       ci.DiscountAmount,
+		"special_instructions":  ci.SpecialInstructions,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update order_item: %w", err)
+	}
+
+	return nil
+}
+
 
 func (r *OrderRepository) GetUserOrdersWithDetails(ctx context.Context, userId string) (*[]order.PopulatedUserOrder, error) {
 
