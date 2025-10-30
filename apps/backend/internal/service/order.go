@@ -130,3 +130,30 @@ func (s *OrderService) CreateOrder(ctx echo.Context, userID string, payload *ord
 
 	return oVendor.ID, nil
 }
+
+
+func (s *OrderService) GetOrdersByUserId(ctx echo.Context, userId string) (*[]order.PopulatedUserOrder,error){
+      logger := middleware.GetLogger(ctx)
+	orders,err := s.orderRepo.GetUserOrdersWithDetails(ctx.Request().Context(),userId)
+
+	 if err != nil {
+        logger.Error().Err(err).Msg("Failed to fetch user orders from repository")
+        return nil, err
+    }
+	return  orders,nil
+
+}
+
+
+func (s *OrderService) GetOrderByID(ctx echo.Context, payload *order.GetOrderByIDPayload) (*order.PopulatedUserOrder, error) {
+    logger := middleware.GetLogger(ctx)
+
+    order, err := s.orderRepo.GetFullOrderById(ctx.Request().Context(), payload.ID)
+    if err != nil {
+        logger.Error().Err(err).Str("order_id", payload.ID).Msg("Failed to fetch user by ID")
+        return nil, err
+    }
+
+    logger.Info().Str("order_id", payload.ID).Msg("User fetched successfully")
+    return order, nil
+}

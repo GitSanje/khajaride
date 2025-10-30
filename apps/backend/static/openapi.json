@@ -666,16 +666,6 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "id": {
-                    "type": "string",
-                    "format": "uuid"
-                  },
-                  "createdAt": {
-                    "type": "string"
-                  },
-                  "updatedAt": {
-                    "type": "string"
-                  },
                   "userId": {
                     "type": "string"
                   },
@@ -691,6 +681,12 @@
                   "phoneNumber": {
                     "type": "string"
                   },
+                  "firstName": {
+                    "type": "string"
+                  },
+                  "lastName": {
+                    "type": "string"
+                  },
                   "detailAddressDirection": {
                     "type": "string"
                   },
@@ -699,14 +695,12 @@
                   }
                 },
                 "required": [
-                  "id",
-                  "createdAt",
-                  "updatedAt",
-                  "userId",
                   "label",
                   "latitude",
                   "longitude",
                   "phoneNumber",
+                  "firstName",
+                  "lastName",
                   "detailAddressDirection",
                   "isDefault"
                 ]
@@ -723,8 +717,7 @@
                   "type": "object",
                   "properties": {
                     "id": {
-                      "type": "string",
-                      "format": "uuid"
+                      "type": "string"
                     },
                     "createdAt": {
                       "type": "string"
@@ -747,6 +740,12 @@
                     "phoneNumber": {
                       "type": "string"
                     },
+                    "firstName": {
+                      "type": "string"
+                    },
+                    "lastName": {
+                      "type": "string"
+                    },
                     "detailAddressDirection": {
                       "type": "string"
                     },
@@ -763,6 +762,8 @@
                     "latitude",
                     "longitude",
                     "phoneNumber",
+                    "firstName",
+                    "lastName",
                     "detailAddressDirection",
                     "isDefault"
                   ]
@@ -795,8 +796,7 @@
                     "type": "object",
                     "properties": {
                       "id": {
-                        "type": "string",
-                        "format": "uuid"
+                        "type": "string"
                       },
                       "createdAt": {
                         "type": "string"
@@ -819,6 +819,12 @@
                       "phoneNumber": {
                         "type": "string"
                       },
+                      "firstName": {
+                        "type": "string"
+                      },
+                      "lastName": {
+                        "type": "string"
+                      },
                       "detailAddressDirection": {
                         "type": "string"
                       },
@@ -835,6 +841,8 @@
                       "latitude",
                       "longitude",
                       "phoneNumber",
+                      "firstName",
+                      "lastName",
                       "detailAddressDirection",
                       "isDefault"
                     ]
@@ -903,8 +911,7 @@
                   "type": "object",
                   "properties": {
                     "id": {
-                      "type": "string",
-                      "format": "uuid"
+                      "type": "string"
                     },
                     "createdAt": {
                       "type": "string"
@@ -927,6 +934,12 @@
                     "phoneNumber": {
                       "type": "string"
                     },
+                    "firstName": {
+                      "type": "string"
+                    },
+                    "lastName": {
+                      "type": "string"
+                    },
                     "detailAddressDirection": {
                       "type": "string"
                     },
@@ -943,6 +956,8 @@
                     "latitude",
                     "longitude",
                     "phoneNumber",
+                    "firstName",
+                    "lastName",
                     "detailAddressDirection",
                     "isDefault"
                   ]
@@ -1029,8 +1044,7 @@
                   "type": "object",
                   "properties": {
                     "id": {
-                      "type": "string",
-                      "format": "uuid"
+                      "type": "string"
                     },
                     "createdAt": {
                       "type": "string"
@@ -1053,6 +1067,12 @@
                     "phoneNumber": {
                       "type": "string"
                     },
+                    "firstName": {
+                      "type": "string"
+                    },
+                    "lastName": {
+                      "type": "string"
+                    },
                     "detailAddressDirection": {
                       "type": "string"
                     },
@@ -1069,6 +1089,8 @@
                     "latitude",
                     "longitude",
                     "phoneNumber",
+                    "firstName",
+                    "lastName",
                     "detailAddressDirection",
                     "isDefault"
                   ]
@@ -3595,24 +3617,19 @@
             }
           },
           {
-            "name": "location",
+            "name": "lat",
             "in": "query",
             "required": true,
-            "style": "deepObject",
             "schema": {
-              "type": "object",
-              "properties": {
-                "lat": {
-                  "type": "number"
-                },
-                "lng": {
-                  "type": "number"
-                }
-              },
-              "required": [
-                "lat",
-                "lng"
-              ]
+              "type": "number"
+            }
+          },
+          {
+            "name": "lng",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number"
             }
           },
           {
@@ -3764,7 +3781,7 @@
     },
     "/v1/orders/create-order": {
       "post": {
-        "description": "Creates an order group and corresponding vendor orders from the authenticated user's active cart session.",
+        "description": "Creates an order vendor and corresponding order items from the authenticated user's active cart session.",
         "summary": "Create order from user's active cart",
         "tags": [
           "Order"
@@ -3794,7 +3811,7 @@
                     "type": "string"
                   },
                   "expectedDeliveryTime": {
-                    "type": "number"
+                    "type": "string"
                   }
                 },
                 "required": [
@@ -3836,6 +3853,601 @@
         ]
       }
     },
+    "/v1/orders/me/get-order/{userId}": {
+      "get": {
+        "description": "Get orders of current user",
+        "summary": "Get orders of current user ",
+        "tags": [
+          "Order"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "getOrdersByUserId",
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "userId": {
+                        "type": "string"
+                      },
+                      "vendorCartId": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "vendorId": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "default": "pending",
+                        "type": "string",
+                        "enum": [
+                          "pending",
+                          "accepted",
+                          "preparing",
+                          "ready_for_pickup",
+                          "assigned",
+                          "picked_up",
+                          "delivered",
+                          "cancelled",
+                          "failed"
+                        ]
+                      },
+                      "subtotal": {
+                        "default": 0,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "deliveryCharge": {
+                        "default": 0,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "vendorServiceCharge": {
+                        "default": 0,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "vat": {
+                        "default": 0,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "vendorDiscount": {
+                        "default": 0,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "total": {
+                        "default": 0,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "currency": {
+                        "default": "NPR",
+                        "type": "string"
+                      },
+                      "paymentStatus": {
+                        "default": "unpaid",
+                        "type": "string",
+                        "enum": [
+                          "unpaid",
+                          "paid",
+                          "refunded",
+                          "failed"
+                        ]
+                      },
+                      "fulfillmentType": {
+                        "default": "delivery",
+                        "type": "string",
+                        "enum": [
+                          "delivery",
+                          "pickup"
+                        ]
+                      },
+                      "deliveryAddressId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                      },
+                      "deliveryInstructions": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "expectedDeliveryTime": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "actualDeliveryTime": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "scheduledFor": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                      },
+                      "pickupReadyTime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                      },
+                      "restaurantAcceptedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                      },
+                      "driverAssignedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                      },
+                      "deliveredAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                      },
+                      "orderItems": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "created_at": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "updated_at": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "orderVendorId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "cartItemId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "menuItemId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "quantity": {
+                              "type": "integer",
+                              "minimum": 1
+                            },
+                            "unitPrice": {
+                              "type": "number",
+                              "minimum": 0
+                            },
+                            "discountAmount": {
+                              "default": 0,
+                              "type": "number",
+                              "minimum": 0
+                            },
+                            "specialInstructions": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "subtotal": {
+                              "type": "number",
+                              "minimum": 0
+                            },
+                            "ZCartItem": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "createdAt": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "updatedAt": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "cartVendorId": {
+                                  "type": "string"
+                                },
+                                "menuItemId": {
+                                  "type": "string"
+                                },
+                                "quantity": {
+                                  "type": "integer",
+                                  "minimum": 1
+                                },
+                                "unitPrice": {
+                                  "type": "number",
+                                  "minimum": 0
+                                },
+                                "discountAmount": {
+                                  "type": "number",
+                                  "minimum": 0
+                                },
+                                "specialInstructions": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "subtotal": {
+                                  "type": "number",
+                                  "minimum": 0
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "createdAt",
+                                "updatedAt",
+                                "cartVendorId",
+                                "menuItemId",
+                                "quantity",
+                                "unitPrice",
+                                "discountAmount",
+                                "subtotal"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "created_at",
+                            "updated_at",
+                            "orderVendorId",
+                            "menuItemId",
+                            "quantity",
+                            "unitPrice",
+                            "subtotal",
+                            "ZCartItem"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "created_at",
+                      "updated_at",
+                      "userId",
+                      "vendorId",
+                      "orderItems"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/orders/get-order/{id}": {
+      "get": {
+        "description": "Get order by Id",
+        "summary": "Get order by Id",
+        "tags": [
+          "Order"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "getOrderById",
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updated_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "userId": {
+                      "type": "string"
+                    },
+                    "vendorCartId": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "vendorId": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "default": "pending",
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "accepted",
+                        "preparing",
+                        "ready_for_pickup",
+                        "assigned",
+                        "picked_up",
+                        "delivered",
+                        "cancelled",
+                        "failed"
+                      ]
+                    },
+                    "subtotal": {
+                      "default": 0,
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "deliveryCharge": {
+                      "default": 0,
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "vendorServiceCharge": {
+                      "default": 0,
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "vat": {
+                      "default": 0,
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "vendorDiscount": {
+                      "default": 0,
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "total": {
+                      "default": 0,
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "currency": {
+                      "default": "NPR",
+                      "type": "string"
+                    },
+                    "paymentStatus": {
+                      "default": "unpaid",
+                      "type": "string",
+                      "enum": [
+                        "unpaid",
+                        "paid",
+                        "refunded",
+                        "failed"
+                      ]
+                    },
+                    "fulfillmentType": {
+                      "default": "delivery",
+                      "type": "string",
+                      "enum": [
+                        "delivery",
+                        "pickup"
+                      ]
+                    },
+                    "deliveryAddressId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "deliveryInstructions": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "expectedDeliveryTime": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "actualDeliveryTime": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "scheduledFor": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
+                    },
+                    "pickupReadyTime": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
+                    },
+                    "restaurantAcceptedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
+                    },
+                    "driverAssignedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
+                    },
+                    "deliveredAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
+                    },
+                    "orderItems": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "created_at": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "updated_at": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "orderVendorId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "cartItemId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true
+                          },
+                          "menuItemId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "quantity": {
+                            "type": "integer",
+                            "minimum": 1
+                          },
+                          "unitPrice": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "discountAmount": {
+                            "default": 0,
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "specialInstructions": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "subtotal": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "ZCartItem": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "createdAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "updatedAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "cartVendorId": {
+                                "type": "string"
+                              },
+                              "menuItemId": {
+                                "type": "string"
+                              },
+                              "quantity": {
+                                "type": "integer",
+                                "minimum": 1
+                              },
+                              "unitPrice": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "discountAmount": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "specialInstructions": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "subtotal": {
+                                "type": "number",
+                                "minimum": 0
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "createdAt",
+                              "updatedAt",
+                              "cartVendorId",
+                              "menuItemId",
+                              "quantity",
+                              "unitPrice",
+                              "discountAmount",
+                              "subtotal"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "created_at",
+                          "updated_at",
+                          "orderVendorId",
+                          "menuItemId",
+                          "quantity",
+                          "unitPrice",
+                          "subtotal",
+                          "ZCartItem"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "created_at",
+                    "updated_at",
+                    "userId",
+                    "vendorId",
+                    "orderItems"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/v1/payments/khalti/initiate": {
       "post": {
         "description": "Creates a new Khalti payment session and returns a payment URL for the user to complete payment.",
@@ -3852,14 +4464,6 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "return_url": {
-                    "type": "string",
-                    "format": "uri"
-                  },
-                  "website_url": {
-                    "type": "string",
-                    "format": "uri"
-                  },
                   "amount": {
                     "type": "number",
                     "minimum": 0,
@@ -3875,8 +4479,6 @@
                   }
                 },
                 "required": [
-                  "return_url",
-                  "website_url",
                   "amount",
                   "purchase_order_id",
                   "purchase_order_name"

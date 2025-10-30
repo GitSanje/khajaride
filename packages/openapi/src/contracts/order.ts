@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { initContract } from "@ts-rest/core";
 import { getSecurityMetadata } from "../utils.js";
-import { ZCreateOrderPayload, ZOrderGroup} from "@khajaride/zod"; 
+import { ZCreateOrderPayload, ZPopulatedUserOrder} from "@khajaride/zod"; 
 
 const c = initContract();
 const metadata = getSecurityMetadata();
@@ -24,7 +24,35 @@ export const orderContract = c.router(
       },
       summary: "Create order from user's active cart",
       description:
-        "Creates an order group and corresponding vendor orders from the authenticated user's active cart session.",
+        "Creates an order vendor and corresponding order items from the authenticated user's active cart session.",
+      metadata,
+    },
+     getOrdersByUserId: {
+      path: "/orders/me/get-order/:userId",
+      pathParams: z.object({
+            userId: z.string().optional(),
+        }),
+      method: "GET",
+      responses: {
+        200: z.array(ZPopulatedUserOrder), 
+      },
+      summary: "Get orders of current user ",
+      description:
+        "Get orders of current user",
+      metadata,
+    },
+    getOrderById: {
+      path: "/orders/get-order/:id",
+      pathParams: z.object({
+            id: z.string(),
+        }),
+      method: "GET",
+      responses: {
+        200: ZPopulatedUserOrder, 
+      },
+      summary: "Get order by Id",
+      description:
+        "Get order by Id",
       metadata,
     },
   },

@@ -10,13 +10,10 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Separator } from "@/components/ui/separator"
 import {
-  ArrowLeft,
   MapPin,
   CreditCard,
-  Wallet,
   Clock,
   ShoppingCart,
-  Trash2,
   Edit2,
   CheckCircle,
   ChevronRight,
@@ -24,8 +21,6 @@ import {
   User,
   Phone,
   Navigation,
-  Currency,
-  PiggyBank,
   Banknote,
 } from "lucide-react"
 import Link from "next/link"
@@ -39,7 +34,7 @@ import { useGetAddresses } from "@/api/hooks/use-user-query"
 import { useGetCartTotals } from "@/api/hooks/use-cart-query"
 import { useCreateOrder } from "@/api/hooks/use-order-query"
 import { useInitiateKhaltiPayment } from "@/api/hooks/use-payment-query"
-import { se } from "date-fns/locale"
+
 
 type CheckoutStep = "address" | "payment" | "confirm"
 

@@ -25,3 +25,14 @@ func (p *CreateOrderPayload) Validate() error {
 	validate := validator.New()
 	return validate.Struct(p)
 }
+
+
+
+type GetOrderByIDPayload struct {
+	ID string `param:"id" validate:"required"`
+}
+
+func (p *GetOrderByIDPayload) Validate() error {
+	validate := validator.New()
+	return validate.Struct(p)
+}

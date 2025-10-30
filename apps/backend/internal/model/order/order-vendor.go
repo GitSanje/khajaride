@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/gitSanje/khajaride/internal/model"
+	"github.com/gitSanje/khajaride/internal/model/user"
+	"github.com/gitSanje/khajaride/internal/model/vendor"
 )
 
 type OrderVendor struct {
@@ -36,34 +38,20 @@ type OrderVendor struct {
 }
 
 
-type OrderVendorInfo struct {
-	ID         string       `json:"id"`
-	Subtotal   float64      `json:"subtotal"`
-	Vendor     VendorDetail `json:"vendor"`
-	OrderItems []OrderItemInfo  `json:"orderItems"`
+type OrderItems struct {
+	MenuItem vendor.MenuItem `json:"menuItem"`
+	OrderItem OrderItem    `json:"orderItem"`
 }
 
-type VendorDetail struct {
-	ID     string   `json:"id"`
-	Name   string   `json:"name"`
-	ImgURL *string  `json:"imgUrl,omitempty"`
-	Rating *float64 `json:"rating,omitempty"`
-}
-
-type OrderItemInfo struct {
-	ID        string     `json:"id"`
-	Quantity  int        `json:"quantity"`
-	UnitPrice float64    `json:"unitPrice"`
-	MenuItem  MenuDetail `json:"menuItem"`
-}
-
-type MenuDetail struct {
-	ID          string  `json:"id"`
+type VendorInfo struct {
 	Name        string  `json:"name"`
-	Description *string `json:"description,omitempty"`
+	Cuisine     string `json:"cuisine"`
+	Image       *string  `json:"image"`
 }
 
 type PopulatedUserOrder struct {
-	OrderGroup
-	Vendors    []OrderVendorInfo `json:"vendors"`        
+	OrderVendor
+	OrderItems     OrderItems   `json:"orderItems"`
+	DeliveryAddress user.UserAddress `json:"deliveryAddress"`
+	Vendor         VendorInfo     `json:"vendor"`
 }

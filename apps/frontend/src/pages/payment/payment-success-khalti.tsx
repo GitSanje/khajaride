@@ -1,15 +1,17 @@
-// components/PaymentSuccess.tsx
-import React, { useEffect, useState } from 'react';
+
 import { useSearchParams, Link } from 'react-router-dom';
 import { CheckCircle, Download, Home, ShoppingBag } from 'lucide-react';
+import { useGetOrderById } from '@/api/hooks/use-order-query';
+import  type { PopulatedUserOrder } from '@khajaride/zod';
 
-interface PaymentSuccessProps {
-  orderData?: any;
-}
 
-const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ orderData }) => {
+
+const PaymentSuccess= () => {
   const [searchParams] = useSearchParams();
-  const [order, setOrder] = useState(orderData);
+  const orderId = searchParams.get('purchase_order_id')
+  const { data: order, isPending} = useGetOrderById({
+    id:orderId!
+  })
   
   // Extract payment parameters from URL
   const paymentData = {
@@ -20,23 +22,7 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ orderData }) => {
     mobile: searchParams.get('mobile')
   };
 
-  useEffect(() => {
-    // If no order data passed as prop, fetch order details
-    if (!orderData && paymentData.purchaseOrderId) {
-      fetchOrderDetails(paymentData.purchaseOrderId);
-    }
-  }, [paymentData.purchaseOrderId, orderData]);
-
-  const fetchOrderDetails = async (orderId: string) => {
-    try {
-      const response = await fetch(`/api/orders/${orderId}`);
-      const orderDetails = await response.json();
-      setOrder(orderDetails);
-    } catch (error) {
-      console.error('Error fetching order details:', error);
-    }
-  };
-
+ 
   const downloadReceipt = () => {
     // Implement receipt download logic
     const receiptData = {

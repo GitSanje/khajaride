@@ -283,45 +283,35 @@ func (r *OrderRepository) UpdateOrderItem(
 
 func (r *OrderRepository) GetUserOrdersWithDetails(ctx context.Context, userId string) (*[]order.PopulatedUserOrder, error) {
 
-	//f3619298-77dc-4704-a742-1e905273daa6
 	query := `
-	SELECT 
-    og.*,
-    jsonb_agg(
-        camel(jsonb_build_object(
-            'id', ov.id,
-            'vendor', camel(jsonb_build_object(
-                'id', v.id,
-                'name', v.name,
-                'img_url', v.vendor_listing_image_name,
-                'rating', v.rating
-            )),
-            'subtotal', ov.subtotal,
-            'order_items', (
-                SELECT jsonb_agg(
-                    camel(jsonb_build_object(
-                        'id', oi.id,
-                        'menu_item', camel(jsonb_build_object(
-                            'id', mi.id,
-                            'name', mi.name,
-                            'description', mi.description
-                        )),
-                        'quantity', oi.quantity,
-                        'unit_price', oi.unit_price
-                    ))
-                )
-                FROM order_items oi
-                JOIN menu_items mi ON oi.menu_item_id = mi.id
-                WHERE oi.order_vendor_id = ov.id
-            )
-        ))
-    ) AS vendors
-	FROM order_groups og
-	JOIN vendors v ON v.id = ov.vendor_id
-	WHERE og.user_id = $1
-	GROUP BY og.id
-	ORDER BY og.created_at DESC;
-
+		SELECT 
+		ov.*,
+		jsonb_agg(
+			jsonb_build_object ( 'orderItem',camel(to_jsonb(oi.*))) || 
+			jsonb_build_object ( 'menuItem',camel(to_jsonb(mi.*))) 
+		) AS order_items,
+		(
+			SELECT camel(to_jsonb(ua))
+			FROM user_addresses ua
+			WHERE ua.id = ov.delivery_address_id
+			LIMIT 1
+		) AS delivery_address,
+		 	(
+			SELECT camel(jsonb_build_object(
+			 'name',v.name,
+			 'cuisine',v.cuisine,
+			 'image',v.vendor_listing_image_name
+			))
+			FROM vendors v
+			WHERE v.id = ov.vendor_id
+			LIMIT 1
+		) AS vendor
+	FROM order_vendors ov
+	JOIN order_items oi ON oi.order_vendor_id = ov.id
+	JOIN menu_items mi ON mi.id = oi.menu_item_id
+	WHERE ov.user_id = $1
+	GROUP BY ov.id
+	ORDER BY ov.created_at DESC;
 	`
 
 	rows, err := r.server.DB.Pool.Query(ctx, query, userId)
@@ -336,6 +326,45 @@ func (r *OrderRepository) GetUserOrdersWithDetails(ctx context.Context, userId s
 	}
 
 	return &og, nil
+}
+
+
+
+
+func (r *OrderRepository) GetFullOrderById(ctx context.Context, orderID string) (*order.PopulatedUserOrder, error) {
+
+	query := `
+		SELECT 
+		ov.*,
+		jsonb_agg(
+			jsonb_build_object ( 'orderItem',camel(to_jsonb(oi.*))) || 
+			jsonb_build_object ( 'menuItem',camel(to_jsonb(mi.*))) 
+		) AS order_items,
+		(
+			SELECT camel(to_jsonb(ua))
+			FROM user_addresses ua
+			WHERE ua.id = ov.delivery_address_id
+			LIMIT 1
+		) AS delivery_address
+		FROM order_vendors ov
+		JOIN order_items oi ON oi.order_vendor_id = ov.id
+		JOIN menu_items mi ON mi.id = oi.menu_item_id
+		WHERE ov.id = $1
+		GROUP BY ov.id
+		`
+
+	rows, err := r.server.DB.Pool.Query(ctx, query, orderID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	order, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[order.PopulatedUserOrder])
+	if err != nil {
+		return nil, err
+	}
+
+	return &order, nil
 }
 
 

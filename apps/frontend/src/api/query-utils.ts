@@ -19,7 +19,9 @@ export const QUERY_KEYS = {
     GET_CART_TOTALS:"getCartTotals"
   },
   ORDER:{
-    CREATE_ORDER:"createOrder"
+    CREATE_ORDER:"createOrder",
+    GET_ORDER_BY_ID:"getOrderById",
+    GET_USER_ORDERS:"getUserOrders",
   },
   PAYMENT:{
     INITIATE_PAYMENT:"initiatePayment"
