@@ -102,7 +102,7 @@ CREATE TABLE payouts (
 
     vendor_id TEXT REFERENCES vendors(id),         -- nullable for system-level payouts
     order_id TEXT REFERENCES order_vendors(id),   -- nullable for system-level payouts
-    account_id TEXT NOT NULL REFERENCES payout_accounts(id),
+    account_id TEXT REFERENCES payout_accounts(id),
     account_type TEXT NOT NULL CHECK (account_type IN ('vendor', 'system')),
 
     payout_type TEXT NOT NULL CHECK (
@@ -110,7 +110,8 @@ CREATE TABLE payouts (
             'vendor_payout',    -- payout to vendor
             'commission',       -- platform commission
             'refund',           -- refund to user
-            'adjustment'        -- manual adjustments
+            'adjustment' ,       -- manual adjustments
+            'user_payout'
         )
     ),
     

@@ -33,6 +33,7 @@ require (
 require (
 	github.com/elastic/elastic-transport-go/v8 v8.7.0 // indirect
 	github.com/elastic/go-elasticsearch/v8 v8.19.0 // indirect
+	github.com/stripe/stripe-go/v83 v83.1.0 // indirect
 )
 
 require (

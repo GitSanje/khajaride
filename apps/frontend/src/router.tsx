@@ -11,6 +11,7 @@ import VendorOnboardingPage from "./pages/vendor-onboarding/vendor-onboarding";
 import CheckoutPage from "./pages/checkout/checkout";
 import PaymentSuccess from "./pages/payment/payment-success-khalti";
 import UserOrders from "./pages/order/user-orders";
+import PaymentFailure from "./pages/payment/payment-failure-khalti";
 
 
 
@@ -90,6 +91,14 @@ const routes = createRoutesFromElements(
       element={
         <ProtectedRoute>
           <PaymentSuccess />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/payment/payment-failed"
+      element={
+        <ProtectedRoute>
+          <PaymentFailure />
         </ProtectedRoute>
       }
     />

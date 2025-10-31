@@ -29,6 +29,34 @@ export const ZKhaltiVerifyPaymentResponse = z.object({
   refunded: z.boolean(),
 });
 
+
+
+// -------------------- Stripe: Initiate Payment --------------------
+export const ZStripePaymentPayload = z.object({
+  purchase_order_id: z.string(),
+  purchase_order_name: z.string(),
+  amount: z.number().positive(),
+  currency: z.string().optional().nullable(),
+});
+
+export const ZStripePaymentResponse = z.object({
+  url: z.string().url(), 
+});
+
+// -------------------- Stripe: Verify Payment --------------------
+export const ZStripeVerifyPaymentPayload = z.object({
+  session_id: z.string(),
+  purchase_order_id: z.string(),
+  purchase_order_name: z.string(),
+  amount: z.number().positive(),
+});
+
+export const ZStripeVerifyPaymentResponse = z.object({
+  status: z.string().optional(), 
+});
+
+
+
 export type KhaltiVerifyPaymentResponse = z.infer<typeof ZKhaltiVerifyPaymentResponse>;
 export type KhaltiPaymentResponse = z.infer<typeof ZKhaltiPaymentResponse>;
 export type KhaltiVerifyPaymentPayload = z.infer<typeof ZKhaltiVerifyPaymentPayload>;

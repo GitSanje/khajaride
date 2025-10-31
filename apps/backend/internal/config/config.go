@@ -20,19 +20,27 @@ type Config struct {
 	Integration   IntegrationConfig    `koanf:"integration" validate:"required"`
 	Observability *ObservabilityConfig `koanf:"observability"`
 	Webhooks      *WebhookConfig       `koanf:"webhooks"`
-	Elasticsearch  *ElasticsearchConfig `koanf:"elasticsearch"`
+	Elasticsearch *ElasticsearchConfig `koanf:"elasticsearch"`
 	Khalti        *KhaltiConfig        `koanf:"khalti"`
-
+	Stripe        *StripeConfig        `koanf:"stripe"`
 }
 
 type KhaltiConfig struct {
-	PublicKey  string `koanf:"public_key" validate:"required"`
-	SecretKey  string `koanf:"secret_key" validate:"required"`
-	ReturnURL  string `koanf:"return_url" validate:"required"`
-	WebsiteURL string `koanf:"website_url" validate:"required"`
+	PublicKey   string `koanf:"public_key" validate:"required"`
+	SecretKey   string `koanf:"secret_key" validate:"required"`
+	ReturnURL   string `koanf:"return_url" validate:"required"`
+	WebsiteURL  string `koanf:"website_url" validate:"required"`
 	InitiateURL string `koanf:"initiate_url" validate:"required"`
 	VerifyURL   string `koanf:"verify_url" validate:"required"`
-	FrontEndURL string  `koanf:"frontend_url" validate:"required"`
+	FrontEndURL string `koanf:"frontend_url" validate:"required"`
+}
+
+type StripeConfig struct {
+	PublicKey   string `koanf:"public_key" validate:"required"`
+	SecretKey   string `koanf:"secret_key" validate:"required"`
+	SuccessURL   string `koanf:"success_url" validate:"required"`
+	CancelURL   string `koanf:"cancel_url" validate:"required"`
+	FrontEndURL string `koanf:"frontend_url" validate:"required"`
 }
 
 type ElasticsearchConfig struct {

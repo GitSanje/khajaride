@@ -6,6 +6,9 @@ import {
   ZKhaltiPaymentResponse,
   ZKhaltiVerifyPaymentResponse,
   ZKhaltiVerifyPaymentPayload,
+  ZStripePaymentPayload,
+  ZStripePaymentResponse
+
 } from "@khajaride/zod";
 const c = initContract();
 const metadata = getSecurityMetadata();
@@ -42,7 +45,23 @@ export const paymentContract = c.router(
         "Verifies the payment with Khalti using the PIDX and confirms whether it succeeded or failed.",
       metadata,
     },
+    // -------------------- Initiate Stripe Payment --------------------
+    initiateStripePayment: {
+      path: "/payments/stripe/initiate",
+      method: "POST",
+      body: ZStripePaymentPayload,
+      responses: {
+        201: ZStripePaymentResponse,
+      },
+      summary: "Initiate stripe payment session",
+      description:
+        "Creates a new stripe payment session and returns a payment URL for the user to complete payment.",
+      metadata,
+    },
+
   },
+
+  
   {
     pathPrefix: "/v1",
   }

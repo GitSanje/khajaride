@@ -414,15 +414,36 @@ func (r *OrderRepository) CreatePayout(ctx context.Context, tx pgx.Tx, p *payout
 
 
 
-func (pr *OrderRepository) MarkOrderPaid(ctx context.Context,   orderID string) error {
+func (pr *OrderRepository) MarkOrder(ctx context.Context,   orderID string, status string) error {
 	query := `
 		UPDATE order_vendors
 		SET payment_status = $1
 		WHERE id = $2
 	`
-     _, err := pr.server.DB.Pool.Exec(ctx, query, "paid", orderID)
+     _, err := pr.server.DB.Pool.Exec(ctx, query, status, orderID)
 	if err != nil {
 		return err
 	}
+	return nil
+}
+func (pr *OrderRepository) MarkOrderPaidAndCheckout(ctx context.Context, orderID string) error {
+	query := `
+		WITH updated_cart AS (
+			UPDATE cart_vendors cv
+			SET status = 'checked_out'
+			FROM order_vendors ov
+			WHERE ov.id = $1 AND ov.vendor_cart_id = cv.id
+			RETURNING ov.id
+		)
+		UPDATE order_vendors
+		SET payment_status = 'paid'
+		WHERE id IN (SELECT id FROM updated_cart)
+	`
+
+	_, err := pr.server.DB.Pool.Exec(ctx, query, orderID)
+	if err != nil {
+		return fmt.Errorf("update order and cart status: %w", err)
+	}
+
 	return nil
 }

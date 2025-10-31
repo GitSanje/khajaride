@@ -33,7 +33,7 @@ import { useParams } from "react-router-dom"
 import { useGetAddresses } from "@/api/hooks/use-user-query"
 import { useGetCartTotals } from "@/api/hooks/use-cart-query"
 import { useCreateOrder } from "@/api/hooks/use-order-query"
-import { useInitiateKhaltiPayment } from "@/api/hooks/use-payment-query"
+import { useInitiateKhaltiPayment, useInitiateStripePayment } from "@/api/hooks/use-payment-query"
 
 
 type CheckoutStep = "address" | "payment" | "confirm"
@@ -53,32 +53,32 @@ export default function CheckoutPage() {
 
 
   useEffect(() => {
-  if (!isPending && addresses && addresses.length > 0) {
-    const found = addresses.find(address => address.isDefault);
-    if (found) {
-      setDeliveryAddress({
-        id: found.id,
-        label: found.label,
-        firstName: found.firstName,
-        lastName: found.lastName,
-        phoneNumber: found.phoneNumber,
-        latitude: found.latitude,
-        longitude: found.longitude,
-        isDefault: !!found.isDefault,
-        detailAddressDirection: found.detailAddressDirection ?? undefined,
-      });
+    if (!isPending && addresses && addresses.length > 0) {
+      const found = addresses.find(address => address.isDefault);
+      if (found) {
+        setDeliveryAddress({
+          id: found.id,
+          label: found.label,
+          firstName: found.firstName,
+          lastName: found.lastName,
+          phoneNumber: found.phoneNumber,
+          latitude: found.latitude,
+          longitude: found.longitude,
+          isDefault: !!found.isDefault,
+          detailAddressDirection: found.detailAddressDirection ?? undefined,
+        });
+      }
     }
-  }
- 
-}, [addresses, isPending]);
 
-  
+  }, [addresses, isPending]);
 
 
- 
+
+
+
 
   const cartVendor = cartVendors?.filter(vendor => vendor.id === cartVendorId) || []
-  
+
   const deliveryDistanceByVendor = useMemo(() => {
     if (!deliveryAddress || !cartVendor.length) return {}
 
@@ -104,76 +104,101 @@ export default function CheckoutPage() {
   const tax = cartVendor.reduce((sum, vendor) => sum + (vendor.vat || 0), 0)
   const pointsDiscount = usePoints ? Math.min(loyaltyPoints * 0.01, subtotal * 0.2) : 0
   const vendorTotal = cartVendor.reduce((sum, vendor) => sum + (vendor.total || 0), 0)
-  const total = vendorTotal  - pointsDiscount
+  const total = vendorTotal - pointsDiscount
 
   const cartVendorData = cartVendors?.find(vendor => vendor.id === cartVendorId)
 
-  const getCartTotalQuery =  {
+  const getCartTotalQuery = {
     vendorId: cartVendorData?.vendor.id ?? '', // fallback empty string
     cartVendorId: cartVendorId ?? '',
     lat: Number(deliveryAddress?.latitude) || 0,
     lng: Number(deliveryAddress?.longitude) || 0,
     distanceKM: deliveryDistanceByVendor[cartVendorData?.vendor.id ?? ''] ?? 0,
     subtotal: subtotal ?? 0,
-    userId: '', 
+    userId: '',
     couponCode: undefined,
   }
 
 
-  const {data: cartTotals} = useGetCartTotals({
-    query:getCartTotalQuery
+  const { data: cartTotals } = useGetCartTotals({
+    query: getCartTotalQuery
     ,
     enabled: !!cartVendorData && !!deliveryAddress
   })
 
-  console.log(cartTotals,'cartTotals');
-  
+  console.log(cartTotals, 'cartTotals');
+
   const handleAddressSubmit = (data: DeliveryAddressFormData) => {
     setDeliveryAddress(data)
   }
 
 
-    const createOrder = useCreateOrder()
+  const createOrder = useCreateOrder()
 
-  const handleReviewContinue = async() => {
+  const handleReviewContinue = async () => {
 
-        const res = await createOrder.mutateAsync({
-      body:{
+    const res = await createOrder.mutateAsync({
+      body: {
         cartVendorId,
         DeliveryAddressId: deliveryAddress?.id!,
         expectedDeliveryTime: cartTotals?.estimatedDeliveryTime || '',
         deliveryInstructions: '',
-       
+
       }
     })
 
-    if(res){
+    if (res) {
       setOrderId(res.orderId)
       setCurrentStep("confirm")
-      
-      console.log("order created",res);
-      
+
+      console.log("order created", res);
+
     }
-    
+
   }
 
 
-   const initiatePayment = useInitiateKhaltiPayment()
-
-  const handleInitiatePayment = async() => {
+  const initiateKhaltiPayment = useInitiateKhaltiPayment()
+  const initiateStripePayment = useInitiateStripePayment()
+  const handleInitiatePayment = async (method: string) => {
 
     if (!deliveryAddress) return
-    const res = await initiatePayment.mutateAsync({
-      body:{
-        amount: total,
-        purchase_order_id: orderId!,
-        purchase_order_name: `Order_${orderId}`,
+
+    if (method == "khalti") {
+      const res = await initiateKhaltiPayment.mutateAsync({
+        body: {
+          amount: total,
+          purchase_order_id: orderId!,
+          purchase_order_name: `Order_${orderId}`,
+        }
+
+
+      })
+      if (res) {
+        window.location.href = res.payment_url
+        console.log(`${method} payment initiated`, res);
+
       }
-    })
-    if(res){
-      window.location.href = res.payment_url
-      console.log("Khalti payment initiated",res);
+
+    } else if (method == "card") {
+
+      const res = await initiateStripePayment.mutateAsync({
+        body: {
+          amount: total,
+          purchase_order_id: orderId!,
+          purchase_order_name: `Order_${orderId}`,
+        }
+
+      })
+      if (res) {
+        window.location.href = res.url
+        console.log(`${method} payment initiated`, res);
+
+      }
+
     }
+
+
 
   }
 
@@ -212,13 +237,12 @@ export default function CheckoutPage() {
               {steps.map((step, index) => (
                 <div key={step.id} className="flex items-center flex-1">
                   <div
-                    className={`flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all ${
-                      currentStep === step.id
+                    className={`flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all ${currentStep === step.id
                         ? "border-primary bg-primary text-primary-foreground"
                         : steps.findIndex((s) => s.id === currentStep) > index
                           ? "border-primary bg-primary text-primary-foreground"
                           : "border-muted bg-muted text-muted-foreground"
-                    }`}
+                      }`}
                   >
                     {step.icon}
                   </div>
@@ -227,9 +251,8 @@ export default function CheckoutPage() {
                   </div>
                   {index < steps.length - 1 && (
                     <div
-                      className={`flex-1 h-1 mx-4 rounded transition-all ${
-                        steps.findIndex((s) => s.id === currentStep) > index ? "bg-primary" : "bg-muted"
-                      }`}
+                      className={`flex-1 h-1 mx-4 rounded transition-all ${steps.findIndex((s) => s.id === currentStep) > index ? "bg-primary" : "bg-muted"
+                        }`}
                     />
                   )}
                 </div>
@@ -279,7 +302,7 @@ export default function CheckoutPage() {
                         </div>
                       </div>
                       <div className="space-y-2">
-                       
+
                         {deliveryAddress.detailAddressDirection && (
                           <div className="flex items-start gap-2 mt-2">
                             <Navigation className="w-4 h-4 text-green-600 mt-0.5" />
@@ -342,7 +365,7 @@ export default function CheckoutPage() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-4">
-                       <div className="flex items-center space-x-3 p-4 border-2 rounded-lg hover:border-primary transition-colors cursor-pointer">
+                      <div className="flex items-center space-x-3 p-4 border-2 rounded-lg hover:border-primary transition-colors cursor-pointer">
                         <RadioGroupItem value="cash" id="cash" />
                         <Label htmlFor="cash" className="flex items-center gap-3 cursor-pointer flex-1 text-base">
                           <Banknote className="w-5 h-5" />
@@ -356,16 +379,16 @@ export default function CheckoutPage() {
                           Credit/Debit Card
                         </Label>
                       </div>
-                      
+
 
                       <div className="space-y-4 mt-6 pt-6 border-t">
                         <div className="grid grid-cols-2 gap-4">
-                         
+
                           <Button
                             variant="outline"
-                            onClick={() =>setPaymentMethod("khalti")}
+                            onClick={() => setPaymentMethod("khalti")}
                             className={`h-20 border-2 hover:border-primary hover:bg-blue-50 dark:hover:bg-blue-950/20 ${paymentMethod === "khalti" ? " border-primary bg-blue-100 bg-blue-50 dark:bg-blue-950/20" : ""}`}
-                          > 
+                          >
                             <div className="flex flex-col items-center gap-2">
                               <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
                                 <span className="text-white font-bold text-xs">K</span>
@@ -379,7 +402,7 @@ export default function CheckoutPage() {
                             variant="outline"
                             className={`h-20 border-2 hover:border-primary hover:bg-green-50 dark:hover:bg-green-950/20 ${paymentMethod === "esewa" ? " border-primary bg-green-100 bg-green-50 dark:bg-green-950/20" : ""}`}
                           >
-                           
+
                             <div className="flex flex-col items-center gap-2">
                               <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
                                 <span className="text-white font-bold text-xs">E</span>
@@ -391,34 +414,10 @@ export default function CheckoutPage() {
                       </div>
                     </RadioGroup>
 
-                    {paymentMethod === "card" && (
-                      <div className="space-y-5 mt-6 pt-6 border-t">
-                        <div>
-                          <Label htmlFor="cardNumber" className="text-base font-semibold">
-                            Card Number
-                          </Label>
-                          <Input id="cardNumber" placeholder="1234 5678 9012 3456" className="mt-2 text-base py-3" />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label htmlFor="expiry" className="text-base font-semibold">
-                              Expiry Date
-                            </Label>
-                            <Input id="expiry" placeholder="MM/YY" className="mt-2 text-base py-3" />
-                          </div>
-                          <div>
-                            <Label htmlFor="cvv" className="text-base font-semibold">
-                              CVV
-                            </Label>
-                            <Input id="cvv" placeholder="123" className="mt-2 text-base py-3" />
-                          </div>
-                        </div>
-                      </div>
-                    )}
 
-                   
-                      
-                    
+
+
+
                   </CardContent>
                 </Card>
               )}
@@ -474,8 +473,8 @@ export default function CheckoutPage() {
                       <h3 className="text-lg font-semibold">Payment Method</h3>
                       <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
                         <p className="font-semibold">
-                          {paymentMethod === "card" ? "Credit/Debit Card" : 
-                           paymentMethod === "wallet" ? "Digital Wallet" : paymentMethod}
+                          {paymentMethod === "card" ? "Credit/Debit Card" :
+                            paymentMethod === "wallet" ? "Digital Wallet" : paymentMethod}
                         </p>
                         <p className="text-sm text-muted-foreground mt-1">
                           {paymentMethod === "khalti" ? "You'll be redirected to your wallet app" : "Card payment secured with encryption"}
@@ -520,7 +519,7 @@ export default function CheckoutPage() {
                 )}
                 {currentStep === "confirm" && (
                   <Button
-                    onClick={handleInitiatePayment}
+                    onClick={()=> handleInitiatePayment(paymentMethod)}
                     className="flex-1 bg-green-500 hover:bg-green-600 text-base py-6 font-semibold"
                   >
                     {paymentMethod === "khalti" ? "Proceed to Khalti" : paymentMethod === "esewa" ? "Proceed to eSewa" : paymentMethod === "card" ? "Proceed to Card" : "Place Order"}
@@ -555,7 +554,7 @@ export default function CheckoutPage() {
                             {vendor.cartItems.map((item) => (
                               <div key={item.cartItem.id} className="flex justify-between text-sm">
                                 <span className="flex-1">
-                                  {item.cartItem.quantity}x { item.cartItem.unitPrice}
+                                  {item.cartItem.quantity}x {item.cartItem.unitPrice}
                                 </span>
                                 <span className="font-medium">Rs. {(item.cartItem.unitPrice * item.cartItem.quantity).toFixed(2)}</span>
                               </div>
@@ -575,7 +574,7 @@ export default function CheckoutPage() {
                         <div className="flex justify-between text-green-600">
                           <span>Delivery Fee</span>
                           <span>
-                            Rs. {deliveryAddress?.latitude ? cartTotals?.deliveryFee: "TBD"}
+                            Rs. {deliveryAddress?.latitude ? cartTotals?.deliveryFee : "TBD"}
                           </span>
                         </div>
                         <div className="flex justify-between">

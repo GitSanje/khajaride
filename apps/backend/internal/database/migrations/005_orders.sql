@@ -234,7 +234,7 @@ CREATE TABLE order_payments (
     transaction_id TEXT,
     amount NUMERIC(10,2) NOT NULL,
     status TEXT NOT NULL CHECK (status IN ('initiated', 'success', 'failed', 'refunded')),
-    method TEXT CHECK (method IN ('esewa', 'khalti', 'card', 'cod')), --COD-> Cash on Delivery
+    method TEXT , --COD-> Cash on Delivery
     paid_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP

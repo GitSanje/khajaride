@@ -10,9 +10,16 @@ import { toast } from "sonner";
 
 export type TInitiateKhaltiPaymentPayload = TRequests['Payment']['initiateKhaltiPayment']['body']
 
+export type TInitiateStripePaymentPayload = TRequests['Payment']['initiateStripePayment']['body']
+
 
 export type InitiateKhaltiPaymentResponse = ServerInferResponseBody<
   typeof apiContract.Payment.initiateKhaltiPayment,
+  201
+>;
+
+export type InitiateStripePaymentResponse = ServerInferResponseBody<
+  typeof apiContract.Payment.initiateStripePayment,
   201
 >;
 
@@ -56,6 +63,40 @@ const VerifyKhaltiPayment = async ({
   } else {
     throw res.body;
   }
+};
+
+
+
+const InitiateStripePayment = async ({
+  api,
+  data,
+}: {
+  api: TApiClient;
+  data: TInitiateStripePaymentPayload;
+}): Promise<InitiateStripePaymentResponse> => {
+  const res = await api.Payment.initiateStripePayment({ body: data });
+
+  if (res.status === 201) {
+    return res.body;
+  } else {
+    throw res.body;
+  }
+};
+
+
+export const useInitiateStripePayment= () => {
+  const api = useApiClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ body }: { body: TInitiateStripePaymentPayload }) => InitiateStripePayment({ api, data: body }),
+    onSuccess: () => {
+
+    },
+    onError: (err) => {
+      showApiErrorToast(err, "Failed to create order");
+    },
+  });
 };
 
 

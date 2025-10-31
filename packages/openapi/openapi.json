@@ -3853,23 +3853,14 @@
         ]
       }
     },
-    "/v1/orders/me/get-order/{userId}": {
+    "/v1/orders/me/get-order": {
       "get": {
         "description": "Get orders of current user",
         "summary": "Get orders of current user ",
         "tags": [
           "Order"
         ],
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "parameters": [],
         "operationId": "getOrdersByUserId",
         "responses": {
           "200": {
@@ -3885,11 +3876,11 @@
                         "type": "string",
                         "format": "uuid"
                       },
-                      "created_at": {
+                      "createdAt": {
                         "type": "string",
                         "format": "date-time"
                       },
-                      "updated_at": {
+                      "updatedAt": {
                         "type": "string",
                         "format": "date-time"
                       },
@@ -4017,71 +4008,33 @@
                         "items": {
                           "type": "object",
                           "properties": {
-                            "id": {
-                              "type": "string",
-                              "format": "uuid"
-                            },
-                            "created_at": {
-                              "type": "string",
-                              "format": "date-time"
-                            },
-                            "updated_at": {
-                              "type": "string",
-                              "format": "date-time"
-                            },
-                            "orderVendorId": {
-                              "type": "string",
-                              "format": "uuid"
-                            },
-                            "cartItemId": {
-                              "type": "string",
-                              "format": "uuid",
-                              "nullable": true
-                            },
-                            "menuItemId": {
-                              "type": "string",
-                              "format": "uuid"
-                            },
-                            "quantity": {
-                              "type": "integer",
-                              "minimum": 1
-                            },
-                            "unitPrice": {
-                              "type": "number",
-                              "minimum": 0
-                            },
-                            "discountAmount": {
-                              "default": 0,
-                              "type": "number",
-                              "minimum": 0
-                            },
-                            "specialInstructions": {
-                              "type": "string",
-                              "nullable": true
-                            },
-                            "subtotal": {
-                              "type": "number",
-                              "minimum": 0
-                            },
-                            "ZCartItem": {
+                            "orderItem": {
                               "type": "object",
                               "properties": {
                                 "id": {
-                                  "type": "string"
+                                  "type": "string",
+                                  "format": "uuid"
                                 },
-                                "createdAt": {
+                                "created_at": {
                                   "type": "string",
                                   "format": "date-time"
                                 },
-                                "updatedAt": {
+                                "updated_at": {
                                   "type": "string",
                                   "format": "date-time"
                                 },
-                                "cartVendorId": {
-                                  "type": "string"
+                                "orderVendorId": {
+                                  "type": "string",
+                                  "format": "uuid"
+                                },
+                                "cartItemId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
                                 },
                                 "menuItemId": {
-                                  "type": "string"
+                                  "type": "string",
+                                  "format": "uuid"
                                 },
                                 "quantity": {
                                   "type": "integer",
@@ -4092,6 +4045,7 @@
                                   "minimum": 0
                                 },
                                 "discountAmount": {
+                                  "default": 0,
                                   "type": "number",
                                   "minimum": 0
                                 },
@@ -4106,38 +4060,202 @@
                               },
                               "required": [
                                 "id",
-                                "createdAt",
-                                "updatedAt",
-                                "cartVendorId",
+                                "created_at",
+                                "updated_at",
+                                "orderVendorId",
                                 "menuItemId",
                                 "quantity",
                                 "unitPrice",
-                                "discountAmount",
                                 "subtotal"
+                              ]
+                            },
+                            "menuItem": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "createdAt": {
+                                  "type": "string"
+                                },
+                                "updatedAt": {
+                                  "type": "string"
+                                },
+                                "vendorId": {
+                                  "type": "string"
+                                },
+                                "categoryId": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "description": {
+                                  "type": "string"
+                                },
+                                "basePrice": {
+                                  "type": "number"
+                                },
+                                "oldPrice": {
+                                  "type": "number"
+                                },
+                                "image": {
+                                  "type": "string"
+                                },
+                                "isAvailable": {
+                                  "type": "boolean"
+                                },
+                                "isVegetarian": {
+                                  "type": "boolean"
+                                },
+                                "isVegan": {
+                                  "type": "boolean"
+                                },
+                                "isPopular": {
+                                  "type": "boolean"
+                                },
+                                "isGlutenFree": {
+                                  "type": "boolean"
+                                },
+                                "spicyLevel": {
+                                  "type": "number"
+                                },
+                                "mostLikedRank": {
+                                  "type": "number"
+                                },
+                                "additionalServiceCharge": {
+                                  "type": "number"
+                                },
+                                "tags": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "portionSize": {
+                                  "type": "string"
+                                },
+                                "specialInstructions": {
+                                  "type": "string"
+                                },
+                                "keywords": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "createdAt",
+                                "updatedAt",
+                                "vendorId",
+                                "categoryId",
+                                "name",
+                                "description",
+                                "basePrice",
+                                "oldPrice",
+                                "image",
+                                "isAvailable",
+                                "isVegetarian",
+                                "isVegan",
+                                "isPopular",
+                                "isGlutenFree",
+                                "spicyLevel",
+                                "mostLikedRank",
+                                "additionalServiceCharge",
+                                "portionSize",
+                                "specialInstructions",
+                                "keywords"
                               ]
                             }
                           },
                           "required": [
-                            "id",
-                            "created_at",
-                            "updated_at",
-                            "orderVendorId",
-                            "menuItemId",
-                            "quantity",
-                            "unitPrice",
-                            "subtotal",
-                            "ZCartItem"
+                            "orderItem",
+                            "menuItem"
                           ]
                         }
+                      },
+                      "deliveryAddress": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "type": "string"
+                          },
+                          "userId": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "latitude": {
+                            "type": "number"
+                          },
+                          "longitude": {
+                            "type": "number"
+                          },
+                          "phoneNumber": {
+                            "type": "string"
+                          },
+                          "firstName": {
+                            "type": "string"
+                          },
+                          "lastName": {
+                            "type": "string"
+                          },
+                          "detailAddressDirection": {
+                            "type": "string"
+                          },
+                          "isDefault": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "createdAt",
+                          "updatedAt",
+                          "userId",
+                          "label",
+                          "latitude",
+                          "longitude",
+                          "phoneNumber",
+                          "firstName",
+                          "lastName",
+                          "detailAddressDirection",
+                          "isDefault"
+                        ]
+                      },
+                      "vendor": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "cuisine": {
+                            "type": "string"
+                          },
+                          "image": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "cuisine"
+                        ]
                       }
                     },
                     "required": [
                       "id",
-                      "created_at",
-                      "updated_at",
+                      "createdAt",
+                      "updatedAt",
                       "userId",
                       "vendorId",
-                      "orderItems"
+                      "orderItems",
+                      "deliveryAddress",
+                      "vendor"
                     ]
                   }
                 }
@@ -4182,11 +4300,11 @@
                       "type": "string",
                       "format": "uuid"
                     },
-                    "created_at": {
+                    "createdAt": {
                       "type": "string",
                       "format": "date-time"
                     },
-                    "updated_at": {
+                    "updatedAt": {
                       "type": "string",
                       "format": "date-time"
                     },
@@ -4314,71 +4432,33 @@
                       "items": {
                         "type": "object",
                         "properties": {
-                          "id": {
-                            "type": "string",
-                            "format": "uuid"
-                          },
-                          "created_at": {
-                            "type": "string",
-                            "format": "date-time"
-                          },
-                          "updated_at": {
-                            "type": "string",
-                            "format": "date-time"
-                          },
-                          "orderVendorId": {
-                            "type": "string",
-                            "format": "uuid"
-                          },
-                          "cartItemId": {
-                            "type": "string",
-                            "format": "uuid",
-                            "nullable": true
-                          },
-                          "menuItemId": {
-                            "type": "string",
-                            "format": "uuid"
-                          },
-                          "quantity": {
-                            "type": "integer",
-                            "minimum": 1
-                          },
-                          "unitPrice": {
-                            "type": "number",
-                            "minimum": 0
-                          },
-                          "discountAmount": {
-                            "default": 0,
-                            "type": "number",
-                            "minimum": 0
-                          },
-                          "specialInstructions": {
-                            "type": "string",
-                            "nullable": true
-                          },
-                          "subtotal": {
-                            "type": "number",
-                            "minimum": 0
-                          },
-                          "ZCartItem": {
+                          "orderItem": {
                             "type": "object",
                             "properties": {
                               "id": {
-                                "type": "string"
+                                "type": "string",
+                                "format": "uuid"
                               },
-                              "createdAt": {
+                              "created_at": {
                                 "type": "string",
                                 "format": "date-time"
                               },
-                              "updatedAt": {
+                              "updated_at": {
                                 "type": "string",
                                 "format": "date-time"
                               },
-                              "cartVendorId": {
-                                "type": "string"
+                              "orderVendorId": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "cartItemId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
                               },
                               "menuItemId": {
-                                "type": "string"
+                                "type": "string",
+                                "format": "uuid"
                               },
                               "quantity": {
                                 "type": "integer",
@@ -4389,6 +4469,7 @@
                                 "minimum": 0
                               },
                               "discountAmount": {
+                                "default": 0,
                                 "type": "number",
                                 "minimum": 0
                               },
@@ -4403,38 +4484,202 @@
                             },
                             "required": [
                               "id",
-                              "createdAt",
-                              "updatedAt",
-                              "cartVendorId",
+                              "created_at",
+                              "updated_at",
+                              "orderVendorId",
                               "menuItemId",
                               "quantity",
                               "unitPrice",
-                              "discountAmount",
                               "subtotal"
+                            ]
+                          },
+                          "menuItem": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "createdAt": {
+                                "type": "string"
+                              },
+                              "updatedAt": {
+                                "type": "string"
+                              },
+                              "vendorId": {
+                                "type": "string"
+                              },
+                              "categoryId": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "description": {
+                                "type": "string"
+                              },
+                              "basePrice": {
+                                "type": "number"
+                              },
+                              "oldPrice": {
+                                "type": "number"
+                              },
+                              "image": {
+                                "type": "string"
+                              },
+                              "isAvailable": {
+                                "type": "boolean"
+                              },
+                              "isVegetarian": {
+                                "type": "boolean"
+                              },
+                              "isVegan": {
+                                "type": "boolean"
+                              },
+                              "isPopular": {
+                                "type": "boolean"
+                              },
+                              "isGlutenFree": {
+                                "type": "boolean"
+                              },
+                              "spicyLevel": {
+                                "type": "number"
+                              },
+                              "mostLikedRank": {
+                                "type": "number"
+                              },
+                              "additionalServiceCharge": {
+                                "type": "number"
+                              },
+                              "tags": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "portionSize": {
+                                "type": "string"
+                              },
+                              "specialInstructions": {
+                                "type": "string"
+                              },
+                              "keywords": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "createdAt",
+                              "updatedAt",
+                              "vendorId",
+                              "categoryId",
+                              "name",
+                              "description",
+                              "basePrice",
+                              "oldPrice",
+                              "image",
+                              "isAvailable",
+                              "isVegetarian",
+                              "isVegan",
+                              "isPopular",
+                              "isGlutenFree",
+                              "spicyLevel",
+                              "mostLikedRank",
+                              "additionalServiceCharge",
+                              "portionSize",
+                              "specialInstructions",
+                              "keywords"
                             ]
                           }
                         },
                         "required": [
-                          "id",
-                          "created_at",
-                          "updated_at",
-                          "orderVendorId",
-                          "menuItemId",
-                          "quantity",
-                          "unitPrice",
-                          "subtotal",
-                          "ZCartItem"
+                          "orderItem",
+                          "menuItem"
                         ]
                       }
+                    },
+                    "deliveryAddress": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "createdAt": {
+                          "type": "string"
+                        },
+                        "updatedAt": {
+                          "type": "string"
+                        },
+                        "userId": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string"
+                        },
+                        "latitude": {
+                          "type": "number"
+                        },
+                        "longitude": {
+                          "type": "number"
+                        },
+                        "phoneNumber": {
+                          "type": "string"
+                        },
+                        "firstName": {
+                          "type": "string"
+                        },
+                        "lastName": {
+                          "type": "string"
+                        },
+                        "detailAddressDirection": {
+                          "type": "string"
+                        },
+                        "isDefault": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "createdAt",
+                        "updatedAt",
+                        "userId",
+                        "label",
+                        "latitude",
+                        "longitude",
+                        "phoneNumber",
+                        "firstName",
+                        "lastName",
+                        "detailAddressDirection",
+                        "isDefault"
+                      ]
+                    },
+                    "vendor": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "cuisine": {
+                          "type": "string"
+                        },
+                        "image": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "cuisine"
+                      ]
                     }
                   },
                   "required": [
                     "id",
-                    "created_at",
-                    "updated_at",
+                    "createdAt",
+                    "updatedAt",
                     "userId",
                     "vendorId",
-                    "orderItems"
+                    "orderItems",
+                    "deliveryAddress",
+                    "vendor"
                   ]
                 }
               }
@@ -4594,6 +4839,75 @@
                     "transaction_id",
                     "fee",
                     "refunded"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/payments/stripe/initiate": {
+      "post": {
+        "description": "Creates a new stripe payment session and returns a payment URL for the user to complete payment.",
+        "summary": "Initiate stripe payment session",
+        "tags": [
+          "Payment"
+        ],
+        "parameters": [],
+        "operationId": "initiateStripePayment",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "purchase_order_id": {
+                    "type": "string"
+                  },
+                  "purchase_order_name": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "number",
+                    "minimum": 0,
+                    "exclusiveMinimum": 0
+                  },
+                  "currency": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "purchase_order_id",
+                  "purchase_order_name",
+                  "amount"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "201",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    }
+                  },
+                  "required": [
+                    "url"
                   ]
                 }
               }

@@ -2,9 +2,8 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"time"
-
 	"github.com/gitSanje/khajaride/internal/model/payment"
 	"github.com/gitSanje/khajaride/internal/server"
 	"github.com/jackc/pgx/v5"
@@ -20,33 +19,83 @@ func NewPaymentRepository(s *server.Server) *PaymentRepository {
 	return &PaymentRepository{server: s}
 }
 
+func (pr *PaymentRepository) CreateOrUpdateOrderPayment(ctx context.Context, p *payment.OrderPayment) error {
+	existing, err := pr.GetPaymentByOrderID(ctx, p.OrderID)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return fmt.Errorf("get existing payment: %w", err)
+	}
 
-func (pr *PaymentRepository) CreateOrderPayment(ctx context.Context, p *payment.OrderPayment) error {
+	
+	if existing != nil {
+		// If same amount, status, and method → only update transaction ID
+		if existing.Amount == p.Amount && existing.Status == p.Status && existing.Method == p.Method {
+			query := `
+				UPDATE order_payments
+				SET transaction_id = @transactionId,
+				    updated_at = NOW()
+				WHERE id = @id
+			`
+			_, err = pr.server.DB.Pool.Exec(ctx, query, pgx.NamedArgs{
+				"transactionId": p.TransactionID,
+				"id":            existing.ID,
+			})
+			if err != nil {
+				return fmt.Errorf("update existing payment: %w", err)
+			}
+			return nil
+		}
 
+		// Otherwise, update full record
+		query := `
+			UPDATE order_payments
+			SET payment_gateway = @paymentGateway,
+			    amount = @amount,
+			    status = @status,
+			    transaction_id = @transactionId,
+			    method = @method,
+			    paid_at = NOW(),
+			    updated_at = NOW()
+			WHERE id = @id
+		`
+		_, err = pr.server.DB.Pool.Exec(ctx, query, pgx.NamedArgs{
+			"id":             existing.ID,
+			"paymentGateway": p.PaymentGateway,
+			"amount":         p.Amount,
+			"status":         p.Status,
+			"transactionId":  p.TransactionID,
+			"method":         p.Method,
+		})
+		if err != nil {
+			return fmt.Errorf("update existing payment: %w", err)
+		}
+		return nil
+	}
+
+	// Otherwise, insert new record
 	query := `
-		INSERT INTO order_payments (order_id, payment_gateway, amount,  status, transaction_id, method, paid_at)
-		VALUES (@orderId, @paymentGateway, @amount, @status, @transactionId, @method, @paidAt)
-
+		INSERT INTO order_payments (
+			order_id, payment_gateway, amount, status, transaction_id, method, paid_at, created_at
+		)
+		VALUES (@orderId, @paymentGateway, @amount, @status, @transactionId, @method, NOW(), NOW())
 	`
-	Now := time.Now()
-	_, err := pr.server.DB.Pool.Exec(ctx, query, pgx.NamedArgs{
+	_, err = pr.server.DB.Pool.Exec(ctx, query, pgx.NamedArgs{
 		"orderId":        p.OrderID,
 		"paymentGateway": p.PaymentGateway,
 		"amount":         p.Amount,
 		"status":         p.Status,
 		"transactionId":  p.TransactionID,
 		"method":         p.Method,
-		"paidAt":         &Now,
+		
 	})
 	if err != nil {
-		return fmt.Errorf("failed to create order payment: %w", err)
+		return fmt.Errorf("insert new payment: %w", err)
 	}
-	return nil
 
+	return nil
 }
 
 func (pr *PaymentRepository) GetPaymentByOrderID(ctx context.Context, orderID string) (*payment.OrderPayment, error) {
-	query := `SELECT order_id, status FROM order_payments WHERE order_id = @orderId LIMIT 1`
+	query := `SELECT * FROM order_payments WHERE order_id = @orderId LIMIT 1`
 	row, err := pr.server.DB.Pool.Query(ctx, query, pgx.NamedArgs{"orderId": orderID})
 
     if err == pgx.ErrNoRows {

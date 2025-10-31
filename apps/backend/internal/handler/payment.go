@@ -98,8 +98,67 @@ func (h *PaymentHandler) KhaltiCallback(c echo.Context) error {
 	return c.Redirect(http.StatusFound, redirectURL)
 }
 
+
+func (h *PaymentHandler) StripePayment(c echo.Context) error {
+	return Handle(
+		h.Handler,
+		func(c echo.Context, payload *payment.StripePaymentPayload) (*payment.StripePaymentResponse, error) {
+		
+			return  h.PaymentService.ProcessStripeCheckout(c, payload)
+		},
+		http.StatusCreated,
+		&payment.StripePaymentPayload{},
+	)(c)
+
+}
+
+
+func (h *PaymentHandler) VerifyStripePayment(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	payload := &payment.StripeVerifyPayload{
+		SessionID:  c.QueryParam("session_id"),
+		PurchaseOrderID:   c.QueryParam("purchase_order_id"),
+		PurchaseOrderName: c.QueryParam("purchase_order_name"),
+		Amount:            parseFloat(c.QueryParam("amount")),
+		
+	}
+
+	orderID, status, err := h.PaymentService.VerifyAndUpdateStripePayment(ctx, payload)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": fmt.Sprintf("Failed to verify payment: %v", err),
+		})
+	}
+
+	redirectURL := fmt.Sprintf(
+		"%s/payment/status?pidx=%s&status=%s&txnId=%s&amount=%f&total_amount=%f&mobile=%s&tidx=%s&purchase_order_id=%s&purchase_order_name=%s&transaction_id=%s&order_id=%s",
+		h.server.Config.Khalti.FrontEndURL,
+		url.QueryEscape(payload.SessionID),
+		url.QueryEscape(status),
+		url.QueryEscape(payload.SessionID),
+		payload.Amount,
+		payload.Amount,
+		"",
+		url.QueryEscape(payload.SessionID),
+		url.QueryEscape(payload.PurchaseOrderID),
+		url.QueryEscape(payload.PurchaseOrderName),
+		url.QueryEscape(payload.SessionID),
+		url.QueryEscape(orderID),
+	)
+   return c.Redirect(http.StatusFound, redirectURL)
+
+}
+
+
+func (h *PaymentHandler) StripeCancelPayment(c echo.Context) error {
+	return h.PaymentService.StripeCancelPayment(c) 
+
+}
 // Helper: safely parse string → float
 func parseFloat(s string) float64 {
 	f, _ := strconv.ParseFloat(s, 64)
 	return f
 }
+
+

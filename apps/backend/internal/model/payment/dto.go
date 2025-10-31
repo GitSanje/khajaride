@@ -64,3 +64,34 @@ type KhaltiPaymentResponse struct {
 }
 
 
+
+type StripePaymentPayload struct {
+	PurchaseOrderID   string  `json:"purchase_order_id"`
+	PurchaseOrderName string  `json:"purchase_order_name"`
+	Amount            float64 `json:"amount"`
+	Currency          *string  `json:"currency"`
+}
+
+func (p *StripePaymentPayload) Validate() error {
+	validate := validator.New()
+	return validate.Struct(p)
+}
+
+type StripePaymentResponse struct {
+	PaymentUrl       string `json:"url"`
+}
+
+
+type StripeVerifyPayload struct {
+	SessionID         string  `query:"session_id"`
+	PurchaseOrderID   string  `query:"purchase_order_id"`
+	PurchaseOrderName string  `query:"purchase_order_name"`
+	Amount            float64 `query:"amount"`
+
+}
+
+
+func (p *StripeVerifyPayload) Validate() error {
+	validate := validator.New()
+	return validate.Struct(p)
+}

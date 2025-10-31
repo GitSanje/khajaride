@@ -7,22 +7,11 @@ const PaymentFailure: React.FC = () => {
   const [searchParams] = useSearchParams();
   
   const paymentData = {
-    transactionId: searchParams.get('tidx') || searchParams.get('transaction_id'),
     purchaseOrderId: searchParams.get('purchase_order_id'),
-    amount: searchParams.get('amount'),
-    status: searchParams.get('status'),
-    mobile: searchParams.get('mobile')
+  
   };
 
-  const retryPayment = () => {
-    // Implement retry payment logic
-    const orderId = paymentData.purchaseOrderId;
-    if (orderId) {
-      // Redirect to payment page with order ID
-      window.location.href = `/payment/retry/${orderId}`;
-    }
-  };
-
+ 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
@@ -48,17 +37,7 @@ const PaymentFailure: React.FC = () => {
                 <span className="font-medium">{paymentData.purchaseOrderId}</span>
               </div>
               
-              <div className="flex justify-between">
-                <span className="text-red-700">Amount:</span>
-                <span className="font-medium">NPR {paymentData.amount}</span>
-              </div>
               
-              <div className="flex justify-between">
-                <span className="text-red-700">Status:</span>
-                <span className="font-medium text-red-600 capitalize">
-                  {paymentData.status?.toLowerCase() || 'failed'}
-                </span>
-              </div>
             </div>
           </div>
 
@@ -88,21 +67,8 @@ const PaymentFailure: React.FC = () => {
 
           {/* Action Buttons */}
           <div className="space-y-3">
-            <button
-              onClick={retryPayment}
-              className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
-            >
-              <RotateCcw className="w-5 h-5" />
-              Retry Payment
-            </button>
-            
-            <Link
-              to="/cart"
-              className="w-full flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-3 px-4 rounded-lg transition-colors"
-            >
-              Back to Cart
-            </Link>
-            
+           
+      
             <Link
               to="/"
               className="w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-800 font-medium py-3 px-4 rounded-lg border border-gray-300 transition-colors"
