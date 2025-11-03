@@ -2,7 +2,8 @@
 import { useSearchParams, Link } from 'react-router-dom';
 import { CheckCircle, Download, Home, ShoppingBag } from 'lucide-react';
 import { useGetOrderById } from '@/api/hooks/use-order-query';
-import  type { PopulatedUserOrder } from '@khajaride/zod';
+import Header from '@customer/layouts/header';
+
 
 
 
@@ -36,6 +37,7 @@ const PaymentSuccess= () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <Header/>
       <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
         {/* Success Header */}
         <div className="bg-green-500 px-6 py-8 text-center">

@@ -1,7 +1,7 @@
 import { useAddCartItem, useDeleteCartItem, useGetCartItems, type TAddCartItemResponse } from "@/api/hooks/use-cart-query";
 import type { TAddCartItem } from "@/types/cart-types";
 import type { TAddCartItemPayload, TCartItemPopulated } from "@khajaride/zod";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { toast } from "sonner";
 
 

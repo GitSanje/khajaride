@@ -4,12 +4,13 @@ const envVarsSchema = z.object({
   VITE_CLERK_PUBLISHABLE_KEY: z
     .string()
     .min(1, "VITE_CLERK_PUBLISHABLE_KEY is required"),
+  VITE_STRIPE_PUBLISHABLE_KEY:z.string().optional(),
   VITE_API_URL: z.string().url().default("http://localhost:3000"),
   VITE_ENV: z.enum(["production", "development", "local"]).default("local"),
 });
 
 const parseResult = envVarsSchema.safeParse(import.meta.env);
-
+console.log("All env vars:", import.meta.env);
 if (!parseResult.success) {
   console.error(
     "❌ Invalid environment variables:",

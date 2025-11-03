@@ -13,7 +13,7 @@ import {
 } from "lucide-react"
 import { Link } from "react-router-dom"
 import { useCart } from "@/hooks/use-cart"
-import { CartSidebar } from "@/pages/cart/cart-ui"
+import { CartSidebar } from "@customer/pages/cart/cart-ui"
 
 
 export default function Header() {

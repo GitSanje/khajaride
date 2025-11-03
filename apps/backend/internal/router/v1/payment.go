@@ -20,6 +20,7 @@ func registerPaymentRoutes(r *echo.Group, h *handler.PaymentHandler, auth *middl
 	payment.GET("/stripe/verify", h.VerifyStripePayment)
     payment.GET("/stripe/cancel", h.StripeCancelPayment)
 	payment.Use(auth.RequireAuth)
+	payment.POST("/stripe/connect-onboard", h.OnboardingStripeConnectAccount)
 	payment.POST("/stripe/initiate", h.StripePayment)
 
 	payment.POST("/khalti/initiate", h.KhaltiPayment)

@@ -7,7 +7,10 @@ import {
   ZKhaltiVerifyPaymentResponse,
   ZKhaltiVerifyPaymentPayload,
   ZStripePaymentPayload,
-  ZStripePaymentResponse
+  ZStripePaymentResponse,
+  ZStripeVendorOnboardingPayload,
+  ZStripeVendorOnboardingResponse
+
 
 } from "@khajaride/zod";
 const c = initContract();
@@ -56,6 +59,19 @@ export const paymentContract = c.router(
       summary: "Initiate stripe payment session",
       description:
         "Creates a new stripe payment session and returns a payment URL for the user to complete payment.",
+      metadata,
+    },
+    // -------------------- Create session Connect vendor onboard  --------------------
+    CreateOnboardingStripeSession: {
+      path: "/payments/stripe/connect-onboard",
+      method: "POST",
+      body: ZStripeVendorOnboardingPayload,
+      responses: {
+        201: ZStripeVendorOnboardingResponse,
+      },
+      summary: "Create session Connect vendor onboard ",
+      description:
+        "Create session Connect vendor onboard ",
       metadata,
     },
 

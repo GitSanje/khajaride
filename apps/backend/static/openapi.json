@@ -4920,6 +4920,60 @@
           }
         ]
       }
+    },
+    "/v1/payments/stripe/connect-onboard": {
+      "post": {
+        "description": "Create session Connect vendor onboard ",
+        "summary": "Create session Connect vendor onboard ",
+        "tags": [
+          "Payment"
+        ],
+        "parameters": [],
+        "operationId": "CreateOnboardingStripeSession",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "vendorId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "vendorId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "201",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "client_secret": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "client_secret"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
     }
   },
   "info": {

@@ -56,19 +56,17 @@ CREATE TABLE payout_accounts (
     owner_type TEXT NOT NULL CHECK (owner_type IN ('vendor', 'system')),
 
     method TEXT NOT NULL CHECK (
-        method IN ('esewa', 'khalti', 'bank_transfer', 'cash')
+        method IN ('esewa', 'khalti', 'bank_transfer', 'cash','stripe')
     ),
 
-    account_identifier TEXT NOT NULL,   -- e.g. esewa id, khalti id, bank acc no
+    account_identifier TEXT ,   -- e.g. esewa id, khalti id, bank acc no
     account_name TEXT,                  -- name on the account
     bank_name TEXT,                     -- for bank transfers
     branch_name TEXT,                   -- optional for banks
 
-    -- Card-specific fields
-    --card_provider TEXT,                 -- e.g. 'visa', 'mastercard', 'amex'
-    -- card_last4 TEXT CHECK (char_length(card_last4) = 4),
-    -- card_expiry_month SMALLINT CHECK (card_expiry_month BETWEEN 1 AND 12),
-    -- card_expiry_year SMALLINT CHECK (card_expiry_year BETWEEN 2000 AND 2100),
+    stripe_account_id TEXT,     
+    stripe_external_account_id TEXT,
+    currency TEXT DEFAULT 'INR', 
 
     is_default BOOLEAN DEFAULT FALSE,
     mode TEXT NOT NULL CHECK (mode IN ('online', 'offline')),

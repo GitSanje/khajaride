@@ -27,7 +27,7 @@ import { Link, useParams } from "react-router-dom"
 import { useGetVenoorById } from "@/api/hooks/use-vendor-query"
 import type { TMenuItem } from "@khajaride/zod"
 import { AddToCartModal } from "../cart/add-to-cart"
-import Header from "@/components/layouts/header"
+import Header from "@customer/layouts/header";
 
 
 export default function VendorMenuPage() {

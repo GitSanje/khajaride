@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gitSanje/khajaride/internal/model/payment"
+	"github.com/gitSanje/khajaride/internal/model/payout"
 	"github.com/gitSanje/khajaride/internal/server"
 	"github.com/jackc/pgx/v5"
 )
@@ -129,3 +130,71 @@ func (pr *PaymentRepository) UpdatePaymentStatus(ctx context.Context, transactio
 
 
 
+
+
+
+func (r *PaymentRepository) CreatePayoutAccount(ctx context.Context, acc *payout.PayoutAccount) error {
+	query := `
+		INSERT INTO payout_accounts (
+			owner_id,
+			owner_type,
+			method,
+			account_identifier,
+			account_name,
+			bank_name,
+			branch_name,
+			stripe_account_id,
+			stripe_external_account_id,
+			currency,
+			is_default,
+			mode,
+			code,
+			verified,
+			verification_status,
+			remarks
+		) VALUES (
+			COALESCE(@owner_id, NULL),
+			@owner_type,
+			@method,
+			COALESCE(@account_identifier, NULL),
+			COALESCE(@account_name, ''),
+			COALESCE(@bank_name, ''),
+			COALESCE(@branch_name, ''),
+			COALESCE(@stripe_account_id, ''),
+			COALESCE(@stripe_external_account_id, ''),
+			COALESCE(@currency, 'INR'),
+			COALESCE(@is_default, FALSE),
+			@mode,
+			@code,
+			COALESCE(@verified, FALSE),
+			COALESCE(@verification_status, 'pending'),
+			COALESCE(@remarks, '')
+		)
+	`
+
+	args := pgx.NamedArgs{
+		"owner_id":                acc.OwnerID,
+		"owner_type":              acc.OwnerType,
+		"method":                  acc.Method,
+		"account_identifier":      acc.AccountIdentifier,
+		"account_name":            acc.AccountName,
+		"bank_name":               acc.BankName,
+		"branch_name":             acc.BranchName,
+		"stripe_account_id":       acc.StripeAccountID,
+		"stripe_external_account_id": string(*acc.StripeExternalAccount),
+		"currency":                acc.Currency,
+		"is_default":              acc.IsDefault,
+		"mode":                    acc.Mode,
+		"code":                    acc.Code,
+		"verified":                acc.Verified,
+		"verification_status":     acc.VerificationStatus,
+		"remarks":                 acc.Remarks,
+	}
+
+	_, err := r.server.DB.Pool.Exec(ctx, query, args)
+	if err != nil {
+		return fmt.Errorf("failed to insert payout account: %w", err)
+	}
+
+	return nil
+}

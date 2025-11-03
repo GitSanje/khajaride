@@ -7,12 +7,13 @@ import { Card } from "@/components/ui/card"
 import { ArrowLeft, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 import type { OnboardingStep, VendorOnboardingFormData } from "@/types/vendor-onboarding-types"
-import { StepAddress } from "@/components/vendor-onboarding/step-address"
-import { StepDocuments } from "@/components/vendor-onboarding/step-documents"
-import { StepProfile } from "@/components/vendor-onboarding/step-profile"
-import { StepPayout } from "@/components/vendor-onboarding/step-payout"
-import { StepReview } from "@/components/vendor-onboarding/step-review"
-import { ProgressIndicator } from "@/components/vendor-onboarding/progress-indicator"
+import { StepAddress } from "apps/vendor/vendor-onboarding/step-address"
+import { StepDocuments } from "apps/vendor/vendor-onboarding/step-documents"
+import { StepProfile } from "apps/vendor/vendor-onboarding/step-profile"
+import { StepReview } from "apps/vendor/vendor-onboarding/step-review"
+import { ProgressIndicator } from "apps/vendor/vendor-onboarding/progress-indicator"
+import VendorOnboardingStripe from "../../../vendor/vendor-onboarding/stripe-connect-onboarding"
+import { StepPayout } from "apps/vendor/vendor-onboarding/step-payout"
 
 const STEPS: { id: OnboardingStep; label: string }[] = [
   { id: "profile", label: "Profile" },
@@ -152,6 +153,7 @@ export default function VendorOnboardingPage() {
                 onUpdate={(data) => handleUpdateFormData({ payoutAccount: data })}
                 onNext={handleNextStep}
               />
+              // <VendorOnboardingStripe />
             )}
 
             {currentStep === "review" && (

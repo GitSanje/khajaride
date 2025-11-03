@@ -1,13 +1,12 @@
 import { createBrowserRouter, createRoutesFromElements, Route } from "react-router-dom";
-import { PublicRoute } from "./components/public-route";
+import { PublicRoute } from "../../src/components/public-route";
 import LandingPage from "./pages/landing-page";
-import { ProtectedRoute } from "./components/protected-route";
+import { ProtectedRoute } from "../../src/components/protected-route";
 import DashboardPage from "./pages/dashboard/dashboard";
-import { AuthLayout } from "./components/layouts/auth-layout";
+import { AuthLayout } from "./layouts/auth-layout";
 import CustomerApp from "./pages/user/user-landing-page";
 import VendorMenuPage from "./pages/vendor/vendor-details";
 import SearchPage from "./pages/search/SearchVendor";
-import VendorOnboardingPage from "./pages/vendor-onboarding/vendor-onboarding";
 import CheckoutPage from "./pages/checkout/checkout";
 import PaymentSuccess from "./pages/payment/payment-success-khalti";
 import UserOrders from "./pages/order/user-orders";
@@ -77,14 +76,6 @@ const routes = createRoutesFromElements(
       }
     />
 
-     <Route
-      path="/vendor-onboard"
-      element={
-        <PublicRoute>
-          <VendorOnboardingPage />
-        </PublicRoute>
-      }
-    />
 
     <Route
       path="/payment/status"

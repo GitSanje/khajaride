@@ -1,16 +1,16 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import './index.css'
-import { env } from "@/config/env";
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { ThemeProvider } from "@/components/theme-provider";
 import { ClerkProvider } from '@clerk/clerk-react';
 import { RouterProvider } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import router from './router.tsx';
-import { RestaurantsDataProvider } from './hooks/use-cart.tsx';
-
+import router from './router';
+import { RestaurantsDataProvider } from '@/hooks/use-cart';
+import { ThemeProvider } from '@/components/theme-provider';
+import { env } from '@/config/env';
+import "@/index.css"
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -19,6 +19,7 @@ const queryClient = new QueryClient({
     },
   },
 });
+
 if (!env.VITE_CLERK_PUBLISHABLE_KEY) {
   throw new Error("Missing Publishable Key");
 }

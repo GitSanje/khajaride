@@ -7,12 +7,14 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-
 	"github.com/gitSanje/khajaride/internal/model/payment"
+	"github.com/gitSanje/khajaride/internal/model/payout"
 	"github.com/gitSanje/khajaride/internal/repository"
 	"github.com/gitSanje/khajaride/internal/server"
 	"github.com/labstack/echo/v4"
 	"github.com/stripe/stripe-go/v83"
+	"github.com/stripe/stripe-go/v83/account"
+	"github.com/stripe/stripe-go/v83/accountsession"
 	"github.com/stripe/stripe-go/v83/checkout/session"
 )
 
@@ -283,4 +285,66 @@ func (ps *PaymentService) StripeCancelPayment(c echo.Context) error {
     // 3️⃣ Redirect user to frontend failure page
     return c.Redirect(http.StatusSeeOther, fmt.Sprintf("%s/payment-failed?purchase_order_id=%s", 
         ps.server.Config.Stripe.FrontEndURL, orderID))
+}
+
+
+
+func (ps *PaymentService) CreateOnboardingSession(c echo.Context, payload *payment.OnboardingPayload) (*payment.OnboardingResponse, error ){
+
+	stripe.Key = ps.server.Config.Stripe.SecretKey
+
+	// 1️⃣ Create a connected account (Express)
+	acctParams := &stripe.AccountParams{
+		Type: stripe.String("express"),
+		Country: stripe.String("IN"),
+		Capabilities: &stripe.AccountCapabilitiesParams{
+			Transfers:    &stripe.AccountCapabilitiesTransfersParams{Requested: stripe.Bool(true)},
+		},
+		BusinessType: stripe.String("individual"),
+		BusinessProfile: &stripe.AccountBusinessProfileParams{
+			ProductDescription: stripe.String("Khajaride vendor payouts"),
+			URL: stripe.String("https://khajride.com"),
+		},
+	}
+	acct, err := account.New(acctParams)
+	if err != nil {
+		return nil,fmt.Errorf("failed to create account: %w", err)
+	}
+
+	// 2️⃣ Create an onboarding session
+	sessionParams := &stripe.AccountSessionParams{
+		Account: stripe.String(acct.ID),
+		Components: &stripe.AccountSessionComponentsParams{
+			AccountOnboarding: &stripe.AccountSessionComponentsAccountOnboardingParams{
+				Enabled: stripe.Bool(true),
+			},
+		},
+	}
+
+	session, err := accountsession.New(sessionParams)
+	if err != nil {
+		return  nil,fmt.Errorf("failed to create account: %w", err)
+	}
+	clientScrt := &payment.OnboardingResponse{
+		ClientSecret: session.ClientSecret,
+	}
+	// 3️⃣ Store connected account info in DB
+	payout := &payout.PayoutAccount{
+		OwnerID:              stripe.String(payload.VendorId),
+		OwnerType:           "vendor",
+		Method:              "stripe",
+		StripeAccountID:    stripe.String(acct.ID),
+		Currency:            "INR",
+		IsDefault:           true,
+		Mode:                "online",
+		Code:                "STRIPE",
+		Verified:            false,
+		VerificationStatus:  "pending",
+	}
+
+	if err := ps.paymentRepo.CreatePayoutAccount(c.Request().Context(),payout); err !=nil{
+		return nil, fmt.Errorf("failed to save payout account: %w", err)
+	}
+   return clientScrt, nil
+
 }

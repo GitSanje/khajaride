@@ -57,6 +57,15 @@ export const ZStripeVerifyPaymentResponse = z.object({
 
 
 
+export const ZStripeVendorOnboardingPayload= z.object({
+  vendorId: z.string(), 
+});
+
+export const ZStripeVendorOnboardingResponse= z.object({
+  client_secret: z.string(), 
+});
+
+
 export type KhaltiVerifyPaymentResponse = z.infer<typeof ZKhaltiVerifyPaymentResponse>;
 export type KhaltiPaymentResponse = z.infer<typeof ZKhaltiPaymentResponse>;
 export type KhaltiVerifyPaymentPayload = z.infer<typeof ZKhaltiVerifyPaymentPayload>;

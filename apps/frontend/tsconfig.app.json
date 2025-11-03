@@ -23,11 +23,12 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
     "baseUrl": ".",
-    "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+   "paths": {
+      "@/*": ["./src/*"],
+      "@/customer/*": ["./apps/customer/*"],
+      "@/vendor/*": ["./apps/vendor/*"]
     }
+
   },
-  "include": ["src"]
+    "include": ["apps/customer/**/*", "apps/vendor/**/*", "src/**/*"]
 }

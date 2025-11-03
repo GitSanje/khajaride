@@ -26,7 +26,7 @@ import {
 import { useGetAllVendors, type TGetVendorsQuery } from "@/api/hooks"
 
 import { Link, useNavigate } from "react-router-dom"; 
-import Header from "@/components/layouts/header"
+import Header from "@customer/layouts/header"
 
 
 

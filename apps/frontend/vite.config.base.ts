@@ -9,12 +9,11 @@ export default defineConfig({
   define: {
     "process.env": process.env,
   },
-  server: {
-    port: 3000,
-  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@customer": path.resolve(__dirname, "apps/customer"),
+      "@vendor": path.resolve(__dirname, "apps/vendor"),
       "@khajaride/openapi": path.resolve(
         __dirname,
         "../../packages/openapi/src"

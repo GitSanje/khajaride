@@ -155,6 +155,19 @@ func (h *PaymentHandler) StripeCancelPayment(c echo.Context) error {
 	return h.PaymentService.StripeCancelPayment(c) 
 
 }
+
+func (h *PaymentHandler) OnboardingStripeConnectAccount(c echo.Context) error {
+	return Handle(
+		h.Handler,
+		func(c echo.Context, payload *payment.OnboardingPayload) (*payment.OnboardingResponse, error) {
+		
+			return  h.PaymentService.CreateOnboardingSession(c, payload)
+		},
+		http.StatusCreated,
+		&payment.OnboardingPayload{},
+	)(c)
+
+}
 // Helper: safely parse string → float
 func parseFloat(s string) float64 {
 	f, _ := strconv.ParseFloat(s, 64)

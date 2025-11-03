@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { XCircle, RotateCcw, Home, Phone } from 'lucide-react';
+import { XCircle, Home, Phone } from 'lucide-react';
 
 const PaymentFailure: React.FC = () => {
   const [searchParams] = useSearchParams();

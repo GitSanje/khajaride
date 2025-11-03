@@ -95,3 +95,16 @@ func (p *StripeVerifyPayload) Validate() error {
 	validate := validator.New()
 	return validate.Struct(p)
 }
+
+
+type OnboardingPayload struct {
+	VendorId   string  `json:"vendorId"  validate:"required"`
+}
+func (p *OnboardingPayload) Validate() error {
+	validate := validator.New()
+	return validate.Struct(p)
+}
+
+type OnboardingResponse struct {
+	ClientSecret string `json:"client_secret"`
+}
