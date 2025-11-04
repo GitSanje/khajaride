@@ -88,3 +88,33 @@ func (s *VendorService) GetVendors(ctx echo.Context, query *vendor.GetVendorsQue
 
     return vendorsPage, nil
 }
+
+
+
+func (s *VendorService) CreateVendor(ctx echo.Context, payload *vendor.CreateVendorPayload) (*vendor.Vendor, error) {
+    logger := middleware.GetLogger(ctx)
+
+    
+    vendor, err := s.vendorRepo.CreateVendor(ctx.Request().Context(), payload)
+    if err != nil {
+        logger.Error().Err(err).Msg("Failed to fetch create vendor")
+        return nil, err
+    }
+
+    return vendor, nil
+}
+
+
+
+func (s *VendorService) CreateVendorAddress(ctx echo.Context, payload *vendor.CreateVendorAddressPayload) (*vendor.VendorAddress, error) {
+    logger := middleware.GetLogger(ctx)
+
+    
+    vendor, err := s.vendorRepo.CreateVendorAddress(ctx.Request().Context(), payload)
+    if err != nil {
+        logger.Error().Err(err).Msg("Failed to fetch create vendor address")
+        return nil, err
+    }
+
+    return vendor, nil
+}

@@ -84,6 +84,64 @@ func (r *UserRepository) CreateUser(ctx context.Context, payload *user.CreateUse
 
 
 
+func (r *UserRepository) GetVendorOnboardingTrack(ctx context.Context, userID string) (*user.VendorOnboardingTrackResponse, error) {
+    stmt := `
+        SELECT is_vendor_onboarding_completed,current_onboarding_step
+        FROM users
+        WHERE id = $1
+    `
+    var completed bool;
+    var currentStep string;
+    err := r.server.DB.Pool.QueryRow(ctx, stmt, userID).Scan(&completed, &currentStep)
+    if err != nil {
+        if err == pgx.ErrNoRows {
+            return nil, fmt.Errorf("user not found: %w", err)
+        }
+        return nil, fmt.Errorf("failed to fetch vendor onboarding status: %w", err)
+    }
+    onboardingRes := &user.VendorOnboardingTrackResponse{
+        Completed: completed,
+        CurrentStep: currentStep,
+    }
+    return onboardingRes, nil
+}
+
+
+func (r *UserRepository) VendorOnboardingTrack(ctx context.Context, userId string, payload *user.VendorOnboardingTrackPayload) (*user.VendorOnboardingTrackResponse, error) {
+    stmt := `
+        UPDATE users
+        SET is_vendor_onboarding_completed = @completed,
+            current_onboarding_step = @currentStep
+        WHERE id = @userId
+        RETURNING is_vendor_onboarding_completed, current_onboarding_step
+    `
+
+    var completed bool
+    var currentStep string
+
+    err := r.server.DB.Pool.QueryRow(ctx, stmt, pgx.NamedArgs{
+        "completed":   payload.Completed,
+        "currentStep": payload.CurrentStep,
+        "userId":      userId,
+    }).Scan(&completed, &currentStep)
+
+    if err != nil {
+        if err == pgx.ErrNoRows {
+            return nil, fmt.Errorf("user not found: %w", err)
+        }
+        return nil, fmt.Errorf("failed to update vendor onboarding status: %w", err)
+    }
+
+    onboardingRes := &user.VendorOnboardingTrackResponse{
+        Completed:   completed,
+        CurrentStep: currentStep,
+    }
+
+    return onboardingRes, nil
+}
+
+
+
 // ------------------- GET USER BY ID -------------------
 
 func (r *UserRepository) GetUserByID(ctx context.Context, id string) (*user.User, error) {

@@ -10,7 +10,6 @@ const envVarsSchema = z.object({
 });
 
 const parseResult = envVarsSchema.safeParse(import.meta.env);
-console.log("All env vars:", import.meta.env);
 if (!parseResult.success) {
   console.error(
     "❌ Invalid environment variables:",

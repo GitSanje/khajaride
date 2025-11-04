@@ -3,7 +3,7 @@ import { PublicRoute } from "../../src/components/public-route";
 import LandingPage from "./pages/landing-page";
 import { ProtectedRoute } from "../../src/components/protected-route";
 import DashboardPage from "./pages/dashboard/dashboard";
-import { AuthLayout } from "./layouts/auth-layout";
+
 import CustomerApp from "./pages/user/user-landing-page";
 import VendorMenuPage from "./pages/vendor/vendor-details";
 import SearchPage from "./pages/search/SearchVendor";
@@ -11,6 +11,7 @@ import CheckoutPage from "./pages/checkout/checkout";
 import PaymentSuccess from "./pages/payment/payment-success-khalti";
 import UserOrders from "./pages/order/user-orders";
 import PaymentFailure from "./pages/payment/payment-failure-khalti";
+import { AuthLayout } from "./layouts/auth-layout";
 
 
 

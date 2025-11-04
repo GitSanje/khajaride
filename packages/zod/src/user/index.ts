@@ -63,6 +63,10 @@ export const ZUser = z.object({
   loyaltyPoints: z.number(),
   profilePicture: z.string().nullable(),
   twoFactorEnabled: z.boolean(),
+  currentOnboardingStep:z.string(),
+  isVendorOnboardingCompleted:z.boolean()
+
+
 });
 
 
@@ -78,3 +82,8 @@ export const ZGetUsersQuery = z.object({
   verified: z.boolean().optional(),
 });
 
+
+export const ZVendorOnboardingTrack = z.object({
+  completed: z.boolean(),
+  currentProgress: z.string()
+})

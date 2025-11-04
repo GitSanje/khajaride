@@ -39,6 +39,39 @@ func (h *UserHandler) CreateUser(c echo.Context) error {
 }
 
 
+
+type GetVendorOnboardingTrackPayload struct{}
+
+func (p *GetVendorOnboardingTrackPayload) Validate() error {
+	return nil
+}
+
+func (h *UserHandler) GetVendorOnboardingTrack(c echo.Context) error {
+
+	return  Handle(h.Handler,
+		func(c echo.Context, payload *GetVendorOnboardingTrackPayload) (*user.VendorOnboardingTrackResponse,error) {
+		userID := middleware.GetUserID(c)
+        return  h.UserService.GetVendorOnboardingTrack(c,userID)
+		},
+		http.StatusOK,
+		&GetVendorOnboardingTrackPayload{},
+		)(c)
+}
+
+
+func (h *UserHandler) VendorOnboardingTrack(c echo.Context) error {
+
+	return  Handle(h.Handler,
+		func(c echo.Context, payload *user.VendorOnboardingTrackPayload) (*user.VendorOnboardingTrackResponse,error) {
+		userID := middleware.GetUserID(c)
+        return  h.UserService.VendorOnboardingTrack(c,userID,payload)
+		},
+		http.StatusOK,
+		&user.VendorOnboardingTrackPayload{},
+		)(c)
+}
+
+
 // ------------------- GET USER BY ID -------------------
 func (h *UserHandler) GetUserByID(c echo.Context) error {
 	return Handle(

@@ -2,14 +2,32 @@ import { type TApiClient, useApiClient } from "@/api";
 import type { TRequests } from "../types";
 import type { ServerInferResponseBody } from "@ts-rest/core";
 import type { apiContract } from "@khajaride/openapi/contracts";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { QUERY_KEYS } from "../query-utils";
+import { showApiErrorToast } from "../utils";
+import { toast } from "sonner";
 
 
 
 // Type definitions for VENDOR operations
 
 export type TGetVendorsQuery = TRequests["Vendor"]["getVendors"]["query"];
+
+
+export type TCreateVendorPayload= TRequests["Vendor"]['createVendor']['body'];
+
+export type TCreateVendorResponse = ServerInferResponseBody<
+  typeof apiContract.Vendor.createVendor,
+  201
+>;
+
+
+export type TCreateVendorAddressPayload= TRequests["Vendor"]['createVendorAddress']['body'];
+
+export type TCreateVendorAddressResponse = ServerInferResponseBody<
+  typeof apiContract.Vendor.createVendorAddress,
+  201
+>;
 
 export type TGetVendorsByIDResponse = ServerInferResponseBody<
   typeof apiContract.Vendor.getVendorByID,
@@ -45,6 +63,72 @@ const fetchAllVendors = async ({
   }
 };
 
+
+
+const createVendor= async ({
+  api,
+  data
+
+}: {
+  api: TApiClient;
+  data: TCreateVendorPayload;
+}): Promise<TCreateVendorResponse> => {
+  const res = await api.Vendor.createVendor({ body: data });
+
+  if (res.status === 201) {
+    return res.body;
+  } else {
+    throw res.body;
+  }
+};
+
+
+export const useCreateVendor = () => {
+  const api = useApiClient();
+  return useMutation({
+    mutationFn: ({ body }: { body: TCreateVendorPayload }) => createVendor({ api, data: body }),
+    onSuccess: () => {
+      toast.success("Vendor created successfully!")
+    },
+    onError: (err) => {
+      showApiErrorToast(err, "Failed to create vendor");
+    },
+  });
+};
+
+
+
+const createVendorAddress= async ({
+  api,
+  data
+
+}: {
+  api: TApiClient;
+  data: TCreateVendorAddressPayload;
+}): Promise<TCreateVendorAddressResponse> => {
+  const res = await api.Vendor.createVendorAddress({ body: data });
+
+  if (res.status === 201) {
+    return res.body;
+  } else {
+    throw res.body;
+  }
+};
+
+
+
+export const useCreateVendorAddress = () => {
+  const api = useApiClient();
+  return useMutation({
+    mutationFn: ({ body }: { body: TCreateVendorAddressPayload }) => createVendorAddress({ api, data: body }),
+    onSuccess: () => {
+      toast.success("Vendor addresses created successfully!")
+    },
+    onError: (err) => {
+      showApiErrorToast(err, "Failed to create vendor");
+    },
+  });
+};
 
 
 const fetchVendorById= async ({

@@ -106,6 +106,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "id": {
+                    "type": "string"
+                  },
                   "email": {
                     "type": "string",
                     "format": "email"
@@ -126,7 +129,7 @@
                     "type": "string",
                     "enum": [
                       "user",
-                      "restaurant_manager",
+                      "vendor",
                       "delivery_partner",
                       "admin"
                     ]
@@ -1919,6 +1922,108 @@
                     "page",
                     "limit",
                     "totalPages"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/vendors/addresses": {
+      "post": {
+        "description": "Add vendor address to database",
+        "summary": "Create a new vendor address",
+        "tags": [
+          "Vendor"
+        ],
+        "parameters": [],
+        "operationId": "createVendorAddress",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "vendorId": {
+                    "type": "string"
+                  },
+                  "streetAddress": {
+                    "type": "string"
+                  },
+                  "city": {
+                    "type": "string"
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "zipcode": {
+                    "type": "string"
+                  },
+                  "latitude": {
+                    "type": "number"
+                  },
+                  "longitude": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "vendorId",
+                  "streetAddress",
+                  "city",
+                  "state",
+                  "zipcode",
+                  "latitude",
+                  "longitude"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "201",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "vendorId": {
+                      "type": "string"
+                    },
+                    "streetAddress": {
+                      "type": "string"
+                    },
+                    "city": {
+                      "type": "string"
+                    },
+                    "state": {
+                      "type": "string"
+                    },
+                    "zipcode": {
+                      "type": "string"
+                    },
+                    "latitude": {
+                      "type": "number"
+                    },
+                    "longitude": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "vendorId",
+                    "streetAddress",
+                    "city",
+                    "state",
+                    "zipcode",
+                    "latitude",
+                    "longitude"
                   ]
                 }
               }

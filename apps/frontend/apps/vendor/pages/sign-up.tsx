@@ -1,10 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -12,9 +10,13 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { AlertCircle, Loader2, Eye, EyeOff, CheckCircle2 } from "lucide-react"
 import { SignupSchema, type SignupFormData } from "@/schemas"
+import { useCreateUser, type TCreateUserPayload } from "@/api/hooks/use-user-query"
+import { useSignUp } from "@clerk/clerk-react"
+import { Link, useNavigate } from "react-router-dom"
 
 export default function VendorSignupPage() {
-  const router = useRouter()
+  const navigate = useNavigate()
+   const { isLoaded, signUp } = useSignUp()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -24,40 +26,62 @@ export default function VendorSignupPage() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<SignupFormData>({
     resolver: zodResolver(SignupSchema as any),
   })
 
+
+  const createUser = useCreateUser()
   const onSubmit = async (data: SignupFormData) => {
+    if (!isLoaded) return
+
     setIsLoading(true)
     setApiError(null)
 
     try {
-      const response = await fetch("/api/vendor/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: data.email,
-          password: data.password,
-          Username: data.username,
-        }),
-      })
 
-      if (!response.ok) {
-        throw new Error("Signup failed. Please try again.")
+       // 1️⃣ Create Clerk user
+        const signUpAttempt = await signUp.create({
+            emailAddress: data.email,
+            password: data.password,
+            username: data.username,
+          });
+          // 2️⃣ Verify or complete the signup (if email verification is required)
+      // await signUp.prepareEmailAddressVerification({ strategy: "email_code" })
+       
+      const userId = signUpAttempt.createdUserId;
+
+      const payload: TCreateUserPayload = {
+        id: userId!,
+        role: "vendor",
+        username: data.username,
+        email: data.email,
+        password: data.password,
+
+      }
+      const response = await createUser.mutateAsync({
+        body: payload
+      })
+      if (response) {
+        setIsSuccess(true)
+        setTimeout(() => {
+          navigate("/login")
+        }, 2000)
       }
 
-      setIsSuccess(true)
-      setTimeout(() => {
-        router.push("/vendor/login")
-      }, 2000)
     } catch (error) {
       setApiError(error instanceof Error ? error.message : "Signup failed")
     } finally {
       setIsLoading(false)
     }
   }
+
+  const onError = (formErrors: any) => {
+  console.warn("Validation failed:", formErrors)
+  setApiError("Please correct the highlighted fields before continuing.")
+}
 
   if (isSuccess) {
     return (
@@ -95,12 +119,12 @@ export default function VendorSignupPage() {
           </CardHeader>
 
           <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit,onError)} className="space-y-4">
               {/* API Error */}
               {apiError && (
                 <div className="flex items-start gap-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
                   <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-red-700">{apiError}</p>
+                  <p className="text-sm text-red-700"> Api Err: {apiError}</p>
                 </div>
               )}
 
@@ -178,21 +202,39 @@ export default function VendorSignupPage() {
               </div>
 
               {/* Terms & Conditions */}
-              <div className="flex items-start gap-2">
-                <Checkbox id="terms" {...register("agreeToTerms")} disabled={isLoading} className="mt-1" />
-                <label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer">
-                  I agree to the{" "}
-                  <Link href="/terms" className="text-primary hover:underline">
-                    Terms of Service
-                  </Link>{" "}
-                  and{" "}
-                  <Link href="/privacy" className="text-primary hover:underline">
-                    Privacy Policy
-                  </Link>
-                </label>
-              </div>
-              {errors.agreeToTerms && <p className="text-sm text-red-500">{errors.agreeToTerms.message}</p>}
-
+             <Controller
+                  name="agreeToTerms"
+                  control={control}
+                  render={({ field }) => (
+                    <div className="flex items-start gap-2">
+                      <Checkbox
+                        id="terms"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isLoading}
+                        className="mt-1"
+                      />
+                      <label
+                        htmlFor="terms"
+                        className="text-sm text-muted-foreground cursor-pointer"
+                      >
+                        I agree to the{" "}
+                        <Link to="/terms" className="text-primary hover:underline">
+                          Terms of Service
+                        </Link>{" "}
+                        and{" "}
+                        <Link to="/privacy" className="text-primary hover:underline">
+                          Privacy Policy
+                        </Link>
+                      </label>
+                    </div>
+                  )}
+                />
+              {errors.agreeToTerms && (
+                <p className="text-sm text-red-500">
+                  {errors.agreeToTerms.message}
+                </p>
+              )}
               {/* Submit Button */}
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
@@ -208,7 +250,7 @@ export default function VendorSignupPage() {
               {/* Login Link */}
               <p className="text-center text-sm text-muted-foreground">
                 Already have an account?{" "}
-                <Link href="/vendor/login" className="text-primary hover:underline font-medium">
+                <Link to="/login" className="text-primary hover:underline font-medium">
                   Sign in here
                 </Link>
               </p>

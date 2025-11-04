@@ -9,7 +9,7 @@ export default mergeConfig(
     server: {
       port: 3000,
     },
-    // cacheDir: '.vite-customer', 
+ 
       envDir: path.resolve(__dirname),
     build: {
       outDir: path.resolve(__dirname, "dist/customer"),

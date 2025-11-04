@@ -22,11 +22,11 @@ export default function VendorLoginPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<VendorLoginFormData>({
-    resolver: zodResolver(vendorLoginSchema),
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(LoginSchema as any),
   })
 
-  const onSubmit = async (data: VendorLoginFormData) => {
+  const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true)
     setApiError(null)
 

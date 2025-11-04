@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"net/http"
 	"time"
 
@@ -46,6 +47,7 @@ func New(cfg *config.Config, logger *zerolog.Logger, loggerService *loggerPkg.Lo
     
 	// Elasticsearch client
 	var esClient *elasticsearch.Client
+	
 	if cfg.Elasticsearch != nil {
 		esCfg := elasticsearch.Config{
 			Addresses: []string{cfg.Elasticsearch.Address},
@@ -53,6 +55,7 @@ func New(cfg *config.Config, logger *zerolog.Logger, loggerService *loggerPkg.Lo
 
 		var err error
 		esClient, err = elasticsearch.NewClient(esCfg) 
+
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize Elasticsearch client: %w", err)
 		}

@@ -9,7 +9,8 @@ import {
   ZDeleteVendorPayload,
   ZGetVendorsQuery,
   ZVendorPopulated,
-  schemaWithPagination
+  schemaWithPagination,
+  ZVendorAddress
 } from "@khajaride/zod";
 import { getSecurityMetadata } from "../utils.js";
 
@@ -26,6 +27,17 @@ export const vendorContract = c.router({
     responses: { 201: ZVendor },
     summary: "Create a new vendor",
     description: "Add vendor to database",
+    metadata,
+  },
+
+   // Create vendor address
+  createVendorAddress: {
+    path: "/vendors/addresses",
+    method: "POST",
+    body: ZVendorAddress,
+    responses: { 201: ZVendorAddress },
+    summary: "Create a new vendor address",
+    description: "Add vendor address to database",
     metadata,
   },
 

@@ -23,6 +23,54 @@ func NewUserService(s *server.Server, userRepo *repository.UserRepository) *User
 	}
 }
 
+func (s *UserService) GetVendorOnboardingTrack(ctx echo.Context, userID string) (*user.VendorOnboardingTrackResponse, error) {
+    logger := middleware.GetLogger(ctx)
+
+    logger.Info().
+        Str("user_id", userID).
+        Msg("Checking vendor onboarding status")
+
+    onboardingtrack, err := s.userRepo.GetVendorOnboardingTrack(ctx.Request().Context(), userID)
+    if err != nil {
+        logger.Error().
+            Err(err).
+            Str("user_id", userID).
+            Msg("Failed to fetch vendor onboarding status")
+        return nil, err
+    }
+
+    logger.Info().
+        Str("user_id", userID).
+        Bool("isVendorOnboardingCompleted", onboardingtrack.Completed).
+        Msg("Fetched vendor onboarding status successfully")
+
+    return onboardingtrack, nil
+}
+
+
+func (s *UserService) VendorOnboardingTrack(ctx echo.Context,userID string, payload *user.VendorOnboardingTrackPayload) (*user.VendorOnboardingTrackResponse, error) {
+    logger := middleware.GetLogger(ctx)
+
+    logger.Info().
+        Str("user_id", userID).
+        Msg("Checking vendor onboarding status")
+
+    onboardingtrack, err := s.userRepo.VendorOnboardingTrack(ctx.Request().Context(), userID, payload)
+    if err != nil {
+        logger.Error().
+            Err(err).
+            Str("user_id", userID).
+            Msg("Failed to fetch vendor onboarding status")
+        return nil, err
+    }
+
+    logger.Info().
+        Str("user_id", userID).
+        Bool("isVendorOnboardingCompleted", onboardingtrack.Completed).
+        Msg("Fetched vendor onboarding status successfully")
+
+    return onboardingtrack, nil
+}
 
 
 func ( s *UserService) CreateUser ( ctx echo.Context,  payload *user.CreateUserPayload) ( *user.User, error) {

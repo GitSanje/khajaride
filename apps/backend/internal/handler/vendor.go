@@ -43,6 +43,33 @@ func (h *VendorHandler) GetVendorByID(c echo.Context) error {
 }
 
 
+// ------------------- CREATE VENDOR -------------------
+func (h *VendorHandler) CreateVendor(c echo.Context) error {
+	return Handle(
+		h.Handler,
+		func(c echo.Context, payload *vendor.CreateVendorPayload) (*vendor.Vendor, error) {
+			return h.VendorService.CreateVendor(c, payload)
+		},
+		http.StatusCreated,
+		&vendor.CreateVendorPayload{},
+	)(c)
+}
+
+
+
+// ------------------- CREATE VENDOR ADDRESS-------------------
+func (h *VendorHandler) CreateVendorAddress(c echo.Context) error {
+	return Handle(
+		h.Handler,
+		func(c echo.Context, payload *vendor.CreateVendorAddressPayload) (*vendor.VendorAddress, error) {
+			return h.VendorService.CreateVendorAddress(c, payload)
+		},
+		http.StatusCreated,
+		&vendor.CreateVendorAddressPayload{},
+	)(c)
+}
+
+
 
 
 

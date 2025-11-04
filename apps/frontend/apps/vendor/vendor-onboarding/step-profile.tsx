@@ -18,7 +18,7 @@ interface StepProfileProps {
   onNext: () => void
 }
 
-const VENDOR_TYPES = ["restaurant", "bakery", "cafe", "alcohol", "grocery", "other"] as const
+const VENDOR_TYPES = ["restaurant" , "bakery" ,"alcohol" , "cafe"]as const
 const CUISINE_OPTIONS = [
   "Italian",
   "Indian",
@@ -245,7 +245,7 @@ export function StepProfile({ data, onUpdate, onNext }: StepProfileProps) {
       </Card>
 
       <Button onClick={onNext} disabled={!isComplete} className="w-full">
-        Continue to Documents
+        Continue to Address
       </Button>
     </div>
   )

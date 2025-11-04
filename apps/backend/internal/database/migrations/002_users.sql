@@ -16,6 +16,8 @@ CREATE TABLE users (
     loyalty_points INT DEFAULT 0,
     profile_picture TEXT,
     two_factor_enabled BOOLEAN DEFAULT FALSE,
+    current_onboarding_step TEXT DEFAULT 'profile',
+    is_vendor_onboarding_completed BOOLEAN DEFAULT FALSE;
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

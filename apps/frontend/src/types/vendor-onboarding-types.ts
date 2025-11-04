@@ -1,4 +1,6 @@
-export type OnboardingStep = "profile" | "documents" | "address" | "payout" | "review" | "complete"
+import type { TCreateVendorPayload } from "@/api/hooks/use-vendor-query"
+
+export type OnboardingStep = "profile"  | "address" | "payout" | "review" | "complete"
 
 export interface VendorProfileData {
   name: string
@@ -49,8 +51,7 @@ export interface PayoutAccountData {
 }
 
 export interface VendorOnboardingFormData {
-  profile: Partial<VendorProfileData>
-  documents: DocumentData[]
+  profile: Partial<TCreateVendorPayload>
   address: Partial<AddressData>
   payoutAccount: Partial<PayoutAccountData>
 }

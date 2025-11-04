@@ -13,7 +13,11 @@ func registerUserRoutes(r *echo.Group, h *handler.UserHandler, auth *middleware.
 	// Protect all /users routes with auth middleware
 	user := r.Group("/users")
 	user.POST("", h.CreateUser)      // POST /users
+	
 	user.Use(auth.RequireAuth)
+	user.PATCH("/vendor-onboarding-track",h.VendorOnboardingTrack)
+	user.GET("/vendor-onboarding-track",h.GetVendorOnboardingTrack)
+
 	// ------------------- Users -------------------
 	
 	user.GET("/me", h.GetUserByID)   // GET /users/me

@@ -25,6 +25,20 @@ func NewGlobalMiddlewares(s *server.Server) *GlobalMiddlewares {
 func (global *GlobalMiddlewares) CORS() echo.MiddlewareFunc {
 	return middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: global.server.Config.Server.CORSAllowedOrigins,
+		 AllowMethods: []string{
+      echo.GET,
+      echo.POST,
+      echo.PUT,
+      echo.DELETE,
+      echo.OPTIONS,
+    },
+    AllowHeaders: []string{
+      echo.HeaderOrigin,
+      echo.HeaderContentType,
+      echo.HeaderAccept,
+      echo.HeaderAuthorization,
+    },
+    AllowCredentials: true,
 	})
 }
 

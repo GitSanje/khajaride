@@ -8,7 +8,7 @@
 
 CREATE TABLE vendor_documents (
     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
-    vendor_id TEXT NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
+    vendor_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 
     document_type TEXT NOT NULL CHECK (
         document_type IN (
@@ -52,7 +52,7 @@ CREATE INDEX idx_vendor_documents_type ON vendor_documents(document_type);
 CREATE TABLE payout_accounts (
     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
     
-    owner_id TEXT,  -- vendor_id for vendor accounts, NULL for system
+    owner_id TEXT,  -- vendor_user_id for vendor accounts, NULL for system
     owner_type TEXT NOT NULL CHECK (owner_type IN ('vendor', 'system')),
 
     method TEXT NOT NULL CHECK (

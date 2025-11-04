@@ -1,5 +1,5 @@
 import { Routes, Route } from "react-router-dom";
-import { SignIn, SignUp } from "@clerk/clerk-react";
+import { SignIn } from "@clerk/clerk-react";
 import { dark } from "@clerk/themes";
 import { useTheme } from "@/components/theme-provider";
 
@@ -12,10 +12,10 @@ export function AuthLayout() {
       <div className="w-full max-w-md">
         <Routes>
              <Route
-            path="/sign-in/*"
+            path="/login/*"
             element={
               <SignIn
-                forceRedirectUrl={"/khajaride"}
+               redirectUrl={"/vendor-onboarding"}
                 appearance={{
                   baseTheme: isDark ? dark : undefined,
                   elements: {
@@ -27,11 +27,11 @@ export function AuthLayout() {
             }
           />
         
-          <Route
-            path="/sign-up/*"
+          {/* <Route
+            path="/"
             element={
               <SignUp
-                forceRedirectUrl={"/khajaride"}
+               
                 appearance={{
                   baseTheme: isDark ? dark : undefined,
                   elements: {
@@ -41,7 +41,7 @@ export function AuthLayout() {
                 }}
               />
             }
-          />
+          /> */}
 
          
         </Routes>

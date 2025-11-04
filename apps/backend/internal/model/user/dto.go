@@ -15,7 +15,7 @@ type CreateUserPayload struct {
 	Username     string  `json:"username" validate:"required,min=3,max=50"`
 	PhoneNumber  *string `json:"phoneNumber,omitempty" validate:"omitempty"` 
 	Password     *string `json:"password,omitempty" validate:"omitempty,min=6"`
-	Role         string `json:"role" validate:"oneof=user restaurant_manager delivery_partner admin"`
+	Role         string `json:"role" validate:"oneof=user vendor delivery_partner admin"`
     ProfilePicture *string `json:"profilePicture,omitempty" validate:"omitempty,url"`
 
 }
@@ -253,3 +253,22 @@ func (p *AdjustPointsPayload) Validate() error {
 
 
 
+
+type VendorOnboardingTrackPayload  struct{
+    Completed     bool `json:"completed"`
+    CurrentStep   string `json:"currentStep"`
+}
+
+
+func (p *VendorOnboardingTrackPayload) Validate() error {
+	validate := validator.New()
+	return validate.Struct(p)
+}
+
+
+
+
+type VendorOnboardingTrackResponse  struct{
+    Completed     bool `json:"completed"`
+    CurrentStep   string `json:"currentStep"`
+}

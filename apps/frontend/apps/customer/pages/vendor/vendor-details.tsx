@@ -329,7 +329,9 @@ export default function VendorMenuPage() {
                 
                 </div>
             </div>
-            <AddToCartModal
+        
+        
+        <AddToCartModal
         item={selectedItem}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

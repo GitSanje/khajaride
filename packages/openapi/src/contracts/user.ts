@@ -6,7 +6,8 @@ import {
   ZLoyaltyPointsLedger,
   schemaWithPagination,
   ZGetUsersQuery,
-  ZUserAddressPayload
+  ZUserAddressPayload,
+  ZVendorOnboardingTrack
 } from "@khajaride/zod";
 import { getSecurityMetadata } from "../utils.js";
 
@@ -24,11 +25,12 @@ export const userContract = c.router(
       method: "POST",
       description: "Create user after Clerk signup, sync to DB",
       body: z.object({
+        id: z.string().optional(),
         email: z.string().email(),
         username: z.string().min(3).max(50),
         phoneNumber: z.string().optional(),
         password: z.string().min(6),
-        role: z.enum(["user", "restaurant_manager", "delivery_partner", "admin"]).optional(),
+        role: z.enum(["user", "vendor", "delivery_partner", "admin"]).optional(),
         profilePicture: z.string().url().optional(),
       }),
       responses: {
@@ -220,6 +222,30 @@ export const userContract = c.router(
         }),
       },
       metadata,
+    },
+
+
+
+     getVendorOnboardingTrack: {
+      summary: "Get vendor onboarding track ",
+      path: "/users/vendor-onboarding-track",
+      method: "GET",
+      responses: {
+        200: ZVendorOnboardingTrack,
+      },
+      metadata,
+    },
+
+    // Create User
+    VendorOnboardingTrack: {
+      summary: "Update vendor onboarding track",
+      path: "/users/vendor-onboarding-track",
+      method: "PATCH",
+      body: ZVendorOnboardingTrack,
+      responses: {
+        200: ZVendorOnboardingTrack,
+      },
+        metadata,
     },
   },
   {

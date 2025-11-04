@@ -9,7 +9,8 @@ export const QUERY_KEYS = {
   },
   USER: {
     GET_ADDRESSES: "getAddresses",
-    CREATE_ADDRESS: "createAddress"
+    CREATE_ADDRESS: "createAddress",
+    GET_VENDOR_ONBOARDING_TRACK:"getVendorOnboardingTrack"
   },
   CART:{
     ADD_CART_ITEM:"addCartItem",

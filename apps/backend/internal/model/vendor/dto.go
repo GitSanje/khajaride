@@ -127,13 +127,13 @@ func (p *GetVendorByIDPayload) Validate() error {
 // ------------------------- Vendor Address -------------------------
 
 type CreateVendorAddressPayload struct {
-	VendorID      string   `json:"vendorId" validate:"required,uuid4"`
+	VendorID      string   `json:"vendorId" validate:"required"`
 	StreetAddress *string  `json:"streetAddress,omitempty"`
-	City          *string  `json:"city,omitempty"`
-	State         *string  `json:"state,omitempty"`
-	Zipcode       *string  `json:"zipcode,omitempty"`
-	Latitude      *float64 `json:"latitude,omitempty" validate:"omitempty"`
-	Longitude     *float64 `json:"longitude,omitempty" validate:"omitempty"`
+	City          string  `json:"city"`
+	State         string  `json:"state"`
+	Zipcode       string  `json:"zipcode"`
+	Latitude      float64 `json:"latitude" validate:"required"`
+	Longitude     float64 `json:"longitude" validate:"required"`
 }
 
 func (p *CreateVendorAddressPayload) Validate() error {

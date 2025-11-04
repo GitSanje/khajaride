@@ -7,8 +7,9 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isLoaded, isSignedIn } = useAuth();
-
+  const { isLoaded, isSignedIn ,userId} = useAuth();
+  console.log(userId,"userId");
+  
   if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center">
