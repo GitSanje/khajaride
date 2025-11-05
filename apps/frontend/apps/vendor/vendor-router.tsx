@@ -21,7 +21,7 @@ const routes = createRoutesFromElements(
       }
     />
     <Route
-      path="/"
+      path="/sign-up"
       element={
         <PublicRoute>
           <VendorSignupPage />

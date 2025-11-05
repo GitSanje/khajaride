@@ -1,6 +1,9 @@
 package service
 
 import (
+	"mime/multipart"
+
+	"github.com/gitSanje/khajaride/internal/lib/aws"
 	"github.com/gitSanje/khajaride/internal/lib/utils"
 	"github.com/gitSanje/khajaride/internal/middleware"
 	"github.com/gitSanje/khajaride/internal/model"
@@ -15,12 +18,14 @@ type VendorService struct {
 
   server *server.Server
   vendorRepo *repository.VendorRepository
+  awsClient    *aws.AWS
 }
 
-func NewVendorService(s *server.Server, vendorRepo *repository.VendorRepository) *VendorService {
+func NewVendorService(s *server.Server, vendorRepo *repository.VendorRepository, awsClient *aws.AWS) *VendorService {
 	return &VendorService{
 		server:  s,
 		vendorRepo: vendorRepo,
+        awsClient:    awsClient,
 	}
 }
 
@@ -117,4 +122,39 @@ func (s *VendorService) CreateVendorAddress(ctx echo.Context, payload *vendor.Cr
     }
 
     return vendor, nil
+}
+
+func (s *VendorService) UploadImages(ctx echo.Context,files []*multipart.FileHeader) (*vendor.UploadImagesResponse, error) {
+    logger := middleware.GetLogger(ctx)
+    
+    var uploadedURLs []string
+
+
+    for _, file := range files {
+		// Open the file
+		src, err := file.Open()
+		if err != nil {
+			logger.Error().Err(err).Msg("Failed to open file")
+			return nil, err
+		}
+		defer src.Close() // make sure to close the file
+
+		// Upload to S3
+		publicURL, err := s.awsClient.S3.UploadPublicFile(
+			ctx.Request().Context(),
+			s.server.Config.AWS.UploadBucket,
+			"vendors/images/"+file.Filename,
+			src,
+		)
+		if err != nil {
+			logger.Error().Err(err).Msg("Failed to upload file to S3")
+			return nil, err
+		}
+
+		uploadedURLs = append(uploadedURLs, publicURL)
+	}
+    imageRes := &vendor.UploadImagesResponse{
+		UploadedURLs: uploadedURLs,
+	}
+	return imageRes, nil
 }

@@ -9,7 +9,7 @@ import { Toaster } from 'sonner';
 
 import { ThemeProvider } from '@/components/theme-provider';
 import { env } from '@/config/env';
-import "./index.css"
+import "@/index.css"
 import venodrRouter from './vendor-router';
 const queryClient = new QueryClient({
   defaultOptions: {

@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/gitSanje/khajaride/internal/errs"
 	"github.com/gitSanje/khajaride/internal/middleware"
 	"github.com/gitSanje/khajaride/internal/model"
 	"github.com/gitSanje/khajaride/internal/model/vendor"
@@ -68,6 +69,37 @@ func (h *VendorHandler) CreateVendorAddress(c echo.Context) error {
 		&vendor.CreateVendorAddressPayload{},
 	)(c)
 }
+
+
+type UploadImagesPayload struct{}
+
+func (p *UploadImagesPayload) Validate() error {
+	return nil
+}
+
+// ------------------- UPLOAD IMAGES-------------------
+func (h *VendorHandler) UploadImages(c echo.Context) error {
+	return Handle(
+		h.Handler,
+		func(c echo.Context, payload *UploadImagesPayload) (*vendor.UploadImagesResponse, error) {
+
+			form, err := c.MultipartForm()
+			if err != nil {
+				return nil, errs.NewBadRequestError("multipart form not found", false, nil, nil, nil)
+			}
+
+			files := form.File["file"]
+			if len(files) == 0 {
+				return nil, errs.NewBadRequestError("no file found", false, nil, nil, nil)
+			}
+
+			return h.VendorService.UploadImages(c,files)
+		},
+		http.StatusCreated,
+		&UploadImagesPayload{},
+	)(c)
+}
+
 
 
 

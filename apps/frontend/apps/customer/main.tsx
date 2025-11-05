@@ -10,7 +10,7 @@ import router from './router';
 import { RestaurantsDataProvider } from '@/hooks/use-cart';
 import { ThemeProvider } from '@/components/theme-provider';
 import { env } from '@/config/env';
-import "./index.css"
+import "@/index.css"
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

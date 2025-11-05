@@ -43,8 +43,8 @@ func (r *VendorRepository) CreateVendor(ctx context.Context, payload *vendor.Cre
 			COALESCE(@ID, gen_random_uuid()::TEXT),
 			@Name, @About, @Cuisine, @Phone, @DeliveryAvailable, @PickupAvailable,
 			@GroupOrderAvailable, @DeliveryFee, @MinOrderAmount, @DeliveryTimeEstimate,
-			@IsOpen, @OpeningHours, @VendorListingImage, @VendorLogoImage,
-			@VendorType, @IsFeatured, @CuisineTags, @PromoText, @VendorNotice
+			COALESCE(@IsOpen, true), @OpeningHours, @VendorListingImage, @VendorLogoImage,
+			@VendorType, COALESCE(@IsFeatured, false), @CuisineTags, @PromoText, @VendorNotice
 		)
 		RETURNING *
 	`
@@ -57,7 +57,6 @@ func (r *VendorRepository) CreateVendor(ctx context.Context, payload *vendor.Cre
 		"Phone":               payload.Phone,
 		"DeliveryAvailable":   payload.DeliveryAvailable,
 		"PickupAvailable":     payload.PickupAvailable,
-		"GroupOrderAvailable": payload.GroupOrderAvailable,
 		"DeliveryFee":         payload.DeliveryFee,
 		"MinOrderAmount":      payload.MinOrderAmount,
 		"DeliveryTimeEstimate": payload.DeliveryTimeEstimate,

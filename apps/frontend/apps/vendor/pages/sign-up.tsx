@@ -67,7 +67,7 @@ export default function VendorSignupPage() {
       if (response) {
         setIsSuccess(true)
         setTimeout(() => {
-          navigate("/login")
+          navigate("/vendor-onboarding")
         }, 2000)
       }
 

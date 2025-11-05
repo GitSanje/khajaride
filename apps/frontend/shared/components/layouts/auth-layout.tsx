@@ -12,7 +12,7 @@ export function AuthLayout() {
       <div className="w-full max-w-md">
         <Routes>
              <Route
-            path="/login/*"
+            path="/"
             element={
               <SignIn
                redirectUrl={"/vendor-onboarding"}
@@ -23,6 +23,7 @@ export function AuthLayout() {
                     rootBox: "w-full",
                   },
                 }}
+               signUpUrl="/sign-up"
               />
             }
           />

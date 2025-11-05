@@ -11,20 +11,21 @@ type OpeningHours map[string]string // e.g. {"mon": "09-22", "tue": "09-22"}
 
 type CreateVendorPayload struct {
 	Name                  string   `json:"name" validate:"required,min=3,max=150"`
-	About                 *string  `json:"about,omitempty"`
-	Cuisine               *string  `json:"cuisine,omitempty"`
-	Phone                 *string  `json:"phone,omitempty"`
-	DeliveryAvailable     *bool    `json:"deliveryAvailable,omitempty"`
-	PickupAvailable       *bool    `json:"pickupAvailable,omitempty"`
-	GroupOrderAvailable   *bool    `json:"groupOrderAvailable,omitempty"`
+	About                 string  `json:"about"`
+	Cuisine               string  `json:"cuisine"`
+	VendorUserID          string  `json:"vendorUserId" validate:"required" `
+	Phone                 string  `json:"phone"`
+	DeliveryAvailable     bool    `json:"deliveryAvailable,omitempty"`
+	PickupAvailable       bool    `json:"pickupAvailable,omitempty"`
+	GroupOrderAvailable   bool    `json:"groupOrderAvailable,omitempty"`
 	DeliveryFee           *float64 `json:"deliveryFee,omitempty" validate:"omitempty,min=0"`
 	MinOrderAmount        *float64 `json:"minOrderAmount,omitempty" validate:"omitempty,min=0"`
 	DeliveryTimeEstimate  *string  `json:"deliveryTimeEstimate,omitempty"`
 	IsOpen                *bool    `json:"isOpen,omitempty"`
-	OpeningHours          *string `json:"openingHours,omitempty"`
+	OpeningHours           string  `json:"openingHours"`
 	VendorListingImage    *string  `json:"vendorListingImageName,omitempty"`
 	VendorLogoImage       *string  `json:"vendorLogoImageName,omitempty"`
-	VendorType            *string  `json:"vendorType,omitempty" validate:"omitempty,oneof=restaurant bakery alcohol cafe"`
+	VendorType             string  `json:"vendorType" validate:"oneof=restaurant bakery alcohol cafe"`
 	IsFeatured            *bool    `json:"isFeatured,omitempty"`
 	CuisineTags           []string `json:"cuisineTags,omitempty"`
 	PromoText             *string  `json:"promoText,omitempty"`
@@ -465,4 +466,9 @@ type DeleteFavoritePayload struct {
 func (p *DeleteFavoritePayload) Validate() error {
 	validate := validator.New()
 	return validate.Struct(p)
+}
+
+
+type UploadImagesResponse struct {
+	UploadedURLs []string `json:"uploadedURLs" `
 }

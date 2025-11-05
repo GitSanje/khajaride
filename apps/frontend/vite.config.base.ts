@@ -5,13 +5,14 @@ import react from "@vitejs/plugin-react";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(),tailwindcss()],
   define: {
     "process.env": process.env,
   },
+   envDir: path.resolve(__dirname),
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": path.resolve(__dirname, "./shared"),
       "@customer": path.resolve(__dirname, "apps/customer"),
       "@vendor": path.resolve(__dirname, "apps/vendor"),
       "@khajaride/openapi": path.resolve(

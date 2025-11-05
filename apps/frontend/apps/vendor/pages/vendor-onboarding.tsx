@@ -1,23 +1,24 @@
-"use client"
+
 
 import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { AlertCircle, ArrowLeft, CheckCircle2 } from "lucide-react"
-import Link from "next/link"
-import type { OnboardingStep, VendorOnboardingFormData } from "@/types/vendor-onboarding-types"
-import { StepAddress } from "@vendor/vendor-onboarding/step-address"
-import { StepProfile } from "@vendor/vendor-onboarding/step-profile"
-import { StepReview } from "@vendor/vendor-onboarding/step-review"
-import { ProgressIndicator } from "@vendor/vendor-onboarding/progress-indicator"
 
-import { StepPayout } from "@vendor/vendor-onboarding/step-payout"
-import { useCreateVendor, type TCreateVendorPayload } from "@/api/hooks/use-vendor-query"
-import { useCreateAddress, useGetVendorOnboardingTrack, useUpdateVendorOnboardingTrack, type TCreateAddressPayload } from "@/api/hooks/use-user-query"
+import type { OnboardingStep, VendorOnboardingFormData } from "@/types/vendor-onboarding-types"
+import { StepAddress } from "../vendor-onboarding/step-address"
+import { StepProfile } from "../vendor-onboarding/step-profile"
+import { StepReview } from "../vendor-onboarding/step-review"
+import { ProgressIndicator } from "../vendor-onboarding/progress-indicator"
+
+
+import {  useGetVendorOnboardingTrack, useUpdateVendorOnboardingTrack, type TCreateAddressPayload } from "@/api/hooks/use-user-query"
 import { useCreateOnboardingStripeSession } from "@/api/hooks/use-payment-query"
 import { useUser } from "@clerk/clerk-react"
-import { Navigate } from "react-router-dom"
+import { Link, Navigate } from "react-router-dom"
+import VendorOnboardingStripe from "../vendor-onboarding/stripe-connect-onboarding"
+import type { VendorProfileFormData } from "@/schemas"
 
 const STEPS: { id: OnboardingStep; label: string }[] = [
   { id: "profile", label: "Profile" },
@@ -28,12 +29,12 @@ const STEPS: { id: OnboardingStep; label: string }[] = [
 
 export default function VendorOnboardingPage() {
 
-   const {  user } = useUser();
-    
-    const { data} = useGetVendorOnboardingTrack({enabled:true})
-if( data?.completed){
-        return <Navigate to="/dashboard" replace />;
-    }
+  const { user } = useUser();
+
+  const { data } = useGetVendorOnboardingTrack({ enabled: true })
+  if (data?.completed) {
+    return <Navigate to="/dashboard" replace />;
+  }
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("profile")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
@@ -44,15 +45,14 @@ if( data?.completed){
   })
 
   useEffect(() => {
-    if(data?.currentProgress){
-        setCurrentStep(data?.currentProgress as OnboardingStep)
+    if (data?.currentProgress) {
+      setCurrentStep(data?.currentProgress as OnboardingStep)
     }
-  },[data?.currentProgress])
+  }, [data?.currentProgress])
 
-  const [error, setError] = useState<string|null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const createVendor = useCreateVendor()
-  const createAddress = useCreateAddress()
+
   const stripeConnectOnboarding = useCreateOnboardingStripeSession()
   const updateVendorOnboardingTrack = useUpdateVendorOnboardingTrack()
 
@@ -60,59 +60,15 @@ if( data?.completed){
     setFormData((prev) => ({ ...prev, ...data }))
   }
 
- const handleNextStep = async () => {
-  const currentIndex = STEPS.findIndex((s) => s.id === currentStep);
+  const handleNextStep = async () => {
 
-  try {
-    switch (currentStep) {
-      case "profile":
-        await createVendor.mutateAsync({
-          body: formData.profile as TCreateVendorPayload,
-        });
-        await updateVendorOnboardingTrack.mutateAsync({
-          body: {
-            completed:false,
-            currentProgress:"address"
-          }
-        })
-        break;
-
-      case "address":
-        await createAddress.mutateAsync({
-          body: formData.address as TCreateAddressPayload,
-        });
-         await updateVendorOnboardingTrack.mutateAsync({
-          body: {
-            completed:false,
-            currentProgress:"payout"
-          }
-        })
-        break;
-
-      case "payout":
-        await stripeConnectOnboarding.mutateAsync({
-          body: {
-            vendorId:user?.id!
-          } ,
-        });
-
-        break;
-
-
-      default:
-        break;
-    }
-
-    // Move to next step if API call succeeds
+    const currentIndex = STEPS.findIndex((s) => s.id === currentStep);
+    console.log(currentIndex, currentStep);
     if (currentIndex < STEPS.length - 1) {
       setCurrentStep(STEPS[currentIndex + 1].id);
-      setError(null); 
     }
-  } catch (err: any) {
-    console.error("Step submission error:", err);
-    setError(err?.message || "Something went wrong. Please try again.");
-  }
-};
+
+  };
 
 
   const handlePreviousStep = () => {
@@ -150,7 +106,7 @@ if( data?.completed){
             information within 24-48 hours. You'll receive an email notification once your account is verified.
           </p>
           <Button asChild className="w-full">
-            <Link href="/">Return to Home</Link>
+            <Link to="/">Return to Home</Link>
           </Button>
         </Card>
       </div>
@@ -164,7 +120,7 @@ if( data?.completed){
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" asChild>
-              <Link href="/">
+              <Link to="/">
                 <ArrowLeft className="w-5 h-5" />
               </Link>
             </Button>
@@ -180,12 +136,12 @@ if( data?.completed){
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-12">
-         {error && (
-                <div className="flex items-start gap-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-red-700"> {error}</p>
-                </div>
-              )}
+        {error && (
+          <div className="flex items-start gap-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-red-700"> {error}</p>
+          </div>
+        )}
         <div className="max-w-2xl mx-auto">
           {/* Progress Indicator */}
           <ProgressIndicator
@@ -202,28 +158,30 @@ if( data?.completed){
             {currentStep === "profile" && (
               <StepProfile
                 data={formData.profile}
-                onUpdate={(data) => handleUpdateFormData({ profile: data as TCreateVendorPayload })}
+                onUpdate={(data: Partial<VendorProfileFormData>) => handleUpdateFormData({ profile: data })}
                 onNext={handleNextStep}
+                setError={setError}
               />
             )}
 
-           
+
 
             {currentStep === "address" && (
               <StepAddress
                 data={formData.address}
-                onUpdate={(data) => handleUpdateFormData({ address: data })}
+                onUpdate={(data: Partial<TCreateAddressPayload>) => handleUpdateFormData({ address: data })}
                 onNext={handleNextStep}
+                setError={setError}
               />
             )}
 
             {currentStep === "payout" && (
-              <StepPayout
-                data={formData.payoutAccount}
-                onUpdate={(data) => handleUpdateFormData({ payoutAccount: data })}
-                onNext={handleNextStep}
-              />
-              // <VendorOnboardingStripe />
+              // <StepPayout
+              //   data={formData.payoutAccount}
+              //   onUpdate={(data) => handleUpdateFormData({ payoutAccount: data })}
+              //   onNext={handleNextStep}
+              // />
+              <VendorOnboardingStripe vendorId={user?.id!} />
             )}
 
             {currentStep === "review" && (

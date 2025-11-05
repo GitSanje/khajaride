@@ -1,22 +1,8 @@
-import type { TCreateVendorPayload } from "@/api/hooks/use-vendor-query"
+
+import type { VendorProfileFormData } from "@/schemas"
 
 export type OnboardingStep = "profile"  | "address" | "payout" | "review" | "complete"
 
-export interface VendorProfileData {
-  name: string
-  about: string
-  cuisine: string
-  vendorType: "restaurant" | "bakery" | "cafe" | "alcohol" | "grocery" | "other"
-  phone: string
-  deliveryAvailable: boolean
-  pickupAvailable: boolean
-  groupOrderAvailable: boolean
-  deliveryFee: number
-  minOrderAmount: number
-  deliveryTimeEstimate: string
-  cuisineTags: string[]
-  promoText: string
-}
 
 export interface DocumentData {
   documentType:
@@ -51,7 +37,7 @@ export interface PayoutAccountData {
 }
 
 export interface VendorOnboardingFormData {
-  profile: Partial<TCreateVendorPayload>
+  profile: Partial<VendorProfileFormData>
   address: Partial<AddressData>
   payoutAccount: Partial<PayoutAccountData>
 }

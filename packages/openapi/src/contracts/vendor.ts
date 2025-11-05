@@ -82,6 +82,24 @@ export const vendorContract = c.router({
     summary: "Get list of vendors with pagination/filter",
   metadata,
   },
+
+  uploadImages: {
+      summary: "Upload images",
+      path: "/vendors/upload-images",
+      method: "POST",
+      contentType: "multipart/form-data",
+      body: z.object({
+        file: z.object({
+          type: z.literal("file"),
+        }),
+      }),
+      responses: {
+        201: z.object({
+          uploadedURLs: z.array(z.string())
+        }),
+      },
+      metadata: metadata,
+    },
 },{
     pathPrefix: "/v1",
   });

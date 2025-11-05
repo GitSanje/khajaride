@@ -24,11 +24,11 @@
     "noUncheckedSideEffectImports": true,
     "baseUrl": ".",
    "paths": {
-      "@/*": ["./src/*"],
+      "@/*": ["./shared/*"],
       "@/customer/*": ["./apps/customer/*"],
       "@/vendor/*": ["./apps/vendor/*"]
     }
 
   },
-    "include": ["apps/customer/**/*", "apps/vendor/**/*", "src/**/*"]
+    "include": ["apps/customer/**/*", "apps/vendor/**/*", "shared/**/*", "postcss.config.cjs", "vite.config.vendor.ts"]
 }

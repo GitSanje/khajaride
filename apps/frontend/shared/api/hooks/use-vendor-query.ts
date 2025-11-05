@@ -22,6 +22,13 @@ export type TCreateVendorResponse = ServerInferResponseBody<
 >;
 
 
+
+export type TUploadImagesResponse = ServerInferResponseBody<
+  typeof apiContract.Vendor.uploadImages,
+  201
+>;
+
+
 export type TCreateVendorAddressPayload= TRequests["Vendor"]['createVendorAddress']['body'];
 
 export type TCreateVendorAddressResponse = ServerInferResponseBody<
@@ -80,6 +87,46 @@ const createVendor= async ({
   } else {
     throw res.body;
   }
+};
+
+
+
+export const UploadImages = async ({
+  api,
+  files,
+}: {
+  api: TApiClient;
+  files: File[];
+}): Promise<TUploadImagesResponse> => {
+  const formData = new FormData();
+
+  files.forEach((file) => formData.append("file", file));
+
+  const res = await api.Vendor.uploadImages({
+    body: formData,
+    extraHeaders: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  if (res.status === 201) {
+    return res.body; 
+  } else {
+    throw res.body;
+  }
+};
+
+
+
+export const useUploadImages = () => {
+  const api = useApiClient();
+
+  return useMutation({
+    mutationFn: ({ files }: { files: File[] }) => UploadImages({ api, files }),
+    onError: (err) => {
+      showApiErrorToast(err, "Failed to upload images");
+    },
+  });
 };
 
 

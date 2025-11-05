@@ -22,8 +22,19 @@ type Config struct {
 	Webhooks      *WebhookConfig       `koanf:"webhooks"`
 	Elasticsearch *ElasticsearchConfig `koanf:"elasticsearch"`
 	Khalti        *KhaltiConfig        `koanf:"khalti"`
+	AWS           AWSConfig            `koanf:"aws" validate:"required"`
 	Stripe        *StripeConfig        `koanf:"stripe"`
 }
+
+
+type AWSConfig struct {
+	Region          string `koanf:"region" validate:"required"`
+	AccessKeyID     string `koanf:"access_key_id" validate:"required"`
+	SecretAccessKey string `koanf:"secret_access_key" validate:"required"`
+	UploadBucket    string `koanf:"upload_bucket" validate:"required"`
+	EndpointURL     string `koanf:"endpoint_url"`
+}
+
 
 type KhaltiConfig struct {
 	PublicKey   string `koanf:"public_key" validate:"required"`

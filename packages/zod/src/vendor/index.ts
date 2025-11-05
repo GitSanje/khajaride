@@ -33,15 +33,21 @@ export const ZMenuItem = ZBase.extend({
 
 
 // ----------------- VendorAddress schema -----------------
-export const ZVendorAddress = z.object({
-  vendorId: z.string(),
-  streetAddress: z.string(),
-  city: z.string(),
-  state: z.string(),
-  zipcode: z.string(),
-  latitude: z.number(),
-  longitude: z.number(),
-});
+export const ZVendorAddress =  z.object({
+  streetAddress: z.string().min(1, "Street address is required"),
+  city: z.string().min(1, "City is required"),
+  state: z.string().min(1, "State/Province is required"),
+  zipcode: z.string().min(1, "Zipcode is required"),
+  latitude: z.preprocess((val) => {
+    if (val === "" || val === null || val === undefined) return val
+    return Number(val)
+  }, z.number().min(-90, "Latitude must be between -90 and 90").max(90, "Latitude must be between -90 and 90")),
+  longitude: z.preprocess((val) => {
+    if (val === "" || val === null || val === undefined) return val
+    return Number(val)
+  }, z.number().min(-180, "Longitude must be between -180 and 180").max(180, "Longitude must be between -180 and 180")),
+})
+
 
 // ----------------- Category schema -----------------
 export const ZCategory = z.object({
@@ -77,8 +83,7 @@ export const ZVendor =  ZBase.extend({
   vendorNotice: z.string(),
   vendorServiceCharge: z.number(),
   vat: z.number(),
-  vendorDiscount: z.number(),
-
+  vendorDiscount: z.number()
 });
 
 // ----------------- VendorPopulated schema -----------------
@@ -94,6 +99,7 @@ export const ZCreateVendorPayload = z.object({
   about: z.string().optional(),
   cuisine: z.string().optional(),
   phone: z.string().optional(),
+  vendorUserId: z.string(),
   deliveryAvailable: z.boolean().optional(),
   pickupAvailable: z.boolean().optional(),
   groupOrderAvailable: z.boolean().optional(),
@@ -141,3 +147,4 @@ export type TMenuItem = z.infer<typeof ZMenuItem>
 export type TVendor = z.infer<typeof ZVendor>
 export type TVendorPopulated = z.infer<typeof ZVendorPopulated>
 export type TCategory = z.infer<typeof ZCategory>
+export type TVendorAddress = z.infer<typeof ZVendorAddress>
