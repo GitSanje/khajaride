@@ -1,22 +1,15 @@
-
-
 import { useEffect, useState } from "react"
-
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { AlertCircle, ArrowLeft, CheckCircle2 } from "lucide-react"
-
 import type { OnboardingStep, VendorOnboardingFormData } from "@/types/vendor-onboarding-types"
 import { StepAddress } from "../vendor-onboarding/step-address"
 import { StepProfile } from "../vendor-onboarding/step-profile"
 import { StepReview } from "../vendor-onboarding/step-review"
 import { ProgressIndicator } from "../vendor-onboarding/progress-indicator"
-
-
-import {  useGetVendorOnboardingTrack, useUpdateVendorOnboardingTrack, type TCreateAddressPayload } from "@/api/hooks/use-user-query"
-import { useCreateOnboardingStripeSession } from "@/api/hooks/use-payment-query"
+import { useGetVendorOnboardingTrack, useUpdateVendorOnboardingTrack, type TCreateAddressPayload } from "@/api/hooks/use-user-query"
 import { useUser } from "@clerk/clerk-react"
-import { Link, Navigate } from "react-router-dom"
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom"
 import VendorOnboardingStripe from "../vendor-onboarding/stripe-connect-onboarding"
 import type { VendorProfileFormData } from "@/schemas"
 
@@ -27,15 +20,69 @@ const STEPS: { id: OnboardingStep; label: string }[] = [
   { id: "review", label: "Review" },
 ]
 
-export default function VendorOnboardingPage() {
+// Loading Skeleton Component
+function VendorOnboardingSkeleton() {
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header Skeleton */}
+      <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-muted rounded-md animate-pulse" />
+            <div>
+              <div className="w-48 h-6 bg-muted rounded animate-pulse mb-2" />
+              <div className="w-32 h-4 bg-muted rounded animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </div>
 
+      {/* Main Content Skeleton */}
+      <div className="container mx-auto px-4 py-12">
+        <div className="max-w-2xl mx-auto">
+          {/* Progress Indicator Skeleton */}
+          <div className="flex justify-between mb-8">
+            {STEPS.map((step, index) => (
+              <div key={step.id} className="flex flex-col items-center flex-1">
+                <div className="w-8 h-8 bg-muted rounded-full animate-pulse mb-2" />
+                <div className="w-16 h-4 bg-muted rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
+
+          {/* Step Content Skeleton */}
+          <div className="mt-12">
+            <Card className="p-6">
+              <div className="space-y-4">
+                {/* Form fields skeleton */}
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <div key={index} className="space-y-2">
+                    <div className="w-24 h-4 bg-muted rounded animate-pulse" />
+                    <div className="w-full h-10 bg-muted rounded animate-pulse" />
+                  </div>
+                ))}
+                
+                {/* Button skeleton */}
+                <div className="flex gap-3 mt-6">
+                  <div className="flex-1 h-10 bg-muted rounded animate-pulse" />
+                  <div className="flex-1 h-10 bg-muted rounded animate-pulse" />
+                </div>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function VendorOnboardingPage() {
   const { user } = useUser();
 
-  const { data } = useGetVendorOnboardingTrack({ enabled: true })
-  if (data?.completed) {
-    return <Navigate to="/dashboard" replace />;
-  }
-  const [currentStep, setCurrentStep] = useState<OnboardingStep>("profile")
+ const navigate = useNavigate();
+  const { "*": currentStep } = useParams();
+  const { data, isLoading } = useGetVendorOnboardingTrack({ enabled: true })
+  //  const [currentStep, setCurrentStep] = useState<OnboardingStep>("profile" )
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
   const [formData, setFormData] = useState<VendorOnboardingFormData>({
@@ -43,38 +90,57 @@ export default function VendorOnboardingPage() {
     address: {},
     payoutAccount: {},
   })
+   const [error, setError] = useState<string | null>(null);
+  // useEffect(() => {
+  //   if (data?.currentStep) {
+  //     setCurrentStep(data?.currentStep as OnboardingStep)
+  //   }
+  // }, [data?.currentStep])
+console.log(currentStep,'currentStep',data,);
 
   useEffect(() => {
-    if (data?.currentProgress) {
-      setCurrentStep(data?.currentProgress as OnboardingStep)
+   if (data?.currentStep) {
+      // No valid step in URL, but we have data, navigate to the correct step
+      navigate(`/vendor-onboarding/${data.currentStep}`, { replace: true });
+    } else {
+      // Default to first step
+      navigate('/vendor-onboarding/profile', { replace: true });
     }
-  }, [data?.currentProgress])
+  }, [currentStep, data?.currentStep, navigate]);
 
-  const [error, setError] = useState<string | null>(null);
+  if (isLoading || !data || !currentStep) {
+    return <VendorOnboardingSkeleton />
+  }
+  
+  if (data?.completed) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+ 
 
 
-  const stripeConnectOnboarding = useCreateOnboardingStripeSession()
-  const updateVendorOnboardingTrack = useUpdateVendorOnboardingTrack()
-
+ 
+ 
   const handleUpdateFormData = (data: Partial<VendorOnboardingFormData>) => {
     setFormData((prev) => ({ ...prev, ...data }))
   }
 
   const handleNextStep = async () => {
-
     const currentIndex = STEPS.findIndex((s) => s.id === currentStep);
     console.log(currentIndex, currentStep);
     if (currentIndex < STEPS.length - 1) {
-      setCurrentStep(STEPS[currentIndex + 1].id);
+      const nextStep = STEPS[currentIndex + 1].id;
+      //setCurrentStep(nextStep);
+      navigate(`/vendor-onboarding/${nextStep}`);
     }
-
   };
-
 
   const handlePreviousStep = () => {
     const currentIndex = STEPS.findIndex((s) => s.id === currentStep)
     if (currentIndex > 0) {
-      setCurrentStep(STEPS[currentIndex - 1].id)
+      const previousStep = STEPS[currentIndex - 1].id;
+      //setCurrentStep(previousStep);
+      navigate(`/vendor-onboarding/${previousStep}`);
     }
   }
 
@@ -106,7 +172,7 @@ export default function VendorOnboardingPage() {
             information within 24-48 hours. You'll receive an email notification once your account is verified.
           </p>
           <Button asChild className="w-full">
-            <Link to="/">Return to Home</Link>
+            <Link to="/dashboard">Go to Dashboard</Link>
           </Button>
         </Card>
       </div>
@@ -145,7 +211,7 @@ export default function VendorOnboardingPage() {
         <div className="max-w-2xl mx-auto">
           {/* Progress Indicator */}
           <ProgressIndicator
-            currentStep={currentStep}
+            currentStep={currentStep as OnboardingStep}
             steps={STEPS}
             completedSteps={STEPS.slice(
               0,
@@ -164,8 +230,6 @@ export default function VendorOnboardingPage() {
               />
             )}
 
-
-
             {currentStep === "address" && (
               <StepAddress
                 data={formData.address}
@@ -176,13 +240,10 @@ export default function VendorOnboardingPage() {
             )}
 
             {currentStep === "payout" && (
-              // <StepPayout
-              //   data={formData.payoutAccount}
-              //   onUpdate={(data) => handleUpdateFormData({ payoutAccount: data })}
-              //   onNext={handleNextStep}
-              // />
-              <VendorOnboardingStripe vendorId={user?.id!} />
+              <VendorOnboardingStripe vendorUserId={user?.id!} /> 
+
             )}
+            
 
             {currentStep === "review" && (
               <StepReview data={formData} onSubmit={handleSubmit} isSubmitting={isSubmitting} />

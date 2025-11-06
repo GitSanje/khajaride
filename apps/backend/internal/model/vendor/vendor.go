@@ -5,8 +5,8 @@ import "github.com/gitSanje/khajaride/internal/model"
 
 type Vendor struct {
 	model.Base
-	ID string `json:"id" db:"id"`
-	VendorUserID *string `json:"vendorUserId" db:"vendor_user_id"`
+	ID                    string `json:"id" db:"id"`
+	VendorUserID         *string `json:"vendorUserId" db:"vendor_user_id"`
 	Name                  string   `json:"name" db:"name"`
 	About                 string   `json:"about" db:"about"`
 	Cuisine               string   `json:"cuisine" db:"cuisine"`
@@ -27,8 +27,8 @@ type Vendor struct {
 	FavoriteCount         int      `json:"favoriteCount" db:"favorite_count"`
 	IsFeatured            bool     `json:"isFeatured" db:"is_featured"`
 	CuisineTags           []string `json:"cuisineTags" db:"cuisine_tags"`
-	PromoText             string   `json:"promoText" db:"promo_text"`
-	VendorNotice          string   `json:"vendorNotice" db:"vendor_notice"`
+	PromoText             *string   `json:"promoText" db:"promo_text"`
+	VendorNotice          *string   `json:"vendorNotice" db:"vendor_notice"`
 	VendorServiceCharge   float64  `json:"vendorServiceCharge" db:"vendor_service_charge"`
 	VAT                   float64  `json:"vat" db:"vat"`
 	VendorDiscount        float64  `json:"vendorDiscount" db:"vendor_discount"`

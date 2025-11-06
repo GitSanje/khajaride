@@ -12,6 +12,7 @@ import type { AddressData } from "@/types/vendor-onboarding-types"
 import { ZVendorAddress, type TVendorAddress } from "@khajaride/zod"
 import { useUpdateVendorOnboardingTrack } from "@/api/hooks/use-user-query"
 import { useCreateVendorAddress } from "@/api/hooks/use-vendor-query"
+import { useUser } from "@clerk/clerk-react"
 
 interface StepAddressProps {
   data: Partial<AddressData>
@@ -28,7 +29,7 @@ export function StepAddress({
 }: StepAddressProps) {
   const [useCurrentLocation, setUseCurrentLocation] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-
+  const { user} = useUser()
   const {
     register,
     handleSubmit,
@@ -39,12 +40,14 @@ export function StepAddress({
   } = useForm<TVendorAddress>({
     resolver: zodResolver(ZVendorAddress as any),
     defaultValues: {
+      vendorUserId: user?.id  ,
       streetAddress: data.streetAddress || "",
       city: data.city || "",
       state: data.state || "",
       zipcode: data.zipcode || "",
       latitude: data.latitude || 0,
       longitude: data.longitude || 0,
+      
     }
   })
 
@@ -102,7 +105,7 @@ export function StepAddress({
       await updateVendorOnboardingTrack.mutateAsync({
         body: {
           completed: false,
-          currentProgress: "payout"
+          currentStep: "payout"
         }
       })
 

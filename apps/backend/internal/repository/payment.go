@@ -162,7 +162,7 @@ func (r *PaymentRepository) CreatePayoutAccount(ctx context.Context, acc *payout
 			COALESCE(@branch_name, ''),
 			COALESCE(@stripe_account_id, ''),
 			COALESCE(@stripe_external_account_id, ''),
-			COALESCE(@currency, 'INR'),
+			COALESCE(@currency, 'USD'),
 			COALESCE(@is_default, FALSE),
 			@mode,
 			@code,
@@ -181,7 +181,7 @@ func (r *PaymentRepository) CreatePayoutAccount(ctx context.Context, acc *payout
 		"bank_name":               acc.BankName,
 		"branch_name":             acc.BranchName,
 		"stripe_account_id":       acc.StripeAccountID,
-		"stripe_external_account_id": string(*acc.StripeExternalAccount),
+		"stripe_external_account_id": acc.StripeExternalAccount,
 		"currency":                acc.Currency,
 		"is_default":              acc.IsDefault,
 		"mode":                    acc.Mode,
@@ -197,4 +197,28 @@ func (r *PaymentRepository) CreatePayoutAccount(ctx context.Context, acc *payout
 	}
 
 	return nil
+}
+
+
+func (r *PaymentRepository) GetStripeAccountID(ctx context.Context, vendorUserID string) (string, error) {
+	query := `
+		SELECT stripe_account_id
+		FROM payout_accounts
+		WHERE owner_id = $1
+		  AND owner_type = 'vendor'
+		  AND method = 'stripe'
+		LIMIT 1;
+	`
+
+	var stripeAccountID string
+	err := r.server.DB.Pool.QueryRow(ctx, query, vendorUserID).Scan(&stripeAccountID)
+	if err != nil {
+		// No row found → return empty string, nil (not an error)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", nil
+		}
+		return "", fmt.Errorf("failed to fetch stripe account id: %w", err)
+	}
+
+	return stripeAccountID, nil
 }

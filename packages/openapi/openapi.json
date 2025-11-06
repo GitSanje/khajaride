@@ -198,6 +198,12 @@
                     },
                     "twoFactorEnabled": {
                       "type": "boolean"
+                    },
+                    "currentOnboardingStep": {
+                      "type": "string"
+                    },
+                    "isVendorOnboardingCompleted": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
@@ -213,7 +219,9 @@
                     "isActive",
                     "loyaltyPoints",
                     "profilePicture",
-                    "twoFactorEnabled"
+                    "twoFactorEnabled",
+                    "currentOnboardingStep",
+                    "isVendorOnboardingCompleted"
                   ]
                 }
               }
@@ -281,6 +289,12 @@
                     },
                     "twoFactorEnabled": {
                       "type": "boolean"
+                    },
+                    "currentOnboardingStep": {
+                      "type": "string"
+                    },
+                    "isVendorOnboardingCompleted": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
@@ -296,7 +310,9 @@
                     "isActive",
                     "loyaltyPoints",
                     "profilePicture",
-                    "twoFactorEnabled"
+                    "twoFactorEnabled",
+                    "currentOnboardingStep",
+                    "isVendorOnboardingCompleted"
                   ]
                 }
               }
@@ -408,6 +424,12 @@
                     },
                     "twoFactorEnabled": {
                       "type": "boolean"
+                    },
+                    "currentOnboardingStep": {
+                      "type": "string"
+                    },
+                    "isVendorOnboardingCompleted": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
@@ -423,7 +445,9 @@
                     "isActive",
                     "loyaltyPoints",
                     "profilePicture",
-                    "twoFactorEnabled"
+                    "twoFactorEnabled",
+                    "currentOnboardingStep",
+                    "isVendorOnboardingCompleted"
                   ]
                 }
               }
@@ -603,6 +627,12 @@
                           },
                           "twoFactorEnabled": {
                             "type": "boolean"
+                          },
+                          "currentOnboardingStep": {
+                            "type": "string"
+                          },
+                          "isVendorOnboardingCompleted": {
+                            "type": "boolean"
                           }
                         },
                         "required": [
@@ -618,7 +648,9 @@
                           "isActive",
                           "loyaltyPoints",
                           "profilePicture",
-                          "twoFactorEnabled"
+                          "twoFactorEnabled",
+                          "currentOnboardingStep",
+                          "isVendorOnboardingCompleted"
                         ]
                       }
                     },
@@ -1451,6 +1483,104 @@
         ]
       }
     },
+    "/v1/users/vendor-onboarding-track": {
+      "get": {
+        "summary": "Get vendor onboarding track ",
+        "tags": [
+          "User"
+        ],
+        "parameters": [],
+        "operationId": "getVendorOnboardingTrack",
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "currentProgress": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "completed",
+                    "currentProgress"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "summary": "Update vendor onboarding track",
+        "tags": [
+          "User"
+        ],
+        "parameters": [],
+        "operationId": "VendorOnboardingTrack",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "completed": {
+                    "type": "boolean"
+                  },
+                  "currentProgress": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "completed",
+                  "currentProgress"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "currentProgress": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "completed",
+                    "currentProgress"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/v1/vendors": {
       "post": {
         "description": "Add vendor to database",
@@ -1479,6 +1609,9 @@
                     "type": "string"
                   },
                   "phone": {
+                    "type": "string"
+                  },
+                  "vendorUserId": {
                     "type": "string"
                   },
                   "deliveryAvailable": {
@@ -1542,7 +1675,8 @@
                   }
                 },
                 "required": [
-                  "name"
+                  "name",
+                  "vendorUserId"
                 ]
               }
             }
@@ -1951,30 +2085,34 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "vendorId": {
-                    "type": "string"
-                  },
                   "streetAddress": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1
                   },
                   "city": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1
                   },
                   "state": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1
                   },
                   "zipcode": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1
                   },
                   "latitude": {
-                    "type": "number"
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
                   },
                   "longitude": {
-                    "type": "number"
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
                   }
                 },
                 "required": [
-                  "vendorId",
                   "streetAddress",
                   "city",
                   "state",
@@ -1994,30 +2132,34 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "vendorId": {
-                      "type": "string"
-                    },
                     "streetAddress": {
-                      "type": "string"
+                      "type": "string",
+                      "minLength": 1
                     },
                     "city": {
-                      "type": "string"
+                      "type": "string",
+                      "minLength": 1
                     },
                     "state": {
-                      "type": "string"
+                      "type": "string",
+                      "minLength": 1
                     },
                     "zipcode": {
-                      "type": "string"
+                      "type": "string",
+                      "minLength": 1
                     },
                     "latitude": {
-                      "type": "number"
+                      "type": "number",
+                      "minimum": -90,
+                      "maximum": 90
                     },
                     "longitude": {
-                      "type": "number"
+                      "type": "number",
+                      "minimum": -180,
+                      "maximum": 180
                     }
                   },
                   "required": [
-                    "vendorId",
                     "streetAddress",
                     "city",
                     "state",
@@ -2073,6 +2215,9 @@
                     "type": "string"
                   },
                   "phone": {
+                    "type": "string"
+                  },
+                  "vendorUserId": {
                     "type": "string"
                   },
                   "deliveryAvailable": {
@@ -2140,6 +2285,7 @@
                 },
                 "required": [
                   "name",
+                  "vendorUserId",
                   "id"
                 ]
               }
@@ -2451,30 +2597,34 @@
                     "address": {
                       "type": "object",
                       "properties": {
-                        "vendorId": {
-                          "type": "string"
-                        },
                         "streetAddress": {
-                          "type": "string"
+                          "type": "string",
+                          "minLength": 1
                         },
                         "city": {
-                          "type": "string"
+                          "type": "string",
+                          "minLength": 1
                         },
                         "state": {
-                          "type": "string"
+                          "type": "string",
+                          "minLength": 1
                         },
                         "zipcode": {
-                          "type": "string"
+                          "type": "string",
+                          "minLength": 1
                         },
                         "latitude": {
-                          "type": "number"
+                          "type": "number",
+                          "minimum": -90,
+                          "maximum": 90
                         },
                         "longitude": {
-                          "type": "number"
+                          "type": "number",
+                          "minimum": -180,
+                          "maximum": 180
                         }
                       },
                       "required": [
-                        "vendorId",
                         "streetAddress",
                         "city",
                         "state",
@@ -2630,6 +2780,63 @@
                     "vendorServiceCharge",
                     "vat",
                     "vendorDiscount"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/vendors/upload-images": {
+      "post": {
+        "summary": "Upload images",
+        "tags": [
+          "Vendor"
+        ],
+        "parameters": [],
+        "operationId": "uploadImages",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "201",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "uploadedURLs": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "uploadedURLs"
                   ]
                 }
               }
@@ -3185,30 +3392,34 @@
                       "vendorAddress": {
                         "type": "object",
                         "properties": {
-                          "vendorId": {
-                            "type": "string"
-                          },
                           "streetAddress": {
-                            "type": "string"
+                            "type": "string",
+                            "minLength": 1
                           },
                           "city": {
-                            "type": "string"
+                            "type": "string",
+                            "minLength": 1
                           },
                           "state": {
-                            "type": "string"
+                            "type": "string",
+                            "minLength": 1
                           },
                           "zipcode": {
-                            "type": "string"
+                            "type": "string",
+                            "minLength": 1
                           },
                           "latitude": {
-                            "type": "number"
+                            "type": "number",
+                            "minimum": -90,
+                            "maximum": 90
                           },
                           "longitude": {
-                            "type": "number"
+                            "type": "number",
+                            "minimum": -180,
+                            "maximum": 180
                           }
                         },
                         "required": [
-                          "vendorId",
                           "streetAddress",
                           "city",
                           "state",

@@ -10,6 +10,8 @@ import (
 	"github.com/gitSanje/khajaride/internal/server"
 	"github.com/gitSanje/khajaride/internal/service"
 	"github.com/labstack/echo/v4"
+	"github.com/stripe/stripe-go/v83"
+	"github.com/stripe/stripe-go/v83/account"
 )
 
 type PaymentHandler struct {
@@ -161,13 +163,81 @@ func (h *PaymentHandler) OnboardingStripeConnectAccount(c echo.Context) error {
 		h.Handler,
 		func(c echo.Context, payload *payment.OnboardingPayload) (*payment.OnboardingResponse, error) {
 		
-			return  h.PaymentService.CreateOnboardingSession(c, payload)
+			return  h.PaymentService.CreateOnboardingAccountWithLink(c, payload)
 		},
 		http.StatusCreated,
 		&payment.OnboardingPayload{},
 	)(c)
 
 }
+
+func (h *PaymentHandler) CreateOnboardingAccountLink(c echo.Context) error {
+	return Handle(
+		h.Handler,
+		func(c echo.Context, payload *payment.OnboardingAccountLinkPayload) (*payment.OnboardingResponse, error) {
+		    url, err := h.PaymentService.CreateOnboardingLink(c.Request().Context(), payload.AccountId)
+			if( err != nil){
+				return  nil,fmt.Errorf("err creating link%v",err)
+			}
+			return &payment.OnboardingResponse{
+				URL: url,
+			},nil
+		},
+		http.StatusCreated,
+		&payment.OnboardingAccountLinkPayload{},
+	)(c)
+
+}
+
+func (h *PaymentHandler) StripeOnboardingRefresh(c echo.Context)  error{
+	
+	accountID := c.QueryParam("account_id")
+	if accountID == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Missing account_id",
+		})
+	}
+
+	url, err := h.PaymentService.CreateOnboardingLink(c.Request().Context(), accountID)
+	if err != nil {
+		 c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": fmt.Sprintf("Failed to create refresh link: %v", err),
+		})
+	}
+     
+	return c.Redirect(http.StatusSeeOther, url)
+}
+
+func (h *PaymentHandler) StripeOnboardingReturn(c echo.Context) error {
+    stripe.Key = h.server.Config.Stripe.SecretKey
+	accountID := c.QueryParam("account_id")
+	if accountID == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Missing account_id",
+		})
+	}
+
+	// Fetch the connected account from Stripe
+	acct, err := account.Get()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": fmt.Sprintf("Failed to fetch Stripe account: %v", err),
+		})
+	}
+
+	// Check if there are still required items
+	if len(acct.Requirements.CurrentlyDue) > 0 || len(acct.Requirements.EventuallyDue) > 0 {
+		// Not finished → redirect to onboarding incomplete page
+	    url:=fmt.Sprintf(`/vendor-onboarding/payment/onboarding-incomplete?account_id=%s`, accountID)
+		return c.Redirect(http.StatusSeeOther, url)
+	}
+
+	// ✅ Onboarding completed → redirect to verified page
+	return c.Redirect(http.StatusSeeOther, "/vendor-onboarding/payment/verified")
+}
+
+
+
 // Helper: safely parse string → float
 func parseFloat(s string) float64 {
 	f, _ := strconv.ParseFloat(s, 64)

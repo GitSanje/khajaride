@@ -30,15 +30,15 @@ export const VENDOR_TYPES = ["restaurant", "bakery", "alcohol", "cafe"] as const
     }),
     deliveryAvailable: z.boolean().default(true),
     pickupAvailable: z.boolean().default(true),
-    groupOrderAvailable: z.boolean().default(false),
     deliveryFee: z.number().min(0, "Delivery fee cannot be negative").default(0),
     minOrderAmount: z.number().min(0, "Minimum order amount cannot be negative").default(0),
     deliveryTimeEstimate: z.string().optional(),
     promoText: z.string().optional(),
     cuisineTags: z.array(z.string()).default([]),
     openingHours: z.string().optional(),
-  vendorListingImage: z.string().optional(),
-  vendorLogoImage: z.string().optional(),
+    vendorListingImage: z.string().optional(),
+    vendorLogoImage: z.string().optional(),
+  
   })
   
 export type VendorProfileFormData = z.infer<typeof vendorProfileSchema>

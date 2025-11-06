@@ -16,6 +16,7 @@ import { useCreateVendor, useUploadImages, type TCreateVendorPayload } from "@/a
 import { VENDOR_TYPES, vendorProfileSchema, type VendorProfileFormData } from "@/schemas"
 import { useUpdateVendorOnboardingTrack } from "@/api/hooks/use-user-query"
 import { useUser } from "@clerk/clerk-react"
+import { ImageUploadField } from "@/components/image-upload-field"
 
 interface StepProfileProps {
   data: Partial<VendorProfileFormData>
@@ -81,7 +82,7 @@ export function StepProfile({
       vendorType: data.vendorType as any || "",
       deliveryAvailable: data.deliveryAvailable ?? true,
       pickupAvailable: data.pickupAvailable ?? true,
-      groupOrderAvailable: data.groupOrderAvailable ?? false,
+
       deliveryFee: data.deliveryFee || 0,
       minOrderAmount: data.minOrderAmount || 0,
       deliveryTimeEstimate: data.deliveryTimeEstimate || "",
@@ -156,15 +157,7 @@ export function StepProfile({
     onUpdate({ ...data, openingHours: formattedHours })
   }
 
-  const handleImageUpload = (type: 'listing' | 'logo', file: File) => {
-    if (type === 'listing') {
-      setVendorListingImage(file)
-      // You might want to upload the image here and get the image name
-      // For now, we'll just store the file object
-    } else {
-      setVendorLogoImage(file)
-    }
-  }
+
 
   const createVendor = useCreateVendor()
   const updateVendorOnboardingTrack = useUpdateVendorOnboardingTrack()
@@ -190,12 +183,13 @@ export function StepProfile({
         const vendorListingUrl = vendorListingImage ? uploadedURLs.shift() : undefined
         const vendorLogoUrl = vendorLogoImage ? uploadedURLs.shift() : undefined
 
+
       // Prepare form data with images
       const submitData = {
         ...formData,
         vendorListingImage: vendorListingUrl,
         vendorLogoImage:vendorLogoUrl,
-        vendorUserId: user?.id
+        vendorUserId: user?.id as string
       }
       console.log("Submitting vendor profile:", submitData)
       // Create vendor
@@ -207,7 +201,7 @@ export function StepProfile({
       await updateVendorOnboardingTrack.mutateAsync({
         body: {
           completed: false,
-          currentProgress: "address"
+          currentStep: "address" 
         }
       })
 
@@ -221,14 +215,9 @@ export function StepProfile({
     }
   }
 
-  const isComplete = 
-    formValues.name && 
-    formValues.about && 
-    formValues.cuisine && 
-    formValues.vendorType && 
-    formValues.phone
-
   
+
+    
   return (
     <div className="space-y-6">
       <form onSubmit={handleSubmit(handleFormSubmit)}>
@@ -390,64 +379,27 @@ export function StepProfile({
             {/* Image Uploads */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Vendor Listing Image */}
-              <div className="space-y-3">
-                <Label htmlFor="listingImage">Restaurant Banner Image</Label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <input
-                    id="listingImage"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) handleImageUpload('listing', file)
-                    }}
-                  />
-                  <label htmlFor="listingImage" className="cursor-pointer">
-                    <ImageIcon className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm text-gray-600">
-                      {vendorListingImage ? vendorListingImage.name : "Upload banner image"}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Recommended: 1200x400px
-                    </p>
-                    <Button type="button" variant="outline" size="sm" className="mt-2">
-                      <Upload className="w-4 h-4 mr-2" />
-                      Choose File
-                    </Button>
-                  </label>
-                </div>
-              </div>
+           
+              <ImageUploadField
+                label="Restaurant Banner Image"
+                description="High-quality banner for your restaurant listing"
+                recommendedSize="1200x400px"
+                onImageSelect={(file) => setVendorListingImage(file)}
+                onImageRemove={() => setVendorListingImage(null)}
+                selectedFile={vendorListingImage}
+              />
+                     {/* Vendor Logo Image */}
+              <ImageUploadField
+                label="Restaurant Logo"
+                description="Your restaurant's logo or icon"
+                recommendedSize="200x200px"
+                onImageSelect={(file) => setVendorLogoImage(file)}
+                onImageRemove={() => setVendorLogoImage(null)}
+                selectedFile={vendorLogoImage}
+              />
 
-              {/* Vendor Logo Image */}
-              <div className="space-y-3">
-                <Label htmlFor="logoImage">Restaurant Logo</Label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <input
-                    id="logoImage"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) handleImageUpload('logo', file)
-                    }}
-                  />
-                  <label htmlFor="logoImage" className="cursor-pointer">
-                    <ImageIcon className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm text-gray-600">
-                      {vendorLogoImage ? vendorLogoImage.name : "Upload logo"}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Recommended: 200x200px
-                    </p>
-                    <Button type="button" variant="outline" size="sm" className="mt-2">
-                      <Upload className="w-4 h-4 mr-2" />
-                      Choose File
-                    </Button>
-                  </label>
-                </div>
-              </div>
+       
+          
             </div>
 
             {/* Service Options */}
@@ -478,18 +430,7 @@ export function StepProfile({
                     Pickup Available
                   </Label>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="group"
-                    checked={formValues.groupOrderAvailable}
-                    onCheckedChange={(checked) => 
-                      handleFormChange("groupOrderAvailable", checked as boolean)
-                    }
-                  />
-                  <Label htmlFor="group" className="font-normal cursor-pointer">
-                    Group Orders Available
-                  </Label>
-                </div>
+               
               </div>
             </div>
 

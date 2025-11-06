@@ -34,6 +34,7 @@ export const ZMenuItem = ZBase.extend({
 
 // ----------------- VendorAddress schema -----------------
 export const ZVendorAddress =  z.object({
+  vendorUserId:z.string(),
   streetAddress: z.string().min(1, "Street address is required"),
   city: z.string().min(1, "City is required"),
   state: z.string().min(1, "State/Province is required"),
@@ -102,14 +103,13 @@ export const ZCreateVendorPayload = z.object({
   vendorUserId: z.string(),
   deliveryAvailable: z.boolean().optional(),
   pickupAvailable: z.boolean().optional(),
-  groupOrderAvailable: z.boolean().optional(),
-  deliveryFee: z.number().min(0).optional(),
+   deliveryFee: z.number().min(0).optional(),
   minOrderAmount: z.number().min(0).optional(),
   deliveryTimeEstimate: z.string().optional(),
   isOpen: z.boolean().optional(),
   openingHours: z.record(z.string()).optional(),
-  vendorListingImageName: z.string().optional(),
-  vendorLogoImageName: z.string().optional(),
+  vendorListingImage: z.string().optional(),
+  vendorLogoImage: z.string().optional(),
   vendorType: z.enum(["restaurant", "bakery", "alcohol", "cafe"]).optional(),
   isFeatured: z.boolean().optional(),
   cuisineTags: z.array(z.string()).optional(),

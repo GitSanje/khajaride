@@ -66,7 +66,7 @@ CREATE TABLE payout_accounts (
 
     stripe_account_id TEXT,     
     stripe_external_account_id TEXT,
-    currency TEXT DEFAULT 'INR', 
+    currency TEXT DEFAULT 'USD', 
 
     is_default BOOLEAN DEFAULT FALSE,
     mode TEXT NOT NULL CHECK (mode IN ('online', 'offline')),

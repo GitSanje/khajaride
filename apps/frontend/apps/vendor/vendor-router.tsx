@@ -1,4 +1,4 @@
-import { Route, createRoutesFromElements, createBrowserRouter } from "react-router-dom";
+import { Route, createRoutesFromElements, createBrowserRouter, Navigate } from "react-router-dom";
 import VendorDashboard from "../vendor/pages/vendor-dashboard";
 import { PublicRoute } from "@/components/public-route";
 import { AuthLayout } from "@/components/layouts/auth-layout";
@@ -28,14 +28,22 @@ const routes = createRoutesFromElements(
         </PublicRoute>
       }
     />
-    <Route
-      path="/vendor-onboarding"
+ <Route
+      path="/vendor-onboarding/*"
       element={
         <ProtectedRoute>
           <VendorOnboardingPage />
         </ProtectedRoute>
       }
-    />
+    >
+      {/* Nested routes for each step */}
+      <Route path="profile" />
+      <Route path="address" />
+      <Route path="payout" />
+      <Route path="review" />
+      {/* Default redirect to first step */}
+      <Route index element={<Navigate to="profile" replace />} />
+    </Route>
     <Route
       path="/*"
       element={

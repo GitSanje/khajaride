@@ -58,11 +58,11 @@ export const ZStripeVerifyPaymentResponse = z.object({
 
 
 export const ZStripeVendorOnboardingPayload= z.object({
-  vendorId: z.string(), 
+  vendorUserId: z.string(), 
 });
 
 export const ZStripeVendorOnboardingResponse= z.object({
-  client_secret: z.string(), 
+  url: z.string(), 
 });
 
 

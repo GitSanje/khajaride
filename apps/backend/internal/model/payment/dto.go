@@ -98,13 +98,21 @@ func (p *StripeVerifyPayload) Validate() error {
 
 
 type OnboardingPayload struct {
-	VendorId   string  `json:"vendorId"  validate:"required"`
+	VendorUserId   string  `json:"vendorUserId"  validate:"required"`
 }
 func (p *OnboardingPayload) Validate() error {
 	validate := validator.New()
 	return validate.Struct(p)
 }
 
+type OnboardingAccountLinkPayload struct {
+	AccountId   string  `json:"accountId"  validate:"required"`
+}
+func (p *OnboardingAccountLinkPayload) Validate() error {
+	validate := validator.New()
+	return validate.Struct(p)
+}
+
 type OnboardingResponse struct {
-	ClientSecret string `json:"client_secret"`
+	URL string `json:"url"`
 }

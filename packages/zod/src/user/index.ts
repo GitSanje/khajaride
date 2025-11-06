@@ -85,5 +85,5 @@ export const ZGetUsersQuery = z.object({
 
 export const ZVendorOnboardingTrack = z.object({
   completed: z.boolean(),
-  currentProgress: z.string()
+  currentStep: z.string()
 })

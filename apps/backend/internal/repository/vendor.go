@@ -34,15 +34,15 @@ func NewVendorRepository(s *server.Server) *VendorRepository {
 func (r *VendorRepository) CreateVendor(ctx context.Context, payload *vendor.CreateVendorPayload) (*vendor.Vendor, error) {
 	stmt := `
 		INSERT INTO vendors (
-			id, name, about, cuisine, phone, delivery_available, pickup_available,
-			group_order_available, delivery_fee, min_order_amount, delivery_time_estimate,
+			vendor_user_id, name, about, cuisine, phone, delivery_available, pickup_available,
+			 delivery_fee, min_order_amount, delivery_time_estimate,
 			is_open, opening_hours, vendor_listing_image_name, vendor_logo_image_name,
 			vendor_type, is_featured, cuisine_tags, promo_text, vendor_notice
 		)
 		VALUES (
-			COALESCE(@ID, gen_random_uuid()::TEXT),
-			@Name, @About, @Cuisine, @Phone, @DeliveryAvailable, @PickupAvailable,
-			@GroupOrderAvailable, @DeliveryFee, @MinOrderAmount, @DeliveryTimeEstimate,
+		
+			@VendorUserId, @Name, @About, @Cuisine, @Phone, @DeliveryAvailable, @PickupAvailable,
+			 @DeliveryFee, @MinOrderAmount, @DeliveryTimeEstimate,
 			COALESCE(@IsOpen, true), @OpeningHours, @VendorListingImage, @VendorLogoImage,
 			@VendorType, COALESCE(@IsFeatured, false), @CuisineTags, @PromoText, @VendorNotice
 		)
@@ -50,7 +50,7 @@ func (r *VendorRepository) CreateVendor(ctx context.Context, payload *vendor.Cre
 	`
 
 	rows, err := r.server.DB.Pool.Query(ctx, stmt, pgx.NamedArgs{
-		"ID":                  nil,
+	    "VendorUserId":       payload.VendorUserID,
 		"Name":                payload.Name,
 		"About":               payload.About,
 		"Cuisine":             payload.Cuisine,
@@ -69,6 +69,7 @@ func (r *VendorRepository) CreateVendor(ctx context.Context, payload *vendor.Cre
 		"CuisineTags":         payload.CuisineTags,
 		"PromoText":           payload.PromoText,
 		"VendorNotice":        payload.VendorNotice,
+	
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create vendor %s: %w", payload.Name, err)
@@ -525,6 +526,15 @@ func (r *VendorRepository) BulkInsertMenuData(
 // ---------------- Vendor Address ----------------
 
 func (r *VendorRepository) CreateVendorAddress(ctx context.Context, payload *vendor.CreateVendorAddressPayload) (*vendor.VendorAddress, error) {
+    var vendorID string
+	err := r.server.DB.Pool.QueryRow(ctx, `
+        SELECT id FROM vendors WHERE vendor_user_id = $1
+    `, payload.VendorUserID).Scan(&vendorID)
+    if err != nil {
+        return nil, fmt.Errorf("failed to lookup vendor by user id: %w", err)
+    }
+
+
 	stmt := `
 		INSERT INTO vendor_addresses (
 			id, vendor_id, street_address, city, state, zipcode, latitude, longitude
@@ -538,7 +548,7 @@ func (r *VendorRepository) CreateVendorAddress(ctx context.Context, payload *ven
 
 	rows, err := r.server.DB.Pool.Query(ctx, stmt, pgx.NamedArgs{
 		"ID":           nil,
-		"VendorID":     payload.VendorID,
+		"VendorID":    vendorID,
 		"StreetAddress": payload.StreetAddress,
 		"City":         payload.City,
 		"State":        payload.State,

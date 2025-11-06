@@ -30,6 +30,7 @@ func (global *GlobalMiddlewares) CORS() echo.MiddlewareFunc {
       echo.POST,
       echo.PUT,
       echo.DELETE,
+	  echo.PATCH, 
       echo.OPTIONS,
     },
     AllowHeaders: []string{

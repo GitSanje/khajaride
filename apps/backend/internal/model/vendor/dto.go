@@ -17,14 +17,13 @@ type CreateVendorPayload struct {
 	Phone                 string  `json:"phone"`
 	DeliveryAvailable     bool    `json:"deliveryAvailable,omitempty"`
 	PickupAvailable       bool    `json:"pickupAvailable,omitempty"`
-	GroupOrderAvailable   bool    `json:"groupOrderAvailable,omitempty"`
 	DeliveryFee           *float64 `json:"deliveryFee,omitempty" validate:"omitempty,min=0"`
 	MinOrderAmount        *float64 `json:"minOrderAmount,omitempty" validate:"omitempty,min=0"`
 	DeliveryTimeEstimate  *string  `json:"deliveryTimeEstimate,omitempty"`
 	IsOpen                *bool    `json:"isOpen,omitempty"`
 	OpeningHours           string  `json:"openingHours"`
-	VendorListingImage    *string  `json:"vendorListingImageName,omitempty"`
-	VendorLogoImage       *string  `json:"vendorLogoImageName,omitempty"`
+	VendorListingImage    *string  `json:"vendorListingImage,omitempty"`
+	VendorLogoImage       *string  `json:"vendorLogoImage,omitempty"`
 	VendorType             string  `json:"vendorType" validate:"oneof=restaurant bakery alcohol cafe"`
 	IsFeatured            *bool    `json:"isFeatured,omitempty"`
 	CuisineTags           []string `json:"cuisineTags,omitempty"`
@@ -128,7 +127,7 @@ func (p *GetVendorByIDPayload) Validate() error {
 // ------------------------- Vendor Address -------------------------
 
 type CreateVendorAddressPayload struct {
-	VendorID      string   `json:"vendorId" validate:"required"`
+	VendorUserID  string   `json:"vendorUserId" validate:"required"`
 	StreetAddress *string  `json:"streetAddress,omitempty"`
 	City          string  `json:"city"`
 	State         string  `json:"state"`

@@ -14,11 +14,11 @@ type PaymentDetails struct {
 }
 
 type CreateOrderPayload struct {
-	UserID               *string         `json:"userID"`
+	UserID               *string        `json:"userID"`
 	CartVendorId         string         `json:"cartVendorId" validate:"required"`
 	DeliveryAddressId    string         `json:"deliveryAddressId" validate:"required"`
 	DeliveryInstructions string         `json:"deliveryInstructions"`
-	ExpectedDeliveryTime string  `json:"expectedDeliveryTime"`
+	ExpectedDeliveryTime string         `json:"expectedDeliveryTime"`
 }
 
 func (p *CreateOrderPayload) Validate() error {
