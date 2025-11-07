@@ -50,6 +50,8 @@ export const ZVendorAddress =  z.object({
 })
 
 
+
+
 // ----------------- Category schema -----------------
 export const ZCategory = z.object({
   categoryId: z.string(),
@@ -79,13 +81,18 @@ export const ZVendor =  ZBase.extend({
   vendorType: z.string().nullable().optional(),
   favoriteCount: z.number(),
   isFeatured: z.boolean(),
-  cuisineTags: z.array(z.string()).optional(),
+  cuisineTags: z.array(z.string()).default([]),
   promoText: z.string(),
   vendorNotice: z.string(),
   vendorServiceCharge: z.number(),
   vat: z.number(),
   vendorDiscount: z.number()
 });
+
+export const ZVendorWithAddress = z.object({
+  vendor: ZVendor,
+  address: ZVendorAddress
+})
 
 // ----------------- VendorPopulated schema -----------------
 export const ZVendorPopulated = ZVendor.extend({

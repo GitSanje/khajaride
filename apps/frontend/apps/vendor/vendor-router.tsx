@@ -5,6 +5,9 @@ import { AuthLayout } from "@/components/layouts/auth-layout";
 import VendorSignupPage from "./pages/sign-up";
 import { ProtectedRoute } from "@/components/protected-route";
 import VendorOnboardingPage from "./pages/vendor-onboarding";
+import OnboardingProfile from "./vendor-onboarding/step-profile";
+import OnboardingAddress from "./vendor-onboarding/step-address";
+import OnboardingPayout from "./vendor-onboarding/stripe-connect-onboarding";
 
 const routes = createRoutesFromElements(
   <>
@@ -28,22 +31,22 @@ const routes = createRoutesFromElements(
         </PublicRoute>
       }
     />
- <Route
-      path="/vendor-onboarding/*"
+    <Route
+      path="/vendor-onboarding"
       element={
         <ProtectedRoute>
           <VendorOnboardingPage />
         </ProtectedRoute>
       }
     >
-      {/* Nested routes for each step */}
-      <Route path="profile" />
-      <Route path="address" />
-      <Route path="payout" />
-      <Route path="review" />
-      {/* Default redirect to first step */}
+      <Route path="profile" element={<OnboardingProfile />} />
+      <Route path="address" element={<OnboardingAddress />} />
+      <Route path="payout" element={<OnboardingPayout />} />
+     
+      
       <Route index element={<Navigate to="profile" replace />} />
     </Route>
+
     <Route
       path="/*"
       element={

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
@@ -17,11 +17,15 @@ import { VENDOR_TYPES, vendorProfileSchema, type VendorProfileFormData } from "@
 import { useUpdateVendorOnboardingTrack } from "@/api/hooks/use-user-query"
 import { useUser } from "@clerk/clerk-react"
 import { ImageUploadField } from "@/components/image-upload-field"
+import { useVendorOnboarding } from "../hooks/useVendorOnboarding"
+import type { OutletContext } from "../pages/vendor-onboarding"
+import { useOutletContext } from "react-router-dom"
 
 interface StepProfileProps {
   data: Partial<VendorProfileFormData>
   onUpdate: (data: Partial<VendorProfileFormData>) => void
   onNext: () => void
+  onPrev: () => void
   setError: (error: string | null) => void
 }
 
@@ -48,10 +52,11 @@ const DAYS_OF_WEEK = [
   "Sunday"
 ]
 
-export function StepProfile({ 
+ function StepProfile({ 
   data, 
   onUpdate, 
   onNext, 
+  onPrev,
   setError 
 }: StepProfileProps) {
   const [cuisineTags, setCuisineTags] = useState<string[]>(data.cuisineTags || [])
@@ -65,16 +70,20 @@ export function StepProfile({
   const [vendorListingImage, setVendorListingImage] = useState<File | null>(null)
   const [vendorLogoImage, setVendorLogoImage] = useState<File | null>(null)
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    watch,
-    trigger
-  } = useForm<VendorProfileFormData>({
-    resolver: zodResolver(vendorProfileSchema as any),
-    defaultValues: {
+   const {  register,
+      handleSubmit,
+      formState: { errors },
+      setValue,
+      watch,
+      trigger, reset } = useForm<VendorProfileFormData>({
+    resolver: zodResolver( vendorProfileSchema as any),
+  })
+
+
+
+  useEffect(() => {
+    if (data) {
+      reset({
       name: data.name || "",
       about: data.about || "",
       cuisine: data.cuisine || "",
@@ -89,10 +98,13 @@ export function StepProfile({
       promoText: data.promoText || "",
       cuisineTags: data.cuisineTags || [],
       openingHours: data.openingHours || "",
+      })
     }
-  })
+  }, [data, reset, user?.id])
+
 
   const formValues = watch()
+  
 
   // Helper function to parse opening hours string
   function parseOpeningHours(hoursString: string): Record<string, { open: string; close: string }> {
@@ -164,10 +176,14 @@ export function StepProfile({
   const uploadImages = useUploadImages()
 
   const handleFormSubmit = async (formData: VendorProfileFormData) => {
+    if(data){
+      onNext()
+      return
+    }
     try {
       setIsSubmitting(true)
       setError(null)
-
+       
      
 
         const filesToUpload: File[] = [];
@@ -219,7 +235,7 @@ export function StepProfile({
 
     
   return (
-    <div className="space-y-6">
+    <div className=" py-6">
       <form onSubmit={handleSubmit(handleFormSubmit)}>
         <Card>
           <CardHeader>
@@ -492,14 +508,43 @@ export function StepProfile({
           </CardContent>
         </Card>
 
+         <div className="flex gap-3 mt-8">
+
+     
+        <Button
+                variant="outline"
+                onClick={onPrev}
+           
+                 className="flex-1 "
+              >
+                Previous
+              </Button>
         <Button 
           type="submit" 
           disabled={isSubmitting} 
-          className="w-full mt-6"
+           className="flex-1 "
         >
           {isSubmitting ? "Creating Vendor..." : "Continue to Address"}
         </Button>
+            </div>
       </form>
     </div>
+  )
+}
+
+
+
+
+export default function OnboardingProfile() {
+  const { formData, handleUpdateFormData, setError } = useVendorOnboarding()
+    const { handleNextStep ,handlePreviousStep} = useOutletContext<OutletContext>()
+  return (
+    <StepProfile
+      data={formData.profile}
+      onUpdate={(data: Partial<VendorProfileFormData>) => handleUpdateFormData({ profile: data })}
+      onNext={handleNextStep}
+      setError={setError}
+      onPrev={handlePreviousStep}
+    />
   )
 }

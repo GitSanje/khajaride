@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/gitSanje/khajaride/internal/repository"
 	"github.com/gitSanje/khajaride/internal/server"
 	"github.com/gitSanje/khajaride/internal/service"
 )
@@ -17,7 +18,7 @@ type Handlers struct {
 	Webhooks *WebhookHandler
 }
 
-func NewHandlers(s *server.Server, services *service.Services) *Handlers {
+func NewHandlers(s *server.Server, services *service.Services, userRepo *repository.UserRepository) *Handlers {
 	return &Handlers{
 		Health:   NewHealthHandler(s),
 		OpenAPI:  NewOpenAPIHandler(s),
@@ -27,6 +28,6 @@ func NewHandlers(s *server.Server, services *service.Services) *Handlers {
 		Cart:     NewCartHandler(s, services.Cart),
 		Webhooks: NewWebhookHandler(s, services.User),
 		Order: NewOrderHandler(s,services.Order),
-		Payment: NewPaymentHandler(s,services.Payment),
+		Payment: NewPaymentHandler(s,services.Payment,userRepo),
 	}
 }

@@ -2,6 +2,7 @@ package service
 
 import (
 	"mime/multipart"
+	"net/http"
 
 	"github.com/gitSanje/khajaride/internal/lib/aws"
 	"github.com/gitSanje/khajaride/internal/lib/utils"
@@ -157,4 +158,23 @@ func (s *VendorService) UploadImages(ctx echo.Context,files []*multipart.FileHea
 		UploadedURLs: uploadedURLs,
 	}
 	return imageRes, nil
+}
+
+
+func (s *VendorService) GetVendorByUserID(ctx echo.Context, vendorUserID string) (*vendor.VendorWithAddress, error) {
+	logger := middleware.GetLogger(ctx)
+
+	data, err := s.vendorRepo.GetVendorByUserID(ctx.Request().Context(), vendorUserID)
+	if err != nil {
+		logger.Error().Err(err).Str("vendorUserID", vendorUserID).Msg("Failed to fetch vendor by vendor_user_id")
+		return nil, err
+	}
+
+	if data == nil {
+		logger.Warn().Str("vendorUserID", vendorUserID).Msg("Vendor not found")
+		return nil, echo.NewHTTPError(http.StatusNotFound, "Vendor not found")
+	}
+
+	logger.Info().Str("vendorID", data.Vendor.ID).Msg("Vendor fetched successfully")
+	return data, nil
 }

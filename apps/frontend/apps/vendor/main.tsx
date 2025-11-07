@@ -11,6 +11,8 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { env } from '@/config/env';
 import "@/index.css"
 import venodrRouter from './vendor-router';
+import { VendorOnboardingProvider } from './hooks/useVendorOnboarding';
+import { StrictMode } from 'react';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -27,18 +29,26 @@ if (!env.VITE_CLERK_PUBLISHABLE_KEY) {
 const clerkPubKey = env.VITE_CLERK_PUBLISHABLE_KEY;
 
 createRoot(document.getElementById('root')!).render(
- 
-      <ClerkProvider publishableKey={clerkPubKey}>
-  
-      <QueryClientProvider client={queryClient}>
+   <StrictMode>
 
+
+     
+      <ClerkProvider publishableKey={clerkPubKey}>
+         <QueryClientProvider client={queryClient}>
+
+   <VendorOnboardingProvider> 
+     
         <ThemeProvider>
           <RouterProvider router={venodrRouter} />
            <Toaster />
           <ReactQueryDevtools initialIsOpen={false} />
         </ThemeProvider>
 
-      </QueryClientProvider>
+     
+         </VendorOnboardingProvider>
+          </QueryClientProvider>
     </ClerkProvider>
+ 
+       </StrictMode>
  
 )

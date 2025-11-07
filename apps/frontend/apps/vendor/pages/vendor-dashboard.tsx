@@ -40,6 +40,8 @@ import {
   FileText,
   Zap,
 } from "lucide-react"
+import { useGetVendorOnboardingTrack } from "@/api/hooks/use-user-query"
+import { Navigate } from "react-router-dom"
 
 // Mock data
 const revenueData = [
@@ -76,7 +78,8 @@ const activeOrders = [
 const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444"]
 
 export default function VendorDashboard() {
- 
+ const {data} = useGetVendorOnboardingTrack({enabled:true})
+
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [activeTab, setActiveTab] = useState("overview")
   const [verificationStatus] = useState<"pending" | "verified" | "rejected">("pending")
@@ -86,6 +89,9 @@ export default function VendorDashboard() {
 //     router.push("/vendor/login")
 //   }
 
+ if(!data?.completed){
+  return <Navigate to="/vendor-onboarding" replace />;
+ }
   return (
     <div className="min-h-screen bg-background flex">
       {/* Sidebar */}

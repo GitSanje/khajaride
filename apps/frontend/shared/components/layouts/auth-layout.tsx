@@ -15,7 +15,7 @@ export function AuthLayout() {
             path="/"
             element={
               <SignIn
-               redirectUrl={"/vendor-onboarding"}
+               forceRedirectUrl={"/vendor-onboarding"}
                 appearance={{
                   baseTheme: isDark ? dark : undefined,
                   elements: {

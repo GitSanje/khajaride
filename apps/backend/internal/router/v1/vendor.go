@@ -20,7 +20,8 @@ func registerVendorRoutes(r *echo.Group, h *handler.VendorHandler, auth *middlew
 	vendor.GET("/:id", h.GetVendorByID)
 
 	vendor.POST("/upload-images",h.UploadImages)
-	
+	vendor.Use(auth.RequireAuth)
+	vendor.GET("/vendorByUserId",h.GetVendorByUserID)
 	//------------------- Vendor Address -------------------
 	vendor.POST("/addresses",h.CreateVendorAddress)
     

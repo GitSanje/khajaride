@@ -6,7 +6,10 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/gitSanje/khajaride/internal/middleware"
 	"github.com/gitSanje/khajaride/internal/model/payment"
+	"github.com/gitSanje/khajaride/internal/model/user"
+	"github.com/gitSanje/khajaride/internal/repository"
 	"github.com/gitSanje/khajaride/internal/server"
 	"github.com/gitSanje/khajaride/internal/service"
 	"github.com/labstack/echo/v4"
@@ -17,14 +20,16 @@ import (
 type PaymentHandler struct {
 	Handler
 	PaymentService *service.PaymentService
+    userRepo *repository.UserRepository
 
 }
 
 
-func NewPaymentHandler(s *server.Server, ps *service.PaymentService) *PaymentHandler {
+func NewPaymentHandler(s *server.Server, ps *service.PaymentService, userRepo *repository.UserRepository) *PaymentHandler {
 	return &PaymentHandler{
 		Handler:       NewHandler(s),
 		PaymentService: ps,
+		userRepo: userRepo,
 	}
 }
 
@@ -175,12 +180,13 @@ func (h *PaymentHandler) CreateOnboardingAccountLink(c echo.Context) error {
 	return Handle(
 		h.Handler,
 		func(c echo.Context, payload *payment.OnboardingAccountLinkPayload) (*payment.OnboardingResponse, error) {
-		    url, err := h.PaymentService.CreateOnboardingLink(c.Request().Context(), payload.AccountId)
+			userVendorID := middleware.GetUserID(c)
+		    url, err := h.PaymentService.CreateOnboardingLink(c.Request().Context(), payload.AccountId,userVendorID )
 			if( err != nil){
 				return  nil,fmt.Errorf("err creating link%v",err)
 			}
 			return &payment.OnboardingResponse{
-				URL: url,
+				URL: &url,
 			},nil
 		},
 		http.StatusCreated,
@@ -192,13 +198,14 @@ func (h *PaymentHandler) CreateOnboardingAccountLink(c echo.Context) error {
 func (h *PaymentHandler) StripeOnboardingRefresh(c echo.Context)  error{
 	
 	accountID := c.QueryParam("account_id")
+	userVendorID := c.QueryParam("vendor_user_id")
 	if accountID == "" {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": "Missing account_id",
 		})
 	}
 
-	url, err := h.PaymentService.CreateOnboardingLink(c.Request().Context(), accountID)
+	url, err := h.PaymentService.CreateOnboardingLink(c.Request().Context(), accountID,userVendorID)
 	if err != nil {
 		 c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": fmt.Sprintf("Failed to create refresh link: %v", err),
@@ -211,14 +218,16 @@ func (h *PaymentHandler) StripeOnboardingRefresh(c echo.Context)  error{
 func (h *PaymentHandler) StripeOnboardingReturn(c echo.Context) error {
     stripe.Key = h.server.Config.Stripe.SecretKey
 	accountID := c.QueryParam("account_id")
+	userVendorID := c.QueryParam("vendor_user_id")
 	if accountID == "" {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": "Missing account_id",
 		})
 	}
+	frontendUrl := "http://localhost:4000"
 
 	// Fetch the connected account from Stripe
-	acct, err := account.Get()
+	acct, err := account.GetByID(accountID ,&stripe.AccountParams{})
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": fmt.Sprintf("Failed to fetch Stripe account: %v", err),
@@ -228,13 +237,26 @@ func (h *PaymentHandler) StripeOnboardingReturn(c echo.Context) error {
 	// Check if there are still required items
 	if len(acct.Requirements.CurrentlyDue) > 0 || len(acct.Requirements.EventuallyDue) > 0 {
 		// Not finished → redirect to onboarding incomplete page
-	    url:=fmt.Sprintf(`/vendor-onboarding/payment/onboarding-incomplete?account_id=%s`, accountID)
+	    url:=fmt.Sprintf(`%s/vendor-onboarding/payout?account_id=%s,status=%s`, frontendUrl, accountID,"incomplete")
 		return c.Redirect(http.StatusSeeOther, url)
 	}
 
+	trackPayload := &user.VendorOnboardingTrackPayload{
+		Completed: true,
+		CurrentStep: "completed",
+	}
+	
+     if _ , err := h.userRepo.VendorOnboardingTrack(c.Request().Context(),userVendorID, trackPayload); err !=nil {
+      return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": fmt.Sprintf("Failed to upadte  VendorOnboardingTrack: %v", err),
+		})
+	 }
+	url:=fmt.Sprintf(`%s/vendor-onboarding/payout?account_id=%s&status=%s`,frontendUrl, accountID,"verified")
 	// ✅ Onboarding completed → redirect to verified page
-	return c.Redirect(http.StatusSeeOther, "/vendor-onboarding/payment/verified")
+	return c.Redirect(http.StatusSeeOther, url)
 }
+
+
 
 
 

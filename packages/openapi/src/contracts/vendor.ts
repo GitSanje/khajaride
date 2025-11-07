@@ -10,7 +10,8 @@ import {
   ZGetVendorsQuery,
   ZVendorPopulated,
   schemaWithPagination,
-  ZVendorAddress
+  ZVendorAddress,
+  ZVendorWithAddress
 } from "@khajaride/zod";
 import { getSecurityMetadata } from "../utils.js";
 
@@ -80,6 +81,15 @@ export const vendorContract = c.router({
       200 : schemaWithPagination(ZVendor)
     },
     summary: "Get list of vendors with pagination/filter",
+  metadata,
+  },
+  getVendorByUserId: {
+    path: "/vendors/vendorByUserId",
+    method: "GET",
+    responses:{
+      200 : ZVendorWithAddress
+    },
+    summary: "Get  vendor by vendor user id",
   metadata,
   },
 

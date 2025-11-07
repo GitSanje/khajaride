@@ -62,7 +62,8 @@ export const ZStripeVendorOnboardingPayload= z.object({
 });
 
 export const ZStripeVendorOnboardingResponse= z.object({
-  url: z.string(), 
+  url: z.string().optional(), 
+  status: z.string()
 });
 
 

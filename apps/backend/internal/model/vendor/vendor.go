@@ -58,3 +58,7 @@ type VendorCategoryLink struct {
 }
 
 
+type VendorWithAddress struct {
+	Vendor     *Vendor   `json:"vendor"`
+	Address    *VendorAddress         `json:"address,omitempty"`
+}

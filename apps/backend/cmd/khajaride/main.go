@@ -50,7 +50,7 @@ func main() {
 	if serviceErr != nil {
 		log.Fatal().Err(serviceErr).Msg("could not create services")
 	}
-	handlers := handler.NewHandlers(srv, services)
+	handlers := handler.NewHandlers(srv, services,repos.User)
 
 	// Initialize router
 	r := router.NewRouter(srv, handlers, services)

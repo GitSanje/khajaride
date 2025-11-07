@@ -114,5 +114,8 @@ func (p *OnboardingAccountLinkPayload) Validate() error {
 }
 
 type OnboardingResponse struct {
-	URL string `json:"url"`
+	URL *string `json:"url"`
+	Status string `json:"status"`
 }
+
+

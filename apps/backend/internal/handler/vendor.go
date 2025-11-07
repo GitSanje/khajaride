@@ -197,3 +197,24 @@ func (h *VendorHandler) GetVendors(c echo.Context) error {
 		&vendor.GetVendorsQuery{},
 	)(c)
 }
+
+type GetVendorByUserIDPayload struct{}
+
+func (p *GetVendorByUserIDPayload) Validate() error {
+	return nil
+}
+
+
+func (h *VendorHandler) GetVendorByUserID(c echo.Context) error {
+	
+
+	return Handle(
+		h.Handler,
+		func(c echo.Context, p *GetVendorByUserIDPayload) (*vendor.VendorWithAddress, error) {
+			vendorUserId := middleware.GetUserID(c)
+			return h.VendorService.GetVendorByUserID(c, vendorUserId)
+		},
+		http.StatusOK,
+		&GetVendorByUserIDPayload{},
+	)(c)
+}

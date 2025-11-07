@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
@@ -10,9 +10,12 @@ import { Label } from "@/components/ui/label"
 import { MapPin } from "lucide-react"
 import type { AddressData } from "@/types/vendor-onboarding-types"
 import { ZVendorAddress, type TVendorAddress } from "@khajaride/zod"
-import { useUpdateVendorOnboardingTrack } from "@/api/hooks/use-user-query"
+import { useUpdateVendorOnboardingTrack, type TCreateAddressPayload } from "@/api/hooks/use-user-query"
 import { useCreateVendorAddress } from "@/api/hooks/use-vendor-query"
 import { useUser } from "@clerk/clerk-react"
+import { useNavigate, useOutletContext } from "react-router-dom"
+import { useVendorOnboarding } from "../hooks/useVendorOnboarding"
+import type { OutletContext } from "../pages/vendor-onboarding"
 
 interface StepAddressProps {
   data: Partial<AddressData>
@@ -21,7 +24,7 @@ interface StepAddressProps {
   setError: (error: string | null) => void
 }
 
-export function StepAddress({ 
+ function StepAddress({ 
   data, 
   onUpdate, 
   onNext, 
@@ -30,28 +33,36 @@ export function StepAddress({
   const [useCurrentLocation, setUseCurrentLocation] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { user} = useUser()
-  const {
-    register,
+
+  const {  register,
     handleSubmit,
     formState: { errors },
     setValue,
     watch,
-    trigger
-  } = useForm<TVendorAddress>({
-    resolver: zodResolver(ZVendorAddress as any),
-    defaultValues: {
-      vendorUserId: user?.id  ,
+    trigger, reset } = useForm<TVendorAddress>({
+  resolver: zodResolver(ZVendorAddress as any),
+})
+
+
+useEffect(() => {
+  if (data) {
+    reset({
+      vendorUserId: user?.id,
       streetAddress: data.streetAddress || "",
       city: data.city || "",
       state: data.state || "",
       zipcode: data.zipcode || "",
       latitude: data.latitude || 0,
       longitude: data.longitude || 0,
-      
-    }
-  })
+    })
+  }
+}, [data, reset, user?.id])
+
+
+  
 
   const formValues = watch()
+    console.log(data,'from adddres ',formValues,data.city);
 
   // Update parent component when form values change
   const handleFormChange = (field: keyof TVendorAddress, value: any) => {
@@ -90,6 +101,10 @@ export function StepAddress({
     const updateVendorOnboardingTrack = useUpdateVendorOnboardingTrack()
   const createVendorAddress = useCreateVendorAddress()
   const handleFormSubmit = async (formData: TVendorAddress) => {
+    if(data){
+      onNext()
+      return
+    }
     try {
       setIsSubmitting(true)
       setError(null)
@@ -261,5 +276,22 @@ export function StepAddress({
         </Button>
       </form>
     </div>
+  )
+}
+
+
+
+
+
+export default function OnboardingAddress() {
+  const { formData, handleUpdateFormData, setError } = useVendorOnboarding()
+  const { handleNextStep } = useOutletContext<OutletContext>()
+  return (
+    <StepAddress
+      data={formData.address}
+      onUpdate={(data: Partial<TCreateAddressPayload>) => handleUpdateFormData({ address: data })}
+      onNext={handleNextStep}
+      setError={setError}
+    />
   )
 }

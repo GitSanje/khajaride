@@ -21,6 +21,7 @@ func registerPaymentRoutes(r *echo.Group, h *handler.PaymentHandler, auth *middl
     payment.GET("/stripe/cancel", h.StripeCancelPayment)
     payment.GET("/stripe/onboarding/refresh", h.StripeOnboardingRefresh)
 	payment.GET("/stripe/onboarding/return", h.StripeOnboardingReturn)
+
 	payment.Use(auth.RequireAuth)
     payment.POST("/stripe/connect-onboard", h.OnboardingStripeConnectAccount)
 	payment.POST("/stripe/create-account-link", h.CreateOnboardingAccountLink)

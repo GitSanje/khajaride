@@ -10,7 +10,7 @@ interface ProgressIndicatorProps {
 
 export function ProgressIndicator({ currentStep, steps, completedSteps }: ProgressIndicatorProps) {
   const currentStepIndex = steps.findIndex((s) => s.id === currentStep)
-
+  
   return (
     <div className="w-full">
       <div className="flex items-center justify-between mb-8">

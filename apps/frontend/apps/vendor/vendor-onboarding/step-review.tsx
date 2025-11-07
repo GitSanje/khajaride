@@ -56,28 +56,7 @@ export function StepReview({ data, onSubmit, isSubmitting }: StepReviewProps) {
         </CardContent>
       </Card>
 
-      {/* Documents Review */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5" />
-            Documents
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {data.documents.map((doc) => (
-              <div key={doc.documentType} className="flex items-center justify-between p-2 bg-muted/50 rounded">
-                <span className="text-sm capitalize">{doc.documentType.replace(/_/g, " ")}</span>
-                <Badge variant="outline" className="text-xs">
-                  Uploaded
-                </Badge>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
+   
       {/* Address Review */}
       <Card>
         <CardHeader>

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	
 	"errors"
 	"fmt"
 	"strings"
@@ -147,6 +148,57 @@ func (r *VendorRepository) UpdateVendor(ctx context.Context, payload *vendor.Upd
 	return &updatedVendor, nil
 }
 
+func (r *VendorRepository) GetVendorByUserID(ctx context.Context, vendorUserID string) (*vendor.VendorWithAddress, error) {
+
+	var result vendor.VendorWithAddress
+
+	// -- Get Vendor
+	queryVendor := `
+		SELECT *
+		FROM vendors
+		WHERE vendor_user_id = $1
+	`
+
+	vendorRow,err := r.server.DB.Pool.Query(ctx, queryVendor, vendorUserID)
+    if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to fetch vendor: %w", err)
+	}
+
+	vendorData, err := pgx.CollectExactlyOneRow(vendorRow, pgx.RowToStructByName[vendor.Vendor])
+	if err != nil {
+		return nil, fmt.Errorf("failed to collect vendor: %w", err)
+	}
+	result.Vendor = &vendorData
+
+	// -- Get Vendor Address
+	queryAddress := `
+		SELECT *
+		FROM vendor_addresses
+		WHERE vendor_id = $1
+		LIMIT 1
+	`
+
+	addrRow,err := r.server.DB.Pool.Query(ctx, queryAddress, vendorData.ID)
+   if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			// Vendor exists but no address yet → return vendor + nil address
+			result.Address = nil
+			return &result, nil
+		}
+		return nil, fmt.Errorf("failed to fetch vendor address: %w", err)
+	}
+	addressData, err := pgx.CollectOneRow(addrRow, pgx.RowToStructByName[vendor.VendorAddress])
+		if err != nil {
+		return nil, fmt.Errorf("failed to collect vendor address: %w", err)
+	}
+
+	result.Address = &addressData
+
+	return &result, nil
+}
 
 
 // ---------------- Delete Vendor ----------------

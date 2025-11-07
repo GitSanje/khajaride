@@ -24,7 +24,6 @@ type PaymentService struct {
 	server      *server.Server
 	paymentRepo *repository.PaymentRepository
 	orderRepo   *repository.OrderRepository
-	
 }
 
 func NewPaymentService(s *server.Server, paymentRepo *repository.PaymentRepository, orderRepo *repository.OrderRepository) *PaymentService {
@@ -32,6 +31,7 @@ func NewPaymentService(s *server.Server, paymentRepo *repository.PaymentReposito
 		server:    s,
 		paymentRepo: paymentRepo,
 		orderRepo: orderRepo,
+	
 	}
 }
 
@@ -341,26 +341,39 @@ func (ps *PaymentService) CreateOnboardingAccountWithLink(c echo.Context, payloa
 
 	}
 
+    acct, err := account.GetByID(acctID, &stripe.AccountParams{})
+	
+	status := "verified"
+    if len(acct.Requirements.CurrentlyDue) > 0 || len(acct.Requirements.EventuallyDue) > 0 {
+        status = "incomplete"
+    }
+	if status == "verified"{
+		return &payment.OnboardingResponse{
+        URL: nil,
+		Status: "verified",
+    }, nil
+	}
 
 	// 2️⃣ Create an onboarding account link
-	 link ,err := ps.CreateOnboardingLink(ctx,acctID)
+	 link ,err := ps.CreateOnboardingLink(ctx,acctID,payload.VendorUserId)
 
 	if err != nil {
 		return  nil,fmt.Errorf("failed to create account link: %w", err)
 	}
 	return &payment.OnboardingResponse{
-        URL: link,
+        URL: &link,
+		Status: "incomplete",
     }, nil
 
 }
 
 
-func (ps *PaymentService) CreateOnboardingLink(ctx context.Context, accountID string) (string, error) {
+func (ps *PaymentService) CreateOnboardingLink(ctx context.Context, accountID string,vendorUserId string) (string, error) {
 	stripe.Key = ps.server.Config.Stripe.SecretKey
 	params := &stripe.AccountLinkParams{
 		Account: stripe.String(accountID),
-		RefreshURL: stripe.String("http://localhost:8080/api/v1/payments/stripe/onboarding/refresh?account_id=" + accountID),
-		ReturnURL:  stripe.String("http://localhost:8080/api/v1/payments/stripe/onboarding/return?account_id=" + accountID),
+		RefreshURL: stripe.String("http://localhost:8080/api/v1/payments/stripe/onboarding/refresh?account_id=" + accountID +"&vendor_user_id="+vendorUserId),
+		ReturnURL:  stripe.String("http://localhost:8080/api/v1/payments/stripe/onboarding/return?account_id=" + accountID +"&vendor_user_id="+vendorUserId),
 		Type: stripe.String("account_onboarding"),
 		CollectionOptions: &stripe.AccountLinkCollectionOptionsParams{
 			Fields: stripe.String("eventually_due"),
@@ -372,3 +385,5 @@ func (ps *PaymentService) CreateOnboardingLink(ctx context.Context, accountID st
 	}
 	return result.URL, nil
 }
+
+

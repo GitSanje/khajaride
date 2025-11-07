@@ -38,7 +38,9 @@ export const VENDOR_TYPES = ["restaurant", "bakery", "alcohol", "cafe"] as const
     openingHours: z.string().optional(),
     vendorListingImage: z.string().optional(),
     vendorLogoImage: z.string().optional(),
-  
+    vendorServiceCharge: z.number().optional(),
+    vat: z.number().optional(),
+    vendorDiscount: z.number().optional()
   })
   
 export type VendorProfileFormData = z.infer<typeof vendorProfileSchema>

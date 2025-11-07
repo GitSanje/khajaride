@@ -47,6 +47,37 @@ export type TGetVendorsResponse = ServerInferResponseBody<
 >;
 
 
+export type TGetVendorByUserIdResponse = ServerInferResponseBody<
+  typeof apiContract.Vendor.getVendorByUserId,
+  200
+>;
+
+
+
+const fetchVendorByUserId= async ({
+  api,
+  
+}: {
+  api: TApiClient;
+  
+}): Promise<TGetVendorByUserIdResponse> => {
+
+  try {
+    const res = await api.Vendor.getVendorByUserId();
+
+    // Check if the API returned successfully
+    if (res.status === 200) {
+      return res.body; // ✅ return the response data
+    } else {
+      throw res.body; // ❌ throw to be caught by React Query
+    }
+  } catch (err) {
+    console.error("Vendor fetch failed:", err);
+    throw err; // important: re-throw so React Query knows the query failed
+  }
+};
+
+
 const fetchAllVendors = async ({
   api,
   query,
@@ -244,5 +275,22 @@ export const useGetVenoorById = ({
     queryKey: [QUERY_KEYS.VENDORS.GET_VENDOR_BY_ID, id],
     queryFn: () => fetchVendorById({ api, id }),
     enabled: enabled && !!id,
+  });
+};
+
+
+export const useGetVendorByUserId = ({
+
+  enabled = true,
+}: {
+ 
+  enabled?: boolean;
+}) => {
+  const api = useApiClient();
+
+  return useQuery({
+    queryKey: [QUERY_KEYS.VENDORS.GET_VENDOR_BY_USER_ID],
+    queryFn: () => fetchVendorByUserId({ api }),
+    enabled: enabled ,
   });
 };
