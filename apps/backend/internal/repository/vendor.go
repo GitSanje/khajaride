@@ -169,6 +169,9 @@ func (r *VendorRepository) GetVendorByUserID(ctx context.Context, vendorUserID s
 
 	vendorData, err := pgx.CollectExactlyOneRow(vendorRow, pgx.RowToStructByName[vendor.Vendor])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
 		return nil, fmt.Errorf("failed to collect vendor: %w", err)
 	}
 	result.Vendor = &vendorData
@@ -192,6 +195,11 @@ func (r *VendorRepository) GetVendorByUserID(ctx context.Context, vendorUserID s
 	}
 	addressData, err := pgx.CollectOneRow(addrRow, pgx.RowToStructByName[vendor.VendorAddress])
 		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+			// Vendor exists but no address yet → return vendor + nil address
+			result.Address = nil
+			return &result, nil
+		   }
 		return nil, fmt.Errorf("failed to collect vendor address: %w", err)
 	}
 

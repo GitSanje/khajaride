@@ -6,9 +6,9 @@ import "github.com/gitSanje/khajaride/internal/model"
 type Vendor struct {
 	model.Base
 	ID                    string `json:"id" db:"id"`
-	VendorUserID         *string `json:"vendorUserId" db:"vendor_user_id"`
+	VendorUserID          string `json:"vendorUserId" db:"vendor_user_id"`
 	Name                  string   `json:"name" db:"name"`
-	About                 string   `json:"about" db:"about"`
+	About                 *string   `json:"about" db:"about"`
 	Cuisine               string   `json:"cuisine" db:"cuisine"`
 	Phone                 *string  `json:"phone" db:"phone"`
 	Rating                float64  `json:"rating" db:"rating"`
@@ -32,6 +32,7 @@ type Vendor struct {
 	VendorServiceCharge   float64  `json:"vendorServiceCharge" db:"vendor_service_charge"`
 	VAT                   float64  `json:"vat" db:"vat"`
 	VendorDiscount        float64  `json:"vendorDiscount" db:"vendor_discount"`
+	Status                string  `json:"status" db:"status"`
 }
 
 

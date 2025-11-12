@@ -16,3 +16,5 @@ type OrderPayment struct {
     Method         string     `json:"method" db:"method"` // 'esewa', 'khalti', 'card', 'cod'
     PaidAt         *time.Time `json:"paidAt,omitempty" db:"paid_at"`
 }
+
+

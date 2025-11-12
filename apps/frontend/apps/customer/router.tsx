@@ -1,7 +1,7 @@
 import { createBrowserRouter, createRoutesFromElements, Route } from "react-router-dom";
-import { PublicRoute } from "../../src/components/public-route";
+
 import LandingPage from "./pages/landing-page";
-import { ProtectedRoute } from "../../src/components/protected-route";
+
 import DashboardPage from "./pages/dashboard/dashboard";
 
 import CustomerApp from "./pages/user/user-landing-page";
@@ -12,6 +12,8 @@ import PaymentSuccess from "./pages/payment/payment-success-khalti";
 import UserOrders from "./pages/order/user-orders";
 import PaymentFailure from "./pages/payment/payment-failure-khalti";
 import { AuthLayout } from "./layouts/auth-layout";
+import { PublicRoute } from "@/components/public-route";
+import { ProtectedRoute } from "@/components/protected-route";
 
 
 

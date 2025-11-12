@@ -37,6 +37,7 @@ export const ZStripePaymentPayload = z.object({
   purchase_order_name: z.string(),
   amount: z.number().positive(),
   currency: z.string().optional().nullable(),
+  vendorUserId:z.string()
 });
 
 export const ZStripePaymentResponse = z.object({

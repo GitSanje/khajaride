@@ -22,7 +22,7 @@ export const VENDOR_TYPES = ["restaurant", "bakery", "alcohol", "cafe"] as const
   // Zod schema based on your vendor schema
   export const vendorProfileSchema = z.object({
     name: z.string().min(1, "Restaurant name is required"),
-    about: z.string().min(1, "About section is required"),
+    about: z.string().optional(),
     cuisine: z.string().min(1, "Primary cuisine is required"),
     phone: z.string().min(1, "Phone number is required"),
     vendorType: z.enum(VENDOR_TYPES, {
@@ -32,10 +32,19 @@ export const VENDOR_TYPES = ["restaurant", "bakery", "alcohol", "cafe"] as const
     pickupAvailable: z.boolean().default(true),
     deliveryFee: z.number().min(0, "Delivery fee cannot be negative").default(0),
     minOrderAmount: z.number().min(0, "Minimum order amount cannot be negative").default(0),
-    deliveryTimeEstimate: z.string().optional(),
+    deliveryTimeEstimate: z
+  .string()
+  .regex(/^\d{1,3}\s*-\s*\d{1,3}\s*(min|mins)?$/i, "Invalid format. Example: 20-30 min")
+  .optional(),
     promoText: z.string().optional(),
     cuisineTags: z.array(z.string()).default([]),
-    openingHours: z.string().optional(),
+    openingHours: z
+  .string()
+  .regex(
+    /^(0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM)\s?-\s?(0?[1-9]|1[0-2]):[0-5][0-9]\s?(PM)$/i,
+    "Invalid time range. Example: 11:00 AM - 08:00 PM"
+  ).min(2, "Opening Hours is required"),
+
     vendorListingImage: z.string().optional(),
     vendorLogoImage: z.string().optional(),
     vendorServiceCharge: z.number().optional(),

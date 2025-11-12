@@ -292,5 +292,8 @@ export const useGetVendorByUserId = ({
     queryKey: [QUERY_KEYS.VENDORS.GET_VENDOR_BY_USER_ID],
     queryFn: () => fetchVendorByUserId({ api }),
     enabled: enabled ,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 };

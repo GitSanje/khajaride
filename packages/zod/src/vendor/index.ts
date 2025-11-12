@@ -62,6 +62,7 @@ export const ZCategory = z.object({
 
 // ----------------- Vendor schema -----------------
 export const ZVendor =  ZBase.extend({
+  vendorUserId:z.string(),
   name: z.string(),
   about: z.string(),
   cuisine: z.string(),
@@ -86,7 +87,8 @@ export const ZVendor =  ZBase.extend({
   vendorNotice: z.string(),
   vendorServiceCharge: z.number(),
   vat: z.number(),
-  vendorDiscount: z.number()
+  vendorDiscount: z.number(),
+  status:z.string()
 });
 
 export const ZVendorWithAddress = z.object({
@@ -114,12 +116,12 @@ export const ZCreateVendorPayload = z.object({
   minOrderAmount: z.number().min(0).optional(),
   deliveryTimeEstimate: z.string().optional(),
   isOpen: z.boolean().optional(),
-  openingHours: z.record(z.string()).optional(),
+  openingHours: z.string(),
   vendorListingImage: z.string().optional(),
   vendorLogoImage: z.string().optional(),
   vendorType: z.enum(["restaurant", "bakery", "alcohol", "cafe"]).optional(),
   isFeatured: z.boolean().optional(),
-  cuisineTags: z.array(z.string()).optional(),
+  cuisineTags: z.array(z.string()).default([]),
   promoText: z.string().optional(),
   vendorNotice: z.string().optional(),
   

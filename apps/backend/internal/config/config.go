@@ -17,6 +17,7 @@ type Config struct {
 	Database      DatabaseConfig       `koanf:"database" validate:"required"`
 	Auth          AuthConfig           `koanf:"auth" validate:"required"`
 	Redis         RedisConfig          `koanf:"redis" validate:"required"`
+	Kafka         KafkaConfig          `koanf:"kafka" `
 	Integration   IntegrationConfig    `koanf:"integration" validate:"required"`
 	Observability *ObservabilityConfig `koanf:"observability"`
 	Webhooks      *WebhookConfig       `koanf:"webhooks"`
@@ -26,6 +27,11 @@ type Config struct {
 	Stripe        *StripeConfig        `koanf:"stripe"`
 }
 
+type KafkaConfig struct {
+	Address string `koanf:"address" validate:"required"`
+}
+
+
 
 type AWSConfig struct {
 	Region          string `koanf:"region" validate:"required"`
@@ -34,6 +40,9 @@ type AWSConfig struct {
 	UploadBucket    string `koanf:"upload_bucket" validate:"required"`
 	EndpointURL     string `koanf:"endpoint_url"`
 }
+
+
+
 
 
 type KhaltiConfig struct {
@@ -52,6 +61,7 @@ type StripeConfig struct {
 	SuccessURL   string `koanf:"success_url" validate:"required"`
 	CancelURL   string `koanf:"cancel_url" validate:"required"`
 	FrontEndURL string `koanf:"frontend_url" validate:"required"`
+	WebhookSecret string   `koanf:"webhook_secret" validate:"required"`
 }
 
 type ElasticsearchConfig struct {

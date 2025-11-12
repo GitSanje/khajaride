@@ -187,6 +187,7 @@ export default function CheckoutPage() {
           amount: total,
           purchase_order_id: orderId!,
           purchase_order_name: `Order_${orderId}`,
+          vendorUserId:cartVendorData?.vendor.vendorUserId!
         }
 
       })

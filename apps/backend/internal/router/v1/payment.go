@@ -26,7 +26,6 @@ func registerPaymentRoutes(r *echo.Group, h *handler.PaymentHandler, auth *middl
     payment.POST("/stripe/connect-onboard", h.OnboardingStripeConnectAccount)
 	payment.POST("/stripe/create-account-link", h.CreateOnboardingAccountLink)
 	payment.POST("/stripe/initiate", h.StripePayment)
-
 	payment.POST("/khalti/initiate", h.KhaltiPayment)
 
 

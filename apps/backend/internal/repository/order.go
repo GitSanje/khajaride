@@ -397,7 +397,7 @@ func (r *OrderRepository) CreatePayout(ctx context.Context, tx pgx.Tx, p *payout
 		p.VendorID,
 		p.OrderID,
 		p.AccountID,
-		p.AccountType,
+		p.Sender,
 		p.PayoutType,
 		p.Method,
 		p.Amount,

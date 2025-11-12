@@ -4,10 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
+	"github.com/gitSanje/khajaride/internal/lib/events"
 	"github.com/gitSanje/khajaride/internal/model/payment"
 	"github.com/gitSanje/khajaride/internal/model/payout"
 	"github.com/gitSanje/khajaride/internal/server"
 	"github.com/jackc/pgx/v5"
+	"github.com/stripe/stripe-go"
+	stripepayout "github.com/stripe/stripe-go/payout"
 )
 
 // ---------------- PAYMENT REPOSITORY ----------------
@@ -221,4 +225,154 @@ func (r *PaymentRepository) GetStripeAccountID(ctx context.Context, vendorUserID
 	}
 
 	return stripeAccountID, nil
+}
+
+
+func (r *PaymentRepository) GetPayoutAccountID(ctx context.Context, vendorUserID string) (string, error) {
+	query := `
+		SELECT id
+		FROM payout_accounts
+		WHERE owner_id = $1
+		  AND owner_type = 'vendor'
+		  AND method = 'stripe'
+		LIMIT 1;
+	`
+
+	var ID string
+	err := r.server.DB.Pool.QueryRow(ctx, query, vendorUserID).Scan(&ID)
+	if err != nil {
+		// No row found → return empty string, nil (not an error)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", nil
+		}
+		return "", fmt.Errorf("failed to fetch stripe account id: %w", err)
+	}
+
+	return ID, nil
+}
+
+func (r *PaymentRepository) UpdateStripePayoutAccount(ctx context.Context, payload *payout.PayoutAccountUpdatePayload) error {
+    query := `
+        UPDATE payout_accounts
+        SET account_identifier = $1,
+            account_name = $2,
+            bank_name = $3,
+            branch_name = $4,
+            verified = $5,
+            verification_status = $6,
+            verified_at = NOW(),
+        WHERE owner_id = $7
+          AND stripe_account_id = $8
+    `
+    res, err := r.server.DB.Pool.Exec(ctx, query,
+        payload.AccountIdentifier,
+        payload.AccountName,
+        payload.BankName,
+        payload.BranchName,
+        payload.Verified,
+        payload.VerificationStatus,
+        payload.OwnerID,
+        payload.StripeAccountID,
+    )
+    if err != nil {
+        return fmt.Errorf("failed to update payout account: %w", err)
+    }
+
+    affected := res.RowsAffected()
+    if affected == 0 {
+        return fmt.Errorf("no payout account found with owner_id=%s and stripe_account_id=%s", payload.OwnerID, payload.StripeAccountID)
+    }
+
+    return nil
+}
+
+
+func (r *PaymentRepository) CreatePayout(ctx context.Context, p *payout.Payout) (string,error) {
+	query := `
+		INSERT INTO payouts (
+			vendor_user_id, order_id, account_id, sender, payout_type,
+			method, amount, status, transaction_ref, remarks
+		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+		 RETURNING id
+	`
+	var ID string;
+	 err := r.server.DB.Pool.QueryRow(ctx, query,
+		p.VendorUserID, p.OrderID, p.AccountID, p.Sender,
+		p.PayoutType, p.Method, p.Amount, p.Status,
+		p.TransactionRef, p.Remarks,
+	).Scan(&ID)
+
+	if(err != nil){
+		return "", err 
+	}
+	return ID, nil
+}
+
+
+func (r *PaymentRepository) UpdatePayoutStatus(ctx context.Context, pId string,status string) error {
+	query := `
+		UPDATE payouts
+		SET status = @status
+		WHERE id = @pid
+	`
+	_, err := r.server.DB.Pool.Exec(ctx, query,pgx.NamedArgs{
+		"pid":pId,
+		"status":status,
+
+	  })
+	
+	return err
+}
+
+
+
+func (r *PaymentRepository) PerformStripePayout(ctx context.Context, payload *events.PayoutRequestedEvent) (*stripe.Payout, error) {
+	// Stripe uses cents
+	amt := payload.Amount * 100
+	fee:= payload.Amount *100*0.03
+
+
+
+	stripe.Key = r.server.Config.Stripe.SecretKey
+    vendorShare := amt - fee
+	params := &stripe.PayoutParams{
+		Amount:   stripe.Int64(int64(vendorShare)),
+		Currency: stripe.String("usd"),
+	}
+    
+	payoutPayload := &payout.Payout{
+			VendorUserID:   &payload.VendorUserID,
+			OrderID:        &payload.OrderID,
+			AccountID:      &payload.PayoutAccId,
+			Sender:         "platform",
+			PayoutType:     "vendor_payout",
+			Method:         "stripe",
+			Amount:          vendorShare / 100,
+			Status:         "pending",
+			TransactionRef: &payload.SessionId, 
+    }
+	pid, err := r.CreatePayout(ctx, payoutPayload); 
+	
+	if err != nil {
+	  return nil, fmt.Errorf("create payout: %w", err)
+	}
+
+	// Send payout to connected account
+	params.SetStripeAccount(payload.StripeConnectAccId)
+
+	// ✅ Embed metadata for traceability
+	params.AddMetadata("vendor_id", payload.VendorUserID)
+	params.AddMetadata("order_id", payload.OrderID)
+	params.AddMetadata("payout_account_id", payload.PayoutAccId)
+	params.AddMetadata("payout_type", "vendor_payout")
+	params.AddMetadata("payout_id",pid)
+
+
+	p, err := stripepayout.New(params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create payout: %w", err)
+	}
+	fmt.Println("✅ Payout sent:", p.ID)
+	
+	return p, nil
 }

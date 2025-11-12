@@ -66,10 +66,12 @@ type KhaltiPaymentResponse struct {
 
 
 type StripePaymentPayload struct {
-	PurchaseOrderID   string  `json:"purchase_order_id"`
-	PurchaseOrderName string  `json:"purchase_order_name"`
-	Amount            float64 `json:"amount"`
+	PurchaseOrderID   string  `json:"purchase_order_id" validate:"required"`
+	PurchaseOrderName string  `json:"purchase_order_name" validate:"required"`
+	Amount            float64 `json:"amount" validate:"required"`
 	Currency          *string  `json:"currency"`
+	VendorUserId       string   `json:"vendorUserId" validate:"required"`
+	
 }
 
 func (p *StripePaymentPayload) Validate() error {

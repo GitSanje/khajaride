@@ -11,12 +11,12 @@ type OpeningHours map[string]string // e.g. {"mon": "09-22", "tue": "09-22"}
 
 type CreateVendorPayload struct {
 	Name                  string   `json:"name" validate:"required,min=3,max=150"`
-	About                 string  `json:"about"`
-	Cuisine               string  `json:"cuisine"`
-	VendorUserID          string  `json:"vendorUserId" validate:"required" `
-	Phone                 string  `json:"phone"`
-	DeliveryAvailable     bool    `json:"deliveryAvailable,omitempty"`
-	PickupAvailable       bool    `json:"pickupAvailable,omitempty"`
+	About                 *string  `json:"about"`
+	Cuisine               string   `json:"cuisine" validate:"required"`
+	VendorUserID          string   `json:"vendorUserId" validate:"required" `
+	Phone                 string   `json:"phone"`
+	DeliveryAvailable     bool     `json:"deliveryAvailable,omitempty"`
+	PickupAvailable       bool     `json:"pickupAvailable,omitempty"`
 	DeliveryFee           *float64 `json:"deliveryFee,omitempty" validate:"omitempty,min=0"`
 	MinOrderAmount        *float64 `json:"minOrderAmount,omitempty" validate:"omitempty,min=0"`
 	DeliveryTimeEstimate  *string  `json:"deliveryTimeEstimate,omitempty"`

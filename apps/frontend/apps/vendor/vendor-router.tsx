@@ -35,6 +35,7 @@ const routes = createRoutesFromElements(
       path="/vendor-onboarding"
       element={
         <ProtectedRoute>
+          
           <VendorOnboardingPage />
         </ProtectedRoute>
       }

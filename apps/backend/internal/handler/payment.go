@@ -1,13 +1,16 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
 
 	"github.com/gitSanje/khajaride/internal/middleware"
 	"github.com/gitSanje/khajaride/internal/model/payment"
+	"github.com/gitSanje/khajaride/internal/model/payout"
 	"github.com/gitSanje/khajaride/internal/model/user"
 	"github.com/gitSanje/khajaride/internal/repository"
 	"github.com/gitSanje/khajaride/internal/server"
@@ -15,21 +18,22 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stripe/stripe-go/v83"
 	"github.com/stripe/stripe-go/v83/account"
+	"github.com/stripe/stripe-go/v83/charge"
+	"github.com/stripe/stripe-go/v83/checkout/session"
+	"github.com/stripe/stripe-go/v83/webhook"
 )
 
 type PaymentHandler struct {
 	Handler
 	PaymentService *service.PaymentService
-    userRepo *repository.UserRepository
-
+	userRepo       *repository.UserRepository
 }
-
 
 func NewPaymentHandler(s *server.Server, ps *service.PaymentService, userRepo *repository.UserRepository) *PaymentHandler {
 	return &PaymentHandler{
-		Handler:       NewHandler(s),
+		Handler:        NewHandler(s),
 		PaymentService: ps,
-		userRepo: userRepo,
+		userRepo:       userRepo,
 	}
 }
 
@@ -37,8 +41,8 @@ func (h *PaymentHandler) KhaltiPayment(c echo.Context) error {
 	return Handle(
 		h.Handler,
 		func(c echo.Context, payload *payment.KhaltiPaymentPayload) (*payment.KhaltiPaymentResponse, error) {
-		
-			return  h.PaymentService.ProcessKhaltiPayment(c, payload)
+
+			return h.PaymentService.ProcessKhaltiPayment(c, payload)
 		},
 		http.StatusCreated,
 		&payment.KhaltiPaymentPayload{},
@@ -74,8 +78,6 @@ func (h *PaymentHandler) KhaltiCallback(c echo.Context) error {
 		TransactionID:     c.QueryParam("transaction_id"),
 	}
 
-
-
 	// 2️⃣ Call service layer
 	orderID, status, err := h.PaymentService.VerifyAndUpdateKhaltiPayment(ctx, payload)
 	if err != nil {
@@ -105,13 +107,12 @@ func (h *PaymentHandler) KhaltiCallback(c echo.Context) error {
 	return c.Redirect(http.StatusFound, redirectURL)
 }
 
-
 func (h *PaymentHandler) StripePayment(c echo.Context) error {
 	return Handle(
 		h.Handler,
 		func(c echo.Context, payload *payment.StripePaymentPayload) (*payment.StripePaymentResponse, error) {
-		
-			return  h.PaymentService.ProcessStripeCheckout(c, payload)
+
+			return h.PaymentService.ProcessStripeCheckout(c, payload)
 		},
 		http.StatusCreated,
 		&payment.StripePaymentPayload{},
@@ -119,24 +120,26 @@ func (h *PaymentHandler) StripePayment(c echo.Context) error {
 
 }
 
-
 func (h *PaymentHandler) VerifyStripePayment(c echo.Context) error {
-	ctx := c.Request().Context()
 
 	payload := &payment.StripeVerifyPayload{
-		SessionID:  c.QueryParam("session_id"),
+		SessionID:         c.QueryParam("session_id"),
 		PurchaseOrderID:   c.QueryParam("purchase_order_id"),
 		PurchaseOrderName: c.QueryParam("purchase_order_name"),
 		Amount:            parseFloat(c.QueryParam("amount")),
-		
 	}
-
-	orderID, status, err := h.PaymentService.VerifyAndUpdateStripePayment(ctx, payload)
+	sess, err := session.Get(payload.SessionID, nil)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{
-			"error": fmt.Sprintf("Failed to verify payment: %v", err),
-		})
+		return fmt.Errorf("fetch stripe session: %w", err)
 	}
+	status := string(sess.PaymentStatus)
+
+	// orderID, status, err := h.PaymentService.VerifyAndUpdateStripePayment(ctx, payload)
+	// if err != nil {
+	// 	return c.JSON(http.StatusInternalServerError, map[string]string{
+	// 		"error": fmt.Sprintf("Failed to verify payment: %v", err),
+	// 	})
+	// }
 
 	redirectURL := fmt.Sprintf(
 		"%s/payment/status?pidx=%s&status=%s&txnId=%s&amount=%f&total_amount=%f&mobile=%s&tidx=%s&purchase_order_id=%s&purchase_order_name=%s&transaction_id=%s&order_id=%s",
@@ -151,15 +154,14 @@ func (h *PaymentHandler) VerifyStripePayment(c echo.Context) error {
 		url.QueryEscape(payload.PurchaseOrderID),
 		url.QueryEscape(payload.PurchaseOrderName),
 		url.QueryEscape(payload.SessionID),
-		url.QueryEscape(orderID),
+		url.QueryEscape(payload.PurchaseOrderID),
 	)
-   return c.Redirect(http.StatusFound, redirectURL)
+	return c.Redirect(http.StatusFound, redirectURL)
 
 }
 
-
 func (h *PaymentHandler) StripeCancelPayment(c echo.Context) error {
-	return h.PaymentService.StripeCancelPayment(c) 
+	return h.PaymentService.StripeCancelPayment(c)
 
 }
 
@@ -167,8 +169,8 @@ func (h *PaymentHandler) OnboardingStripeConnectAccount(c echo.Context) error {
 	return Handle(
 		h.Handler,
 		func(c echo.Context, payload *payment.OnboardingPayload) (*payment.OnboardingResponse, error) {
-		
-			return  h.PaymentService.CreateOnboardingAccountWithLink(c, payload)
+
+			return h.PaymentService.CreateOnboardingAccountWithLink(c, payload)
 		},
 		http.StatusCreated,
 		&payment.OnboardingPayload{},
@@ -181,13 +183,13 @@ func (h *PaymentHandler) CreateOnboardingAccountLink(c echo.Context) error {
 		h.Handler,
 		func(c echo.Context, payload *payment.OnboardingAccountLinkPayload) (*payment.OnboardingResponse, error) {
 			userVendorID := middleware.GetUserID(c)
-		    url, err := h.PaymentService.CreateOnboardingLink(c.Request().Context(), payload.AccountId,userVendorID )
-			if( err != nil){
-				return  nil,fmt.Errorf("err creating link%v",err)
+			url, err := h.PaymentService.CreateOnboardingLink(c.Request().Context(), payload.AccountId, userVendorID)
+			if err != nil {
+				return nil, fmt.Errorf("err creating link%v", err)
 			}
 			return &payment.OnboardingResponse{
 				URL: &url,
-			},nil
+			}, nil
 		},
 		http.StatusCreated,
 		&payment.OnboardingAccountLinkPayload{},
@@ -195,8 +197,8 @@ func (h *PaymentHandler) CreateOnboardingAccountLink(c echo.Context) error {
 
 }
 
-func (h *PaymentHandler) StripeOnboardingRefresh(c echo.Context)  error{
-	
+func (h *PaymentHandler) StripeOnboardingRefresh(c echo.Context) error {
+
 	accountID := c.QueryParam("account_id")
 	userVendorID := c.QueryParam("vendor_user_id")
 	if accountID == "" {
@@ -205,18 +207,18 @@ func (h *PaymentHandler) StripeOnboardingRefresh(c echo.Context)  error{
 		})
 	}
 
-	url, err := h.PaymentService.CreateOnboardingLink(c.Request().Context(), accountID,userVendorID)
+	url, err := h.PaymentService.CreateOnboardingLink(c.Request().Context(), accountID, userVendorID)
 	if err != nil {
-		 c.JSON(http.StatusInternalServerError, map[string]string{
+		c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": fmt.Sprintf("Failed to create refresh link: %v", err),
 		})
 	}
-     
+
 	return c.Redirect(http.StatusSeeOther, url)
 }
 
 func (h *PaymentHandler) StripeOnboardingReturn(c echo.Context) error {
-    stripe.Key = h.server.Config.Stripe.SecretKey
+	stripe.Key = h.server.Config.Stripe.SecretKey
 	accountID := c.QueryParam("account_id")
 	userVendorID := c.QueryParam("vendor_user_id")
 	if accountID == "" {
@@ -227,7 +229,7 @@ func (h *PaymentHandler) StripeOnboardingReturn(c echo.Context) error {
 	frontendUrl := "http://localhost:4000"
 
 	// Fetch the connected account from Stripe
-	acct, err := account.GetByID(accountID ,&stripe.AccountParams{})
+	acct, err := account.GetByID(accountID, &stripe.AccountParams{})
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": fmt.Sprintf("Failed to fetch Stripe account: %v", err),
@@ -237,33 +239,129 @@ func (h *PaymentHandler) StripeOnboardingReturn(c echo.Context) error {
 	// Check if there are still required items
 	if len(acct.Requirements.CurrentlyDue) > 0 || len(acct.Requirements.EventuallyDue) > 0 {
 		// Not finished → redirect to onboarding incomplete page
-	    url:=fmt.Sprintf(`%s/vendor-onboarding/payout?account_id=%s,status=%s`, frontendUrl, accountID,"incomplete")
+		url := fmt.Sprintf(`%s/vendor-onboarding/payout?account_id=%s,status=%s`, frontendUrl, accountID, "incomplete")
 		return c.Redirect(http.StatusSeeOther, url)
 	}
 
 	trackPayload := &user.VendorOnboardingTrackPayload{
-		Completed: true,
+		Completed:   true,
 		CurrentStep: "completed",
 	}
-	
-     if _ , err := h.userRepo.VendorOnboardingTrack(c.Request().Context(),userVendorID, trackPayload); err !=nil {
-      return c.JSON(http.StatusInternalServerError, map[string]string{
+
+	if _, err := h.userRepo.VendorOnboardingTrack(c.Request().Context(), userVendorID, trackPayload); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": fmt.Sprintf("Failed to upadte  VendorOnboardingTrack: %v", err),
 		})
-	 }
-	url:=fmt.Sprintf(`%s/vendor-onboarding/payout?account_id=%s&status=%s`,frontendUrl, accountID,"verified")
+	}
+
+	if err := h.PaymentService.UpdateStripePayoutAccount(c.Request().Context(), userVendorID, acct); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": fmt.Sprintf("Failed to update payout account: %v", err),
+		})
+	}
+	url := fmt.Sprintf(`%s/vendor-onboarding/payout?account_id=%s&status=%s`, frontendUrl, accountID, "verified")
 	// ✅ Onboarding completed → redirect to verified page
 	return c.Redirect(http.StatusSeeOther, url)
 }
 
 
+func (ph *PaymentHandler) HandleStripeWebhook(c echo.Context) error {
+	ctx := c.Request().Context()
 
+	payload, err := io.ReadAll(c.Request().Body)
+	if err != nil {
+		return c.String(http.StatusBadRequest, "Failed to read body")
+	}
+	sigHeader := c.Request().Header.Get("Stripe-Signature")
+	endpointSecret := ph.server.Config.Stripe.WebhookSecret
+	// Verify request came from Stripe
+	event, err := webhook.ConstructEvent(payload, sigHeader, endpointSecret)
+	if err != nil {
+		fmt.Println("⚠️  Webhook signature verification failed:", err)
+		return c.String(http.StatusBadRequest, "Invalid signature")
+	}
+	switch event.Type {
 
+	case "checkout.session.completed":
+		var session stripe.CheckoutSession
+		if err := json.Unmarshal(event.Data.Raw, &session); err != nil {
+			return c.String(http.StatusBadRequest, "Failed to parse session")
+		}
+		orderID := session.Metadata["purchase_order_id"]
+		
+
+		// 🚀 Call your Verify & Update function
+		orderID, status, err := ph.PaymentService.VerifyAndUpdateStripePayment(ctx, &payment.StripeVerifyPayload{
+			SessionID: session.ID,
+		})
+
+		if err != nil {
+			fmt.Println("❌ Failed updating payment:", err)
+			return c.String(http.StatusInternalServerError, "Failed to update payment")
+		}
+
+		fmt.Println("✅ Payment processed:", orderID, status)
+		// Return 200 so Stripe stops retrying
+		return c.JSON(http.StatusOK, map[string]string{
+			"Messages": "successfully processed",
+		})
+
+	case "application_fee.created":
+		var fee stripe.ApplicationFee
+		_ = json.Unmarshal(event.Data.Raw, &fee)
+
+		ch, err := charge.Get(fee.Charge.ID, nil)
+		if err != nil {
+			return c.String(http.StatusInternalServerError, "Failed to fetch charge")
+		}
+
+		orderID := ch.Metadata["purchase_order_id"]
+		vendorUserId := ch.Metadata["vendor_user_id"]
+
+		payoutAccId, err := ph.PaymentService.GetPayoutAccountID(ctx, vendorUserId)
+		if err != nil {
+			return c.String(http.StatusInternalServerError, "Failed to get payout account")
+		}
+
+		commission := float64(fee.Amount) / 100
+
+		_,err = ph.PaymentService.CreatePayout(ctx, &payout.Payout{
+			Sender:        "platform",
+			OrderID:       stripe.String(orderID),
+			PayoutType:    "commission",
+			AccountID:     stripe.String(payoutAccId),
+			Method:        "stripe",
+			Amount:        commission,
+			TransactionRef: stripe.String(fee.ID),
+			Status:        "completed",
+		})
+		if err != nil {
+			return c.String(http.StatusInternalServerError, "Failed to create payout entry")
+		}
+
+		return c.NoContent(http.StatusOK)
+
+	case "payout.paid":
+		if err := ph.PaymentService.HandlePayoutStatus(ctx, event); err !=nil{
+          return c.String(http.StatusInternalServerError, "Failed to update payout status")
+		}
+       return c.NoContent(http.StatusOK)
+	case "payout.failed":
+		if err := ph.PaymentService.HandlePayoutStatus(ctx, event); err !=nil{
+          return c.String(http.StatusInternalServerError, "Failed to update payout status")
+		}
+       return c.NoContent(http.StatusOK)
+
+	default:
+		// Ignore other events
+		return c.NoContent(http.StatusOK)
+	}
+
+}
 
 // Helper: safely parse string → float
 func parseFloat(s string) float64 {
 	f, _ := strconv.ParseFloat(s, 64)
 	return f
+
 }
-
-

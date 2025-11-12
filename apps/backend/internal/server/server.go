@@ -16,6 +16,7 @@ import (
 	"github.com/newrelic/go-agent/v3/integrations/nrredis-v9"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
+
 )
 
 type Server struct {
@@ -24,6 +25,7 @@ type Server struct {
 	LoggerService *loggerPkg.LoggerService
 	DB            *database.Database
 	Redis         *redis.Client
+	
 	httpServer    *http.Server
 	Job           *job.JobService
 	Elasticsearch *elasticsearch.Client
@@ -72,6 +74,8 @@ func New(cfg *config.Config, logger *zerolog.Logger, loggerService *loggerPkg.Lo
 		// Don't fail startup if Redis is unavailable
 	}
 
+
+
 	// job service
 	jobService := job.NewJobService(logger, cfg)
 	jobService.InitHandlers(cfg, logger)
@@ -80,6 +84,8 @@ func New(cfg *config.Config, logger *zerolog.Logger, loggerService *loggerPkg.Lo
 	if err := jobService.Start(); err != nil {
 		return nil, err
 	}
+
+	//Instantiate kafka
 
 	server := &Server{
 		Config:        cfg,

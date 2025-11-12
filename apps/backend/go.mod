@@ -49,6 +49,10 @@ require (
 	github.com/aws/smithy-go v1.23.2 // indirect
 	github.com/elastic/elastic-transport-go/v8 v8.7.0 // indirect
 	github.com/elastic/go-elasticsearch/v8 v8.19.0 // indirect
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/pierrec/lz4/v4 v4.1.15 // indirect
+	github.com/segmentio/kafka-go v0.4.49 // indirect
+	github.com/spf13/pflag v1.0.9 // indirect
 	github.com/stripe/stripe-go/v83 v83.1.0 // indirect
 )
 
@@ -117,6 +121,7 @@ require (
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/cast v1.7.0 // indirect
+	github.com/spf13/cobra v1.10.1
 	github.com/stripe/stripe-go v70.15.0+incompatible
 	github.com/svix/svix-webhooks v1.76.1
 	github.com/tklauser/go-sysconf v0.3.12 // indirect

@@ -42,15 +42,15 @@ const CUISINE_OPTIONS = [
   "Desserts",
 ]
 
-const DAYS_OF_WEEK = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday"
-]
+// const DAYS_OF_WEEK = [
+//   "Monday",
+//   "Tuesday",
+//   "Wednesday",
+//   "Thursday",
+//   "Friday",
+//   "Saturday",
+//   "Sunday"
+// ]
 
  function StepProfile({ 
   data, 
@@ -62,9 +62,7 @@ const DAYS_OF_WEEK = [
   const [cuisineTags, setCuisineTags] = useState<string[]>(data.cuisineTags || [])
   const [selectedCuisine, setSelectedCuisine] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [openingHours, setOpeningHours] = useState<Record<string, { open: string; close: string }>>(
-    data.openingHours ? parseOpeningHours(data.openingHours) : {}
-  )
+ 
 
   const { user} = useUser()
   const [vendorListingImage, setVendorListingImage] = useState<File | null>(null)
@@ -106,30 +104,30 @@ const DAYS_OF_WEEK = [
   const formValues = watch()
   
 
-  // Helper function to parse opening hours string
-  function parseOpeningHours(hoursString: string): Record<string, { open: string; close: string }> {
-    const hours: Record<string, { open: string; close: string }> = {}
-    const days = hoursString.split(';')
+  // // Helper function to parse opening hours string
+  // function parseOpeningHours(hoursString: string): Record<string, { open: string; close: string }> {
+  //   const hours: Record<string, { open: string; close: string }> = {}
+  //   const days = hoursString.split(';')
     
-    days.forEach(dayHours => {
-      const [day, timeRange] = dayHours.split(': ')
-      if (timeRange) {
-        const [open, close] = timeRange.split(' - ')
-        if (open && close) {
-          hours[day] = { open, close }
-        }
-      }
-    })
+  //   days.forEach(dayHours => {
+  //     const [day, timeRange] = dayHours.split(': ')
+  //     if (timeRange) {
+  //       const [open, close] = timeRange.split(' - ')
+  //       if (open && close) {
+  //         hours[day] = { open, close }
+  //       }
+  //     }
+  //   })
     
-    return hours
-  }
+  //   return hours
+  // }
 
-  // Helper function to format opening hours for submission
-  function formatOpeningHours(hours: Record<string, { open: string; close: string }>): string {
-    return Object.entries(hours)
-      .map(([day, times]) => `${day}: ${times.open} - ${times.close}`)
-      .join('; ')
-  }
+  // // Helper function to format opening hours for submission
+  // function formatOpeningHours(hours: Record<string, { open: string; close: string }>): string {
+  //   return Object.entries(hours)
+  //     .map(([day, times]) => `${day}: ${times.open} - ${times.close}`)
+  //     .join('; ')
+  // }
 
   // Update parent component when form values change
   const handleFormChange = (field: keyof VendorProfileFormData, value: any) => {
@@ -154,20 +152,20 @@ const DAYS_OF_WEEK = [
     onUpdate({ ...data, cuisineTags: newTags })
   }
 
-  const handleOpeningHoursChange = (day: string, field: 'open' | 'close', value: string) => {
-    const updatedHours = {
-      ...openingHours,
-      [day]: {
-        ...openingHours[day],
-        [field]: value
-      }
-    }
-    setOpeningHours(updatedHours)
+  // const handleOpeningHoursChange = (day: string, field: 'open' | 'close', value: string) => {
+  //   const updatedHours = {
+  //     ...openingHours,
+  //     [day]: {
+  //       ...openingHours[day],
+  //       [field]: value
+  //     }
+  //   }
+  //   setOpeningHours(updatedHours)
     
-    const formattedHours = formatOpeningHours(updatedHours)
-    setValue("openingHours", formattedHours)
-    onUpdate({ ...data, openingHours: formattedHours })
-  }
+  //   const formattedHours = formatOpeningHours(updatedHours)
+  //   setValue("openingHours", formattedHours)
+  //   onUpdate({ ...data, openingHours: formattedHours })
+  // }
 
 
 
@@ -369,26 +367,25 @@ const DAYS_OF_WEEK = [
             <div className="space-y-4">
               <Label>Opening Hours</Label>
               <div className="space-y-3">
-                {DAYS_OF_WEEK.map((day) => (
-                  <div key={day} className="flex items-center gap-4">
-                    <Label className="w-24 text-sm font-medium">{day}</Label>
-                    <div className="flex items-center gap-2 flex-1">
+                
+               
                       <Input
-                        type="time"
-                        value={openingHours[day]?.open || ""}
-                        onChange={(e) => handleOpeningHoursChange(day, 'open', e.target.value)}
+                      id="openingHours"
+                        type="text"
+                          {...register("openingHours")}
+                        
+                                       onChange={(e) => handleFormChange("openingHours", e.target.value)}
                         className="flex-1"
+                        placeholder="eg. 11:00 AM - 8:00 PM"
                       />
-                      <span className="text-sm text-gray-500">to</span>
-                      <Input
-                        type="time"
-                        value={openingHours[day]?.close || ""}
-                        onChange={(e) => handleOpeningHoursChange(day, 'close', e.target.value)}
-                        className="flex-1"
-                      />
-                    </div>
-                  </div>
-                ))}
+                       
+                     
+                  
+                     {errors.openingHours && (
+                <p className="text-sm text-red-600">{errors.openingHours.message}</p>
+              )}
+                  
+            
               </div>
             </div>
 

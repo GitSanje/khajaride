@@ -13,7 +13,7 @@ import { ZVendorAddress, type TVendorAddress } from "@khajaride/zod"
 import { useUpdateVendorOnboardingTrack, type TCreateAddressPayload } from "@/api/hooks/use-user-query"
 import { useCreateVendorAddress } from "@/api/hooks/use-vendor-query"
 import { useUser } from "@clerk/clerk-react"
-import { useNavigate, useOutletContext } from "react-router-dom"
+import {  useOutletContext } from "react-router-dom"
 import { useVendorOnboarding } from "../hooks/useVendorOnboarding"
 import type { OutletContext } from "../pages/vendor-onboarding"
 

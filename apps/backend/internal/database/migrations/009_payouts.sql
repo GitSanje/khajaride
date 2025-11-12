@@ -64,7 +64,7 @@ CREATE TABLE payout_accounts (
     bank_name TEXT,                     -- for bank transfers
     branch_name TEXT,                   -- optional for banks
 
-    stripe_account_id TEXT,     
+    stripe_account_id TEXT, UNIQUE     
     stripe_external_account_id TEXT,
     currency TEXT DEFAULT 'USD', 
 
@@ -97,12 +97,10 @@ CREATE TRIGGER set_updated_at_payout_accounts
 -- =========================
 CREATE TABLE payouts (
     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
-
-    vendor_id TEXT REFERENCES vendors(id),         -- nullable for system-level payouts
+    vendor_user_id TEXT REFERENCES users(id),  
     order_id TEXT REFERENCES order_vendors(id),   -- nullable for system-level payouts
     account_id TEXT REFERENCES payout_accounts(id),
-    account_type TEXT NOT NULL CHECK (account_type IN ('vendor', 'system')),
-
+    sender TEXT NOT NULL CHECK (sender IN ('customer','vendor', 'platform')),
     payout_type TEXT NOT NULL CHECK (
         payout_type IN (
             'vendor_payout',    -- payout to vendor
@@ -113,12 +111,11 @@ CREATE TABLE payouts (
         )
     ),
     
-    method TEXT NOT NULL CHECK (method IN ('esewa', 'khalti', 'bank_transfer', 'cash', 'card')),
+    method TEXT NOT NULL CHECK (method IN ('esewa', 'khalti', 'bank_transfer', 'cash', 'card','stripe')),
     amount NUMERIC(12,2) NOT NULL,
     status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'failed')),
     transaction_ref TEXT,                          -- txn ref from provider
     remarks TEXT,
-
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );

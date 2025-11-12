@@ -173,7 +173,7 @@ func TransformFoodManduVendors(flatJSON []byte) ([]vendor.VendorBulkInput, error
 			Vendor: vendor.Vendor{
 				ID:                 strconv.Itoa(getInt(vendorMap, "Id")),
 				Name:               getString(vendorMap, "Name"),
-				About:              "",
+				About:              nil,
 				Cuisine:            getString(vendorMap, "Cuisine"),
 				Rating:             getFloat(vendorMap, "VendorRating"),
 				DeliveryAvailable:  getBool(vendorMap, "AcceptsDeliveryOrder"),

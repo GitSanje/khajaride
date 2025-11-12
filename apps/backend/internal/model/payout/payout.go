@@ -33,10 +33,10 @@ type PayoutAccount struct {
 // =========================
 type Payout struct {
 	ID             string    `json:"id" db:"id"`
-	VendorID       string    `json:"vendorId,omitempty" db:"vendor_id"` // nullable for system-level payouts
-	OrderID        string    `json:"orderId,omitempty" db:"order_id"`   // nullable for system-level payouts
-	AccountID      string    `json:"accountId" db:"account_id"`         // references PayoutAccount
-	AccountType    string    `json:"accountType" db:"account_type"`     // 'vendor' or 'system'
+	VendorUserID   *string    `json:"vendorUserId" db:"vendor_user_id"`
+	OrderID        *string    `json:"orderId,omitempty" db:"order_id"`   // nullable for system-level payouts
+	AccountID      *string    `json:"accountId" db:"account_id"`         // references PayoutAccount
+	Sender         string    `json:"sender" db:"sender"`     // 'vendor' or 'system'
 	PayoutType     string    `json:"payoutType" db:"payout_type"`       // vendor_payout, commission, refund, adjustment
 	Method         string    `json:"method" db:"method"`                // esewa, khalti, bank_transfer, cash, card
 	Amount         float64   `json:"amount" db:"amount"`
@@ -45,4 +45,15 @@ type Payout struct {
 	Remarks        *string   `json:"remarks,omitempty" db:"remarks"`
 	CreatedAt      time.Time `json:"createdAt" db:"created_at"`
 	UpdatedAt      time.Time `json:"updatedAt" db:"updated_at"`
+}
+
+type PayoutAccountUpdatePayload struct {
+    OwnerID           string
+    StripeAccountID   string
+    AccountIdentifier string
+    AccountName       string
+    BankName          string
+    BranchName        string
+    Verified          bool
+    VerificationStatus string
 }
