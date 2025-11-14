@@ -264,7 +264,6 @@ func (h *PaymentHandler) StripeOnboardingReturn(c echo.Context) error {
 	return c.Redirect(http.StatusSeeOther, url)
 }
 
-
 func (ph *PaymentHandler) HandleStripeWebhook(c echo.Context) error {
 	ctx := c.Request().Context()
 
@@ -288,7 +287,6 @@ func (ph *PaymentHandler) HandleStripeWebhook(c echo.Context) error {
 			return c.String(http.StatusBadRequest, "Failed to parse session")
 		}
 		orderID := session.Metadata["purchase_order_id"]
-		
 
 		// 🚀 Call your Verify & Update function
 		orderID, status, err := ph.PaymentService.VerifyAndUpdateStripePayment(ctx, &payment.StripeVerifyPayload{
@@ -308,12 +306,27 @@ func (ph *PaymentHandler) HandleStripeWebhook(c echo.Context) error {
 
 	case "application_fee.created":
 		var fee stripe.ApplicationFee
-		_ = json.Unmarshal(event.Data.Raw, &fee)
-
-		ch, err := charge.Get(fee.Charge.ID, nil)
-		if err != nil {
-			return c.String(http.StatusInternalServerError, "Failed to fetch charge")
+		if err := json.Unmarshal(event.Data.Raw, &fee); err != nil {
+			return c.String(http.StatusBadRequest, "Invalid application_fee payload")
 		}
+
+		stripe.Key = ph.server.Config.Stripe.SecretKey
+
+		// // Handle connected vs platform account safely
+		var stripeAccountID *string
+		if fee.Account != nil {
+			stripeAccountID = stripe.String(fee.Account.ID)
+		}
+		params := &stripe.ChargeParams{} 
+		params.StripeAccount = stripeAccountID
+
+
+		// Fetch charge
+		ch, err := charge.Get(fee.OriginatingTransaction.ID,nil)
+		if err != nil {
+			return c.String(http.StatusInternalServerError, fmt.Sprintf("Failed to fetch charge: %v", err))
+		}
+
 
 		orderID := ch.Metadata["purchase_order_id"]
 		vendorUserId := ch.Metadata["vendor_user_id"]
@@ -325,32 +338,33 @@ func (ph *PaymentHandler) HandleStripeWebhook(c echo.Context) error {
 
 		commission := float64(fee.Amount) / 100
 
-		_,err = ph.PaymentService.CreatePayout(ctx, &payout.Payout{
-			Sender:        "platform",
-			OrderID:       stripe.String(orderID),
-			PayoutType:    "commission",
-			AccountID:     stripe.String(payoutAccId),
-			Method:        "stripe",
-			Amount:        commission,
+		_, err = ph.PaymentService.CreatePayout(ctx, &payout.Payout{
+			VendorUserID:   &vendorUserId,
+			Sender:         "platform",
+			OrderID:        stripe.String(orderID),
+			PayoutType:     "commission",
+			AccountID:      stripe.String(payoutAccId),
+			Method:         "stripe",
+			Amount:         commission,
 			TransactionRef: stripe.String(fee.ID),
-			Status:        "completed",
+			Status:         "completed",
 		})
 		if err != nil {
-			return c.String(http.StatusInternalServerError, "Failed to create payout entry")
+			return c.String(http.StatusInternalServerError, fmt.Sprintf("Failed to create payout entry: %v", err))
 		}
 
 		return c.NoContent(http.StatusOK)
 
 	case "payout.paid":
-		if err := ph.PaymentService.HandlePayoutStatus(ctx, event); err !=nil{
-          return c.String(http.StatusInternalServerError, "Failed to update payout status")
+		if err := ph.PaymentService.HandlePayoutStatus(ctx, event); err != nil {
+			return c.String(http.StatusInternalServerError, "Failed to update payout status")
 		}
-       return c.NoContent(http.StatusOK)
+		return c.NoContent(http.StatusOK)
 	case "payout.failed":
-		if err := ph.PaymentService.HandlePayoutStatus(ctx, event); err !=nil{
-          return c.String(http.StatusInternalServerError, "Failed to update payout status")
+		if err := ph.PaymentService.HandlePayoutStatus(ctx, event); err != nil {
+			return c.String(http.StatusInternalServerError, "Failed to update payout status")
 		}
-       return c.NoContent(http.StatusOK)
+		return c.NoContent(http.StatusOK)
 
 	default:
 		// Ignore other events

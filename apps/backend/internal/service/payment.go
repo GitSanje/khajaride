@@ -197,6 +197,19 @@ func (ps *PaymentService) ProcessStripeCheckout(c echo.Context, payload *payment
 	))
 	fee := int64(payload.Amount * 100 * 0.03)
 
+// 	Parse request → apply rules → create CheckoutSession object →
+//   determine payment mode →
+//     create PaymentIntent (status: requires_payment_method) →
+//       wait for customer to complete checkout →
+//         confirm PaymentIntent →
+//           create Charge →
+//             apply application_fee →
+//               create ApplicationFee object →
+//                 run Connect transfer →
+//                   update balances →
+//                     fire webhooks
+
+    //https://docs.stripe.com/connect/destination-charges
 	params := &stripe.CheckoutSessionParams{
 		Mode:       stripe.String(string(stripe.CheckoutSessionModePayment)),
 		SuccessURL: successURL,
@@ -215,6 +228,7 @@ func (ps *PaymentService) ProcessStripeCheckout(c echo.Context, payload *payment
 		},
 		PaymentIntentData: &stripe.CheckoutSessionPaymentIntentDataParams{
 			ApplicationFeeAmount: stripe.Int64(fee),
+			//destination charges
 			TransferData: &stripe.CheckoutSessionPaymentIntentDataTransferDataParams{
 				Destination: stripe.String(accountId),
 			},
@@ -225,6 +239,12 @@ func (ps *PaymentService) ProcessStripeCheckout(c echo.Context, payload *payment
 				"stripe_connect_acc_id":accountId,
 			},
 		},
+		Metadata: map[string]string{
+				"purchase_order_id": payload.PurchaseOrderID,
+				"vendor_user_id":    payload.VendorUserId,
+				"amount":            fmt.Sprintf("%f", payload.Amount),
+				"stripe_connect_acc_id":accountId,
+			},
 	}
 
 	s, err := session.New(params)
@@ -284,6 +304,7 @@ func (ps *PaymentService) VerifyAndUpdateStripePayment(
 				return "", "", fmt.Errorf("get payout accountid: %w", err)
 			}
 			p := &payout.Payout{
+				VendorUserID: stripe.String(vendorUserId),
 				Sender:         "customer",
 				OrderID:        stripe.String(orderID),
 				PayoutType:     "user_payout",
@@ -297,6 +318,7 @@ func (ps *PaymentService) VerifyAndUpdateStripePayment(
 			if _,err := ps.paymentRepo.CreatePayout(ctx, p); err != nil {
 				return "", "", fmt.Errorf("create payout: %w", err)
 			}
+			
 			events.PublishPayoutRequested(ctx, events.PayoutRequestedEvent{
                 OrderID:      orderID,
 				VendorUserID: vendorUserId,

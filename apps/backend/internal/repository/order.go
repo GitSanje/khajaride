@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+
 	"github.com/gitSanje/khajaride/internal/model/cart"
 	"github.com/gitSanje/khajaride/internal/model/order"
 	"github.com/gitSanje/khajaride/internal/model/payout"
@@ -355,6 +356,9 @@ func (r *OrderRepository) GetFullOrderById(ctx context.Context, orderID string) 
 
 	rows, err := r.server.DB.Pool.Query(ctx, query, orderID)
 	if err != nil {
+		if  err == pgx.ErrNoRows {
+			return nil,nil
+		}
 		return nil, err
 	}
 	defer rows.Close()
@@ -394,7 +398,7 @@ func (r *OrderRepository) CreatePayout(ctx context.Context, tx pgx.Tx, p *payout
 
 	_, err := tx.Exec(ctx, query,
 		p.ID,
-		p.VendorID,
+		p.VendorUserID,
 		p.OrderID,
 		p.AccountID,
 		p.Sender,

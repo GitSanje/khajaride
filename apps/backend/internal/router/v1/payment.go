@@ -17,6 +17,7 @@ func registerPaymentRoutes(r *echo.Group, h *handler.PaymentHandler, auth *middl
 	payment.GET("/khalti/callback", h.KhaltiCallback)
 	// ------------------- Stripe Payment -------------------
 	//4000003560000008
+	payment.POST("/stripe/webhooks", h.HandleStripeWebhook)
 	payment.GET("/stripe/verify", h.VerifyStripePayment)
     payment.GET("/stripe/cancel", h.StripeCancelPayment)
     payment.GET("/stripe/onboarding/refresh", h.StripeOnboardingRefresh)

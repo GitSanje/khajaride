@@ -27,7 +27,7 @@
 ### Run Ngrok docker
 
 * To create user using webhooks from the clerk
-`docker run --net=host -it -e NGROK_AUTHTOKEN=xyz ngrok/ngrok:latest http 8080`
+`docker run --name ngrok --net=host -it -e NGROK_AUTHTOKEN=xyz ngrok/ngrok:latest http 8080`
 
 docker logs -f keen_wu
 

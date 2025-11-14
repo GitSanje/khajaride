@@ -48,6 +48,25 @@ tasks:
     - echo 'Running up migrations...'
     - tern migrate -m ./internal/database/migrations --conn-string {{.KHAJARIDE_DB_DSN}}
 
+  consumer:
+    desc: "Run the Kafka consumer CLI"
+    cmds:
+      - go run ./cmd/consumers  {{.CLI_ARGS}}
+   # ✅ List available jobs
+  consumer:list:
+    desc: "List all available consumer jobs"
+    cmds:
+      - task: consumer
+        vars:
+          CLI_ARGS: list
+   # ✅ Run a specific job by name
+  consumer:job:
+    desc: "Run a specific consumer job"
+    cmds:
+      - go run ./cmd/consumers "{{.JOB}}"
+    requires:
+      vars: [JOB]
+
   tidy:
     desc: format all .go files, and tidy and vendor module dependencies
     cmds:

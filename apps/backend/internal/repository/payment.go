@@ -4,14 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/gitSanje/khajaride/internal/lib/events"
 	"github.com/gitSanje/khajaride/internal/model/payment"
 	"github.com/gitSanje/khajaride/internal/model/payout"
 	"github.com/gitSanje/khajaride/internal/server"
 	"github.com/jackc/pgx/v5"
-	"github.com/stripe/stripe-go"
-	stripepayout "github.com/stripe/stripe-go/payout"
+	"github.com/stripe/stripe-go/v83"
+	"github.com/stripe/stripe-go/v83/balance"
+	stripepayout "github.com/stripe/stripe-go/v83/payout"
 )
 
 // ---------------- PAYMENT REPOSITORY ----------------
@@ -287,26 +289,40 @@ func (r *PaymentRepository) UpdateStripePayoutAccount(ctx context.Context, paylo
 }
 
 
-func (r *PaymentRepository) CreatePayout(ctx context.Context, p *payout.Payout) (string,error) {
+
+func (r *PaymentRepository) CreatePayout(ctx context.Context, p *payout.Payout) (string, error) {
 	query := `
 		INSERT INTO payouts (
 			vendor_user_id, order_id, account_id, sender, payout_type,
 			method, amount, status, transaction_ref, remarks
-		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-		 RETURNING id
+		) VALUES (
+			@vendor_user_id, @order_id, @account_id, @sender, @payout_type,
+			@method, @amount, @status, @transaction_ref, @remarks
+		)
+		RETURNING id
 	`
-	var ID string;
-	 err := r.server.DB.Pool.QueryRow(ctx, query,
-		p.VendorUserID, p.OrderID, p.AccountID, p.Sender,
-		p.PayoutType, p.Method, p.Amount, p.Status,
-		p.TransactionRef, p.Remarks,
-	).Scan(&ID)
 
-	if(err != nil){
-		return "", err 
+	args := pgx.NamedArgs{
+		"vendor_user_id": p.VendorUserID,
+		"order_id":       p.OrderID,
+		"account_id":     p.AccountID,
+		"sender":         p.Sender,
+		"payout_type":    p.PayoutType,
+		"method":         p.Method,
+		"amount":         p.Amount,
+		"status":         p.Status,
+		"transaction_ref": p.TransactionRef,
+		"remarks":        p.Remarks,
 	}
-	return ID, nil
+
+	var id string
+	err := r.server.DB.Pool.QueryRow(ctx, query, args).Scan(&id)
+	if err != nil {
+		return "", err
+	}
+	return id, nil
 }
+
 
 
 func (r *PaymentRepository) UpdatePayoutStatus(ctx context.Context, pId string,status string) error {
@@ -330,14 +346,28 @@ func (r *PaymentRepository) PerformStripePayout(ctx context.Context, payload *ev
 	// Stripe uses cents
 	amt := payload.Amount * 100
 	fee:= payload.Amount *100*0.03
+    vendorShare := amt - fee
+    
+	 // ✅ Check balance
+    availableUSD, err := r.CheckConnectedAccountBalance(payload.StripeConnectAccId, "usd",true)
+	if err != nil {
+		return nil,fmt.Errorf("error:%s", err)
+	}
 
+	if availableUSD*100 < vendorShare {
+        log.Printf("Balance:%f, VendorShare:%f", availableUSD, float64(vendorShare)/100)
+        return nil, fmt.Errorf("insufficient funds for payout")
+    }
 
+	log.Printf("Balance:%f,VendorShare:%f", availableUSD,vendorShare / 100)
 
 	stripe.Key = r.server.Config.Stripe.SecretKey
-    vendorShare := amt - fee
+	
 	params := &stripe.PayoutParams{
 		Amount:   stripe.Int64(int64(vendorShare)),
 		Currency: stripe.String("usd"),
+		
+		 Method: stripe.String("instant"),
 	}
     
 	payoutPayload := &payout.Payout{
@@ -375,4 +405,28 @@ func (r *PaymentRepository) PerformStripePayout(ctx context.Context, payload *ev
 	fmt.Println("✅ Payout sent:", p.ID)
 	
 	return p, nil
+}
+
+func (r *PaymentRepository) CheckConnectedAccountBalance(stripeAccountID string, currency string, instant bool) (float64, error) {
+	stripe.Key = r.server.Config.Stripe.SecretKey
+    params := &stripe.BalanceParams{}
+    params.SetStripeAccount(stripeAccountID)
+    
+    bal, err := balance.Get(params)
+    if err != nil {
+        return 0, fmt.Errorf("failed to fetch balance: %w", err)
+    }
+
+    balances := bal.Available
+    if instant {
+        balances = bal.InstantAvailable
+    }
+
+    for _, b := range balances {
+        if string(b.Currency) == currency {
+            return float64(b.Amount) / 100, nil
+        }
+    }
+
+    return 0, fmt.Errorf("no balance available in currency %s", currency)
 }

@@ -12,14 +12,25 @@ func main() {
 	rootCmd := &cobra.Command{Use: "consumer"}
 
 	// List available jobs
-	listCmd := &cobra.Command{
+		listCmd := &cobra.Command{
 		Use:   "list",
 		Short: "List available worker jobs",
 		Run: func(cmd *cobra.Command, args []string) {
-			_ = consumers.NewJobRegistry([]string{"localhost:9092"})
-		
+			registry := consumers.NewJobRegistry([]string{"localhost:9092"})
+			jobs := registry.List()
+
+			if len(jobs) == 0 {
+				fmt.Println("No jobs registered.")
+				return
+			}
+
+			fmt.Println("Available jobs:")
+			for _, j := range jobs {
+				fmt.Println(" -", j)
+			}
 		},
 	}
+
 	rootCmd.AddCommand(listCmd)
 
 	// Create subcommands for each job

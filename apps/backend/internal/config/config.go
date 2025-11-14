@@ -61,7 +61,7 @@ type StripeConfig struct {
 	SuccessURL   string `koanf:"success_url" validate:"required"`
 	CancelURL   string `koanf:"cancel_url" validate:"required"`
 	FrontEndURL string `koanf:"frontend_url" validate:"required"`
-	WebhookSecret string   `koanf:"webhook_secret" validate:"required"`
+	WebhookSecret string   `koanf:"webhook_secret"`
 }
 
 type ElasticsearchConfig struct {
